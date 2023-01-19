@@ -4,8 +4,8 @@
   "description": "Ravencoin wallet library for JavaScript",
   "main": "index.js",
   "scripts": {
-    "build": "tsc ./index.ts",
-    "watch": "tsc ./index.ts --watch"
+    "build": "tsc ./example.ts",
+    "watch": "tsc ./example.ts --watch"
   },
   "repository": {
     "type": "git",
