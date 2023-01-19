@@ -2,10 +2,11 @@
   "name": "ravencoin-jswallet",
   "version": "1.0.0",
   "description": "Ravencoin wallet library for JavaScript",
+  "type":"module",
   "main": "index.js",
   "scripts": {
-    "build": "tsc ./example.ts",
-    "watch": "tsc ./example.ts --watch"
+    "build": "tsc ./src/example.ts",
+    "watch": "tsc ./src/example.ts --watch"
   },
   "repository": {
     "type": "git",

@@ -5,33 +5,73 @@ import RavencoinKey from "@ravenrebels/ravencoin-key";
 import { IAddressMetaData } from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
-const rpc = getRPC(
+const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
+const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc"
+//Default rpc 
+let rpc = getRPC(
     "anonymous",
     "anonymous",
     "https://rvn-rpc-mainnet.ting.finance/rpc"
 );
-let _mnemonic = "switch enact token move brush universe cave trick dignity seek craft alone";
+let _mnemonic = "";
 const ACCOUNT = 0;
 
-//@ts-ignore 
+
 const addressObjects: Array<IAddressMetaData> = [];
 
-
 let numberOfUnusedAddresses = 0;
-
 function getAddresses(): Array<string> {
     const addresses = addressObjects.map(obj => {
         return obj.address
     });
     return addresses;
 }
-function init(mnemonic) {
-    _mnemonic = mnemonic
-    for (let i = 0; i < 100; i++) {
-        const o = RavencoinKey.getAddressPair("rvn", mnemonic, ACCOUNT, i);
+
+export interface IOptions {
+    rpc_username?: string;
+    rpc_password?: string;
+    rpc_url?: string;
+    mnemonic: string;
+    network?: "rvn" | "rvn-test";
+}
+
+async function init(options: IOptions) {
+
+    //VALIDATION
+    if (!options) {
+        throw Error("option argument is mandatory");
+    }
+    if (!options.mnemonic) {
+        throw Error("option.mnemonic is mandatory");
+    }
+    if (options.rpc_username && options.rpc_password && options.rpc_url) {
+        rpc = getRPC(options.rpc_username, options.rpc_password, options.rpc_url);
+    }
+
+    if (options.network === "rvn-test" && !options.rpc_url) {
+        rpc = getRPC("anonymous", "anonymous", URL_TESTNET);
+    }
+
+    //DERIVE ADDRESSES BIP44, 20 unused (that is no history, not no balance)
+    _mnemonic = options.mnemonic;
+    let unusedAddresses = 0;
+    let position = 0;
+    while (unusedAddresses < 20) {
+
+        const network = options.network || "rvn";
+        const o = RavencoinKey.getAddressPair(network, _mnemonic, ACCOUNT, position);
         addressObjects.push(o.external);
         addressObjects.push(o.internal);
+
+        if (await hasHistory([o.external.address]) === true) {
+            unusedAddresses = 0;
+        }
+        else {
+            unusedAddresses++;
+        }
+        position++;
     }
+    console.log("Created", position, "addresses");
 
     return {
         getAddresses, getBalance, getReceiveAddress, getUTXOs, send,
