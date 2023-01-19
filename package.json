@@ -1,0 +1,27 @@
+{
+  "name": "ravencoin-jswallet",
+  "version": "1.0.0",
+  "description": "Ravencoin wallet library for JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc ./index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ravenrebels/ravencoin-jswallet.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ravenrebels/ravencoin-jswallet/issues"
+  },
+  "dependencies": {
+    "@ravenrebels/ravencoin-key": "^2.0.0",
+    "@ravenrebels/ravencoin-rpc": "^0.1.4",
+    "bitcore-lib": "^8.25.40",
+    "coininfo": "^5.2.1",
+    "typescript": "^4.9.4" 
+  },
+  "homepage": "https://github.com/ravenrebels/ravencoin-jswallet#readme"
+}
