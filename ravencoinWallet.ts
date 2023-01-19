@@ -1,5 +1,5 @@
 import * as bitcore from "bitcore-lib";
-import * as coininfo from "coininfo";
+const coininfo = require("coininfo");
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
 import { IAddressMetaData } from "./Types";
@@ -123,6 +123,7 @@ async function send(toAddress: string, amount: number) {
     const UTXOs = await getUTXOs();
 
     //Add Ravencoin as Network to BITCORE 
+    //@ts-ignore 
     const d = coininfo.ravencoin.main.toBitcore();
     d.name = "ravencoin";
     d.alias = "RVN";
