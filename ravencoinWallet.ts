@@ -1,7 +1,5 @@
 import * as bitcore from "bitcore-lib";
 import * as coininfo from "coininfo";
-
-
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
 import { IAddressMetaData } from "./Types";
@@ -15,30 +13,91 @@ const rpc = getRPC(
 let _mnemonic = "switch enact token move brush universe cave trick dignity seek craft alone";
 const ACCOUNT = 0;
 
-//@ts-ignore
-
+//@ts-ignore 
 const addressObjects: Array<IAddressMetaData> = [];
 
 
+let numberOfUnusedAddresses = 0;
 
+function getAddresses(): Array<string> {
+    const addresses = addressObjects.map(obj => {
+        return obj.address
+    });
+    return addresses;
+}
 function init(mnemonic) {
     _mnemonic = mnemonic
     for (let i = 0; i < 100; i++) {
         const o = RavencoinKey.getAddressPair("rvn", mnemonic, ACCOUNT, i);
-
         addressObjects.push(o.external);
         addressObjects.push(o.internal);
     }
 
     return {
-        getBalance, getUTXOs, send
+        getAddresses, getBalance, getReceiveAddress, getUTXOs, send,
     }
 }
+async function hasHistory(addresses: Array<string>): Promise<boolean> {
+
+    const includeAssets = true;
+    const obj = {
+        addresses,
+    };
+    const asdf = await rpc(methods.getaddresstxids, [obj, includeAssets]);
+    return asdf.length > 0;
+}
+
+async function getReceiveAddress() {
+
+    const addresses = getAddresses();
+
+    //even addresses are external, odd address are internal/changes
+    //Get the first external address we can find that lack history
+    for (let counter = 0; counter < addresses.length; counter++) {
+        if (counter % 2 !== 0) {
+            continue;
+        }
+        const address = addresses[counter];
+
+        //If an address has tenth of thousands of transactions, getHistory will throw an exception
+
+        const asdf = await hasHistory([address]);
+
+        if (asdf === false) {
+            return address;
+        }
+
+    }
+
+    //IF we have not found one, return the first address
+    return addresses[0];
+}
+
+async function getChangeAddress() {
+    const addresses = getAddresses();
+
+    //even addresses are external, odd address are internal/changes
+    //Get the first internal address we can find that lack history
+    for (let counter = 0; counter < addresses.length; counter++) {
+        if (counter % 1 !== 0) {
+            continue;
+        }
+        const address = addresses[counter];
+
+        //If an address has tenth of thousands of transactions, getHistory will throw an exception
+
+        const asdf = await hasHistory([address]);
+
+        if (asdf === false) {
+            return address;
+        }
+    }
+
+    //IF we have not found one, return the first address
+    return addresses[1];
+}
 function getUTXOs() {
-    const addresses = addressObjects.map(obj => {
-        return obj.address
-    });
-    return rpc(methods.getaddressutxos, [{ addresses: addresses }]);
+    return rpc(methods.getaddressutxos, [{ addresses: getAddresses() }]);
 }
 
 
@@ -47,28 +106,31 @@ function getPrivateKeyByAddress(address: string) {
     const f = addressObjects.find(a => a.address === address);
 
     if (!f) {
-        return null;
+        return undefined;
     }
     return f.WIF;
 
 }
 async function send(toAddress: string, amount: number) {
 
-    const addresses = addressObjects.map(obj => {
-        return obj.address
-    });
-
+    if (amount < 0) {
+        throw Error("Amount cannot be negative");
+    }
+    if (!toAddress) {
+        throw Error("toAddress seems invalid");
+    }
+    const addresses = getAddresses();
     const UTXOs = await getUTXOs();
 
-    //Add Ravencoin as Network to BITCORE
-    //@ts-ignore
-
+    //Add Ravencoin as Network to BITCORE 
     const d = coininfo.ravencoin.main.toBitcore();
     d.name = "ravencoin";
     d.alias = "RVN";
     bitcore.Networks.add(d);
 
-    //@ts-ignore
+    //According to the source file bitcore.Networks.get has two arguments, the second argument keys is OPTIONAL
+    //The TypescriptTypes says that the second arguments is mandatory, so ignore that
+    //@ts-ignore 
     const ravencoin = bitcore.Networks.get("RVN");
 
     //GET UNSPET OUTPUTS (UTXO)
@@ -98,7 +160,7 @@ async function send(toAddress: string, amount: number) {
 
 
     const transaction = new bitcore.Transaction();
-    const utxoObjects = UTXOs.map(u => bitcore.Transaction.UnspentOutput(u))
+    const utxoObjects = UTXOs.map(u => new bitcore.Transaction.UnspentOutput(u))
 
     const privateKeys = utxoObjects.map(utxo => {
         const addy = utxo.address.toString();
@@ -113,25 +175,12 @@ async function send(toAddress: string, amount: number) {
     transaction.change(addresses[1]); //TODO make dynamic
     transaction.sign(privateKeys);
 
-    /*
-    var privateKeys = [
-     new bitcore.PrivateKey('91avARGdfge8E4tZfYLoxeJ5sGBdNJQH4kvjJoQFacbgwmaKkrx'),
-     new bitcore.PrivateKey('91avARGdfge8E4tZfYLoxeJ5sGBdNJQH4kvjJoQFacbgww7vXtT')
-   ];
-    */
-
-
-
     return await rpc(methods.sendrawtransaction, [transaction.serialize()])
 
 }
 async function getBalance() {
-    const addresses = addressObjects.map(obj => {
-        return obj.address
-    });
 
-    const params = [{ "addresses": addresses }];
-
+    const params = [{ "addresses": getAddresses() }];
     const balance = await rpc(methods.getaddressbalance, params);
 
     return balance.balance / ONE_FULL_COIN;

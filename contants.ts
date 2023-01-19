@@ -1,0 +1,1 @@
+export const ONE_FULL_COIN = 1e8;
