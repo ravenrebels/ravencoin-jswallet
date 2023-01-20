@@ -1,9 +1,11 @@
-import * as bitcore from "bitcore-lib";
+
+const bitcore = require("bitcore-lib");
 const coininfo = require("coininfo");
-import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
-import RavencoinKey from "@ravenrebels/ravencoin-key";
+
+const { getRPC, methods } = require("@ravenrebels/ravencoin-rpc");
+const RavencoinKey = require("@ravenrebels/ravencoin-key");
 import { IAddressMetaData } from "./Types";
-import { ONE_FULL_COIN } from "./contants";
+const { ONE_FULL_COIN } = require("./contants");
 
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc"
@@ -35,7 +37,7 @@ export interface IOptions {
     network?: "rvn" | "rvn-test";
 }
 
-async function init(options: IOptions) {
+export  async function init(options: IOptions) {
 
     //VALIDATION
     if (!options) {
@@ -45,6 +47,7 @@ async function init(options: IOptions) {
         throw Error("option.mnemonic is mandatory");
     }
     if (options.rpc_username && options.rpc_password && options.rpc_url) {
+
         rpc = getRPC(options.rpc_username, options.rpc_password, options.rpc_url);
     }
 
@@ -53,6 +56,8 @@ async function init(options: IOptions) {
     }
 
     //DERIVE ADDRESSES BIP44, 20 unused (that is no history, not no balance)
+    //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
+    //That is one history lookup intead of 20
     _mnemonic = options.mnemonic;
     let unusedAddresses = 0;
     let position = 0;
@@ -71,7 +76,7 @@ async function init(options: IOptions) {
         }
         position++;
     }
-    console.log("Created", position, "addresses");
+    console.log("Derived", position, "addresses");
 
     return {
         getAddresses, getBalance, getReceiveAddress, getUTXOs, send,
@@ -227,6 +232,4 @@ async function getBalance() {
     return balance.balance / ONE_FULL_COIN;
 }
 
-export default {
-    init
-}
+ 
