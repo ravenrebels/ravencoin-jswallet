@@ -6,7 +6,7 @@ Ravencoin wallet library for JavaScript
 ## Example code
 To run this code
 1) Create an empty npm project
-2) Install ravencoin-jswallet from GitHub (not NPM) ```npm install https://github.com/ravenrebels/ravencoin-jswallet.git```
+2) Install ravencoin-jswallet from GitHub (not NPM) ```npm install github:ravenrebels/ravencoin-jswallet```
 3) Set "type" to "module" in your package.json
 
  
