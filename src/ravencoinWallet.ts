@@ -78,8 +78,8 @@ class Wallet {
 
                 //If no history, break            
                 isLast20ExternalAddressesUnused = false === await this.hasHistory(tempAddresses);
-            } 
-        } 
+            }
+        }
     }
     async hasHistory(addresses: Array<string>): Promise<boolean> {
 
@@ -214,14 +214,25 @@ class Wallet {
         return await this.rpc(methods.sendrawtransaction, [transaction.serialize()])
 
     }
-    async getBalance() {
+    async getAssets() {
+
         const includeAssets = true;
+        const params = [{ "addresses": this.getAddresses() }, includeAssets];
+        const balance = await this.rpc(methods.getaddressbalance, params);
+
+        //Remove RVN
+        const result = balance.filter(obj => {
+            return obj.assetName !== "RVN";
+        })
+        return result;
+    }
+    async getBalance() {
+        const includeAssets = false;
         const params = [{ "addresses": this.getAddresses() }, includeAssets];
         const balance = await this.rpc(methods.getaddressbalance, params);
 
         return balance.balance / ONE_FULL_COIN;
     }
-
 
 }
 

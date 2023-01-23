@@ -26,6 +26,7 @@
     "@types/bitcore-lib": "0.15.3",
     "bitcore-lib": "^8.25.40",
     "coininfo": "^5.2.1",
+    "jest": "^29.3.1",
     "parcel": "2.8.3"
   },
   "homepage": "https://github.com/ravenrebels/ravencoin-jswallet#readme",

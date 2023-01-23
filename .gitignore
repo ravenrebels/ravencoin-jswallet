@@ -1,3 +1,4 @@
+
 *.js
 # Logs
 logs
@@ -105,3 +106,4 @@ dist
 .tern-port
 
 !postInstall.js
+!/src/test.js
