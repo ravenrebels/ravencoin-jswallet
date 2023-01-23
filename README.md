@@ -6,7 +6,7 @@ Ravencoin wallet library for JavaScript
 ## Example code
 
 ```
-import ravencoinWallet from "ravencoin-jswallet";
+import ravencoinWallet from "HOLD ON COMING SOON";
 
 const options = {
     mnemonic: "asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf",
