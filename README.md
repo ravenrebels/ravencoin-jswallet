@@ -25,8 +25,8 @@ RavencoinWallet.createInstance({
 
 ### Show RVN and ASSETS balance
 ```
-//
-import RavencoinWallet from "ravencoin-jswallet"; //installed from GitHub, not NPM
+//install from GitHub, not npm. npm install github:ravenrebels/ravencoin-jswallet
+import RavencoinWallet from "ravencoin-jswallet"; 
 
 //This wallet belongs to account "Crazy Cat" on https://testnet.ting.finance/signin/
 const options = {
