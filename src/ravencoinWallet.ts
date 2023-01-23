@@ -9,19 +9,20 @@ const { ONE_FULL_COIN } = require("./contants");
 
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc"
+
 //Default rpc 
 let rpc = getRPC(
     "anonymous",
     "anonymous",
-    "https://rvn-rpc-mainnet.ting.finance/rpc"
+    URL_MAINNET
 );
 let _mnemonic = "";
-const ACCOUNT = 0;
+
 
 
 const addressObjects: Array<IAddressMetaData> = [];
 
-let numberOfUnusedAddresses = 0;
+
 function getAddresses(): Array<string> {
     const addresses = addressObjects.map(obj => {
         return obj.address
@@ -37,7 +38,7 @@ export interface IOptions {
     network?: "rvn" | "rvn-test";
 }
 
-export  async function init(options: IOptions) {
+export async function init(options: IOptions) {
 
     //VALIDATION
     if (!options) {
@@ -55,15 +56,16 @@ export  async function init(options: IOptions) {
         rpc = getRPC("anonymous", "anonymous", URL_TESTNET);
     }
 
-    //DERIVE ADDRESSES BIP44, 20 unused (that is no history, not no balance)
+    //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
     //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
     //That is one history lookup intead of 20
     _mnemonic = options.mnemonic;
     let unusedAddresses = 0;
     let position = 0;
+    const ACCOUNT = 0;
+    const network = options.network || "rvn";
     while (unusedAddresses < 20) {
 
-        const network = options.network || "rvn";
         const o = RavencoinKey.getAddressPair(network, _mnemonic, ACCOUNT, position);
         addressObjects.push(o.external);
         addressObjects.push(o.internal);
@@ -79,7 +81,7 @@ export  async function init(options: IOptions) {
     console.log("Derived", position, "addresses");
 
     return {
-        getAddresses, getBalance, getReceiveAddress, getUTXOs, send,
+        getAddresses, getBalance, getChangeAddress, getReceiveAddress, getUTXOs, send,
     }
 }
 async function hasHistory(addresses: Array<string>): Promise<boolean> {
@@ -92,14 +94,14 @@ async function hasHistory(addresses: Array<string>): Promise<boolean> {
     return asdf.length > 0;
 }
 
-async function getReceiveAddress() {
+async function _getFirstUnusedAddress(external: boolean) {
 
     const addresses = getAddresses();
-
     //even addresses are external, odd address are internal/changes
-    //Get the first external address we can find that lack history
+
     for (let counter = 0; counter < addresses.length; counter++) {
-        if (counter % 2 !== 0) {
+
+        if (external && counter % 2 !== 0) {
             continue;
         }
         const address = addresses[counter];
@@ -111,35 +113,22 @@ async function getReceiveAddress() {
         if (asdf === false) {
             return address;
         }
-
     }
+
 
     //IF we have not found one, return the first address
     return addresses[0];
+
+}
+async function getReceiveAddress() {
+
+    const isExternal = true;
+    return _getFirstUnusedAddress(isExternal)
 }
 
 async function getChangeAddress() {
-    const addresses = getAddresses();
-
-    //even addresses are external, odd address are internal/changes
-    //Get the first internal address we can find that lack history
-    for (let counter = 0; counter < addresses.length; counter++) {
-        if (counter % 1 !== 0) {
-            continue;
-        }
-        const address = addresses[counter];
-
-        //If an address has tenth of thousands of transactions, getHistory will throw an exception
-
-        const asdf = await hasHistory([address]);
-
-        if (asdf === false) {
-            return address;
-        }
-    }
-
-    //IF we have not found one, return the first address
-    return addresses[1];
+    const isExternal = false;
+    return _getFirstUnusedAddress(isExternal)
 }
 function getUTXOs() {
     return rpc(methods.getaddressutxos, [{ addresses: getAddresses() }]);
@@ -204,7 +193,6 @@ async function send(toAddress: string, amount: number) {
         throw Error("No unspent transactions outputs");
     }
 
-
     const transaction = new bitcore.Transaction();
     const utxoObjects = UTXOs.map(u => new bitcore.Transaction.UnspentOutput(u))
 
@@ -232,4 +220,3 @@ async function getBalance() {
     return balance.balance / ONE_FULL_COIN;
 }
 
- 

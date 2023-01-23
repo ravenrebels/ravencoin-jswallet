@@ -5,7 +5,11 @@
   "main": "./dist/index.js",
   "module":"./dist/module.js",
   "scripts": {
-    "build": "parcel build ./src/ravencoinWallet.ts"
+   
+    "build": "parcel build ./src/ravencoinWallet.ts",
+    "postinstall": "node ./postInstall.js",
+    "prepare": "node ./postInstall.js"
+    
   },
   "repository": {
     "type": "git",
