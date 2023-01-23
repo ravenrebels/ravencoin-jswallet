@@ -9,7 +9,7 @@ To run this code
 2) Install ravencoin-jswallet from GitHub (not NPM) ```npm install https://github.com/ravenrebels/ravencoin-jswallet.git```
 3) Set "type" to "module" in your package.json
 
-Example code for node.js, set "type":"module" in package.json to use import `instead` of `require`
+ 
 ```
 //
 import RavencoinWallet from "ravencoin-jswallet"; //installed from GitHub, not NPM
