@@ -15,16 +15,18 @@ const options = {
     network: "rvn-test"
 }
 async function work() {
-
+    console.log("Init wallet.......");
     const wallet = await ravencoinWallet.init(options);
-
 
     const address = await wallet.getReceiveAddress();
     const balance = await wallet.getBalance();
     console.table([
         { "Prop": "Balance", "Value": balance.toLocaleString() },
         { "Prop": "Address", "Value": address }]);
+
+    const transactionId = await wallet.send("mhBKhj5FxzBu1h8U6pSB16pwmjP7xo4ehG", 313);
+    console.log("Sending", transactionId);
 }
-work();  
+work(); 
 
 ``` 
