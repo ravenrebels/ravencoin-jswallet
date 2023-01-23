@@ -78,11 +78,8 @@ class Wallet {
 
                 //If no history, break            
                 isLast20ExternalAddressesUnused = false === await this.hasHistory(tempAddresses);
-            }
-
-        }
-
-
+            } 
+        } 
     }
     async hasHistory(addresses: Array<string>): Promise<boolean> {
 
@@ -218,8 +215,8 @@ class Wallet {
 
     }
     async getBalance() {
-
-        const params = [{ "addresses": this.getAddresses() }];
+        const includeAssets = true;
+        const params = [{ "addresses": this.getAddresses() }, includeAssets];
         const balance = await this.rpc(methods.getaddressbalance, params);
 
         return balance.balance / ONE_FULL_COIN;
