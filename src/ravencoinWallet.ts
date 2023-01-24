@@ -76,9 +76,9 @@ class Wallet {
 
                 tempAddresses.push(o.external.address + "");
 
-                //If no history, break            
-                isLast20ExternalAddressesUnused = false === await this.hasHistory(tempAddresses);
             }
+            //If no history, break            
+            isLast20ExternalAddressesUnused = false === await this.hasHistory(tempAddresses);
         }
     }
     async hasHistory(addresses: Array<string>): Promise<boolean> {
