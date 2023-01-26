@@ -6,9 +6,7 @@
   "module": "./dist/module.js",
   "types": "dist/types.d.ts",
   "scripts": {
-    "build": "parcel build ./src/ravencoinWallet.ts",
-    "postinstall_old": "node ./postInstall.js",
-    "prepare": "node ./postInstall.js"
+    "build": "parcel build ./src/ravencoinWallet.ts" 
   },
   "repository": {
     "type": "git",
