@@ -2,8 +2,12 @@
   "name": "@ravenrebels/ravencoin-jswallet", 
   "version": "0.0.1",
   "description": "Ravencoin wallet library for JavaScript",
-  "main": "./dist/index.js",
-  "module": "./dist/module.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "exports":{
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs"
+  },
   "types": "dist/types.d.ts",
   "scripts": {
     "build": "parcel build ./src/ravencoinWallet.ts" 
