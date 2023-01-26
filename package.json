@@ -27,12 +27,12 @@
     "@ravenrebels/ravencoin-rpc": "^0.1.4",
     "@types/bitcore-lib": "0.15.3",
     "bitcore-lib": "^8.25.40",
-    "coininfo": "^5.2.1",
-    "jest": "^29.3.1",
-    "ravencoin-jswallet": "file:"
+    "coininfo": "^5.2.1"
+
   },
   "homepage": "https://github.com/ravenrebels/ravencoin-jswallet#readme",
   "devDependencies": {
+    "jest": "^29.3.1" ,
     "@parcel/packager-ts": "^2.8.3",
     "@parcel/transformer-typescript-types": "^2.8.3",
     "assert": "^2.0.0",
