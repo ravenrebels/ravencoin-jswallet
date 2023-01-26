@@ -1,5 +1,5 @@
 {
-  "name": "@ravenrebels/ravencoin-jswallet",
+  "name": "@ravenrebels/ravencoin-jswallet", 
   "version": "0.0.1",
   "description": "Ravencoin wallet library for JavaScript",
   "main": "./dist/index.js",
