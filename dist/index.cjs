@@ -46,11 +46,17 @@ class $bf36305bcbc0cb23$var$Wallet {
         return addresses;
     }
     async init(options) {
+        let username = "anonymous";
+        let password = "anonymous";
+        let url = $bf36305bcbc0cb23$var$URL_MAINNET;
         //VALIDATION
         if (!options) throw Error("option argument is mandatory");
         if (!options.mnemonic) throw Error("option.mnemonic is mandatory");
-        if (options.rpc_username && options.rpc_password && options.rpc_url) this.rpc = $bf36305bcbc0cb23$require$getRPC(options.rpc_username, options.rpc_password, options.rpc_url);
-        if (options.network === "rvn-test" && !options.rpc_url) this.rpc = $bf36305bcbc0cb23$require$getRPC("anonymous", "anonymous", $bf36305bcbc0cb23$var$URL_TESTNET);
+        url = options.rpc_url || url;
+        password = options.rpc_password || url;
+        username = options.rpc_username || url;
+        if (options.network === "rvn-test" && !options.rpc_url) url = $bf36305bcbc0cb23$var$URL_TESTNET;
+        this.rpc = $bf36305bcbc0cb23$require$getRPC(username, password, url);
         //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
         //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
         //That is one history lookup intead of 20
@@ -67,7 +73,7 @@ class $bf36305bcbc0cb23$var$Wallet {
                 this.addressPosition++;
                 tempAddresses.push(o.external.address + "");
             }
-            //If no history, break            
+            //If no history, break
             isLast20ExternalAddressesUnused = false === await this.hasHistory(tempAddresses);
         }
     }
@@ -122,15 +128,15 @@ class $bf36305bcbc0cb23$var$Wallet {
         if (!toAddress) throw Error("toAddress seems invalid");
         const addresses = this.getAddresses();
         const UTXOs = await this.getUTXOs();
-        //Add Ravencoin as Network to BITCORE 
-        //@ts-ignore 
+        //Add Ravencoin as Network to BITCORE
+        //@ts-ignore
         const d = $4aiOY$coininfo.ravencoin.main.toBitcore();
         d.name = "ravencoin";
         d.alias = "RVN";
         $4aiOY$bitcorelib.Networks.add(d);
         //According to the source file bitcore.Networks.get has two arguments, the second argument keys is OPTIONAL
         //The TypescriptTypes says that the second arguments is mandatory, so ignore that
-        //@ts-ignore 
+        //@ts-ignore
         const ravencoin = $4aiOY$bitcorelib.Networks.get("RVN");
         //GET UNSPET OUTPUTS (UTXO)
         //Configure RPC bridge
@@ -171,7 +177,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         const includeAssets = true;
         const params = [
             {
-                "addresses": this.getAddresses()
+                addresses: this.getAddresses()
             },
             includeAssets
         ];
@@ -186,7 +192,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         const includeAssets = false;
         const params = [
             {
-                "addresses": this.getAddresses()
+                addresses: this.getAddresses()
             },
             includeAssets
         ];

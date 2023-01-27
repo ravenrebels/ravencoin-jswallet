@@ -43,15 +43,14 @@ class Wallet {
       throw Error("option.mnemonic is mandatory");
     }
 
-
     url = options.rpc_url || url;
     password = options.rpc_password || url;
     username = options.rpc_username || url;
-    
 
     if (options.network === "rvn-test" && !options.rpc_url) {
-        url = URL_TESTNET;
+      url = URL_TESTNET;
     }
+
     this.rpc = getRPC(username, password, url);
     //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
     //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
@@ -60,7 +59,7 @@ class Wallet {
     let isLast20ExternalAddressesUnused = false;
     const ACCOUNT = 0;
     const network = options.network || "rvn";
-
+ 
     while (isLast20ExternalAddressesUnused === false) {
       const tempAddresses = [] as string[];
 
