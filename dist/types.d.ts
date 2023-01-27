@@ -22,7 +22,7 @@ declare class Wallet {
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
 }
-export function createInstance(options: any): Promise<Wallet>;
+export function createInstance(options: IOptions): Promise<Wallet>;
 export interface IOptions {
     rpc_username?: string;
     rpc_password?: string;
