@@ -236,6 +236,9 @@ class Wallet {
 
 }
 
+export default {
+    createInstance
+}
 export async function createInstance(options:IOptions) {
     const wallet = new Wallet();
     await wallet.init(options);

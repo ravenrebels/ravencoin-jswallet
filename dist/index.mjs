@@ -180,6 +180,9 @@ class $c3676b79c37149df$var$Wallet {
         return balance.balance / $c3676b79c37149df$require$ONE_FULL_COIN;
     }
 }
+var $c3676b79c37149df$export$2e2bcd8739ae039 = {
+    createInstance: $c3676b79c37149df$export$99152e8d49ca4e7d
+};
 async function $c3676b79c37149df$export$99152e8d49ca4e7d(options) {
     const wallet = new $c3676b79c37149df$var$Wallet();
     await wallet.init(options);
@@ -187,5 +190,5 @@ async function $c3676b79c37149df$export$99152e8d49ca4e7d(options) {
 }
 
 
-export {$c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
+export {$c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
 //# sourceMappingURL=index.mjs.map

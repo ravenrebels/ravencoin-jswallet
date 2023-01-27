@@ -6,10 +6,16 @@ var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 function $parcel$interopDefault(a) {
   return a && a.__esModule ? a.default : a;
 }
+function $parcel$defineInteropFlag(a) {
+  Object.defineProperty(a, '__esModule', {value: true, configurable: true});
+}
 function $parcel$export(e, n, v, s) {
   Object.defineProperty(e, n, {get: v, set: s, enumerable: true, configurable: true});
 }
 
+$parcel$defineInteropFlag(module.exports);
+
+$parcel$export(module.exports, "default", () => $bf36305bcbc0cb23$export$2e2bcd8739ae039);
 $parcel$export(module.exports, "createInstance", () => $bf36305bcbc0cb23$export$99152e8d49ca4e7d);
 
 
@@ -188,6 +194,9 @@ class $bf36305bcbc0cb23$var$Wallet {
         return balance.balance / $bf36305bcbc0cb23$require$ONE_FULL_COIN;
     }
 }
+var $bf36305bcbc0cb23$export$2e2bcd8739ae039 = {
+    createInstance: $bf36305bcbc0cb23$export$99152e8d49ca4e7d
+};
 async function $bf36305bcbc0cb23$export$99152e8d49ca4e7d(options) {
     const wallet = new $bf36305bcbc0cb23$var$Wallet();
     await wallet.init(options);

@@ -22,6 +22,10 @@ declare class Wallet {
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
 }
+declare const _default: {
+    createInstance: typeof createInstance;
+};
+export default _default;
 export function createInstance(options: IOptions): Promise<Wallet>;
 export interface IOptions {
     rpc_username?: string;
