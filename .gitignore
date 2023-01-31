@@ -106,6 +106,6 @@ typings/
 # TernJS port file
 .tern-port
 
-!postInstall.js
+.parcel-cache
 !/src/test.js
 !dist/*
