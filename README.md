@@ -30,7 +30,7 @@ RavencoinWallet.createInstance({
 ### Show RVN and ASSETS balance
 
 ```
-import RavencoinWallet from "ravencoin-jswallet";
+import RavencoinWallet from "@ravenrebels/ravencoin-jswallet";
 
 //This wallet belongs to account "Crazy Cat" on https://testnet.ting.finance/signin/
 const options = {
