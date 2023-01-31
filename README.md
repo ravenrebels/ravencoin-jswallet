@@ -1,6 +1,7 @@
 # ravencoin-jswallet
 Ravencoin wallet library for JavaScript
-
+##
+EXPERIMENTAL. DO NOT USE IN PRODUCTION
 
 
 ## Example code

@@ -1,4 +1,4 @@
-const RavencoinWallet = require("../dist/index.js");
+const RavencoinWallet = require("../dist/index.cjs");
 
 console.log("RavencoinWallet", RavencoinWallet);
 jest.setTimeout(300 * 1000);

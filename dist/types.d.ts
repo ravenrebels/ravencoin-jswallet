@@ -5,7 +5,7 @@ interface IAddressMetaData {
     privateKey: string;
 }
 declare class Wallet {
-    rpc: any;
+    rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
     addressObjects: Array<IAddressMetaData>;
     addressPosition: number;

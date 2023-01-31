@@ -1,7 +1,7 @@
 var $4aiOY$bitcorelib = require("bitcore-lib");
 var $4aiOY$coininfo = require("coininfo");
-var $4aiOY$ravenrebelsravencoinrpc = require("@ravenrebels/ravencoin-rpc");
 var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
+var $4aiOY$ravenrebelsravencoinrpc = require("@ravenrebels/ravencoin-rpc");
 
 function $parcel$interopDefault(a) {
   return a && a.__esModule ? a.default : a;
@@ -21,8 +21,6 @@ $parcel$export(module.exports, "createInstance", () => $bf36305bcbc0cb23$export$
 
 
 
-var $bf36305bcbc0cb23$require$getRPC = $4aiOY$ravenrebelsravencoinrpc.getRPC;
-var $bf36305bcbc0cb23$require$methods = $4aiOY$ravenrebelsravencoinrpc.methods;
 const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
 
 
@@ -32,7 +30,7 @@ const $bf36305bcbc0cb23$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/
 //Avoid singleton (anti-pattern)
 //Meaning multiple instances of the wallet must be able to co-exist
 class $bf36305bcbc0cb23$var$Wallet {
-    rpc = $bf36305bcbc0cb23$require$getRPC("anonymous", "anonymous", $bf36305bcbc0cb23$var$URL_MAINNET);
+    rpc = (0, $4aiOY$ravenrebelsravencoinrpc.getRPC)("anonymous", "anonymous", $bf36305bcbc0cb23$var$URL_MAINNET);
     _mnemonic = "";
     addressObjects = [];
     addressPosition = 0;
@@ -56,7 +54,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         password = options.rpc_password || url;
         username = options.rpc_username || url;
         if (options.network === "rvn-test" && !options.rpc_url) url = $bf36305bcbc0cb23$var$URL_TESTNET;
-        this.rpc = $bf36305bcbc0cb23$require$getRPC(username, password, url);
+        this.rpc = (0, $4aiOY$ravenrebelsravencoinrpc.getRPC)(username, password, url);
         //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
         //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
         //That is one history lookup intead of 20
@@ -82,7 +80,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         const obj = {
             addresses: addresses
         };
-        const asdf = await this.rpc($bf36305bcbc0cb23$require$methods.getaddresstxids, [
+        const asdf = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddresstxids, [
             obj,
             includeAssets
         ]);
@@ -112,7 +110,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         return this._getFirstUnusedAddress(isExternal);
     }
     async getUTXOs() {
-        return this.rpc($bf36305bcbc0cb23$require$methods.getaddressutxos, [
+        return this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressutxos, [
             {
                 addresses: this.getAddresses()
             }
@@ -140,7 +138,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         const ravencoin = $4aiOY$bitcorelib.Networks.get("RVN");
         //GET UNSPET OUTPUTS (UTXO)
         //Configure RPC bridge
-        const balance = await this.rpc($bf36305bcbc0cb23$require$methods.getaddressbalance, [
+        const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, [
             {
                 addresses: addresses
             }
@@ -150,7 +148,7 @@ class $bf36305bcbc0cb23$var$Wallet {
             if (b < amount) throw Error("Not enough money, " + b);
         }
         //GET UNSPENT TRANSACTION OUTPUTS
-        const unspent = await this.rpc($bf36305bcbc0cb23$require$methods.getaddressutxos, [
+        const unspent = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressutxos, [
             {
                 addresses: addresses
             }
@@ -169,7 +167,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         transaction.to(toAddress, amount * $bf36305bcbc0cb23$require$ONE_FULL_COIN);
         transaction.change(addresses[1]); //TODO make dynamic
         transaction.sign(privateKeys);
-        return await this.rpc($bf36305bcbc0cb23$require$methods.sendrawtransaction, [
+        return await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).sendrawtransaction, [
             transaction.serialize()
         ]);
     }
@@ -181,7 +179,7 @@ class $bf36305bcbc0cb23$var$Wallet {
             },
             includeAssets
         ];
-        const balance = await this.rpc($bf36305bcbc0cb23$require$methods.getaddressbalance, params);
+        const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
         //Remove RVN
         const result = balance.filter((obj)=>{
             return obj.assetName !== "RVN";
@@ -196,7 +194,7 @@ class $bf36305bcbc0cb23$var$Wallet {
             },
             includeAssets
         ];
-        const balance = await this.rpc($bf36305bcbc0cb23$require$methods.getaddressbalance, params);
+        const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
         return balance.balance / $bf36305bcbc0cb23$require$ONE_FULL_COIN;
     }
 }

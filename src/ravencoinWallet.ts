@@ -1,10 +1,10 @@
 const bitcore = require("bitcore-lib");
 const coininfo = require("coininfo");
 
-const { getRPC, methods } = require("@ravenrebels/ravencoin-rpc");
+import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
-import { IAddressMetaData } from "./Types";
-const { ONE_FULL_COIN } = require("./contants");
+import { IAddressMetaData, IUTXO } from "./Types";
+import { ONE_FULL_COIN } from "./contants";
 
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
@@ -59,7 +59,7 @@ class Wallet {
     let isLast20ExternalAddressesUnused = false;
     const ACCOUNT = 0;
     const network = options.network || "rvn";
- 
+
     while (isLast20ExternalAddressesUnused === false) {
       const tempAddresses = [] as string[];
 
@@ -174,10 +174,12 @@ class Wallet {
     }
 
     //GET UNSPENT TRANSACTION OUTPUTS
-    const unspent = await this.rpc(methods.getaddressutxos, [
+    const allUnspent = await this.rpc(methods.getaddressutxos, [
       { addresses: addresses },
     ]);
 
+    //GET ENOUGH UTXOs FOR THIS TRANSACTION
+    const unspent = getEnoughUTXOs(allUnspent, amount * ONE_FULL_COIN);
     if (unspent.length === 0) {
       throw Error("No unspent transactions outputs");
     }
@@ -187,6 +189,7 @@ class Wallet {
       (u) => new bitcore.Transaction.UnspentOutput(u)
     );
 
+    const changeAddress = this._getFirstUnusedAddress(false);
     const privateKeys = utxoObjects.map((utxo) => {
       const addy = utxo.address.toString();
       const key = this.getPrivateKeyByAddress(addy);
@@ -197,7 +200,7 @@ class Wallet {
     transaction.from(utxoObjects);
     transaction.fee(ONE_FULL_COIN * 0.02);
     transaction.to(toAddress, amount * ONE_FULL_COIN);
-    transaction.change(addresses[1]); //TODO make dynamic
+    transaction.change(changeAddress); //TODO make dynamic
     transaction.sign(privateKeys);
 
     return await this.rpc(methods.sendrawtransaction, [
@@ -239,4 +242,21 @@ export interface IOptions {
   rpc_url?: string;
   mnemonic: string;
   network?: "rvn" | "rvn-test";
+}
+
+export function getEnoughUTXOs(
+  utxos: Array<IUTXO>,
+  amount: number
+): Array<IUTXO> {
+  let tempAmount = 0;
+  const returnValue: Array<IUTXO> = [];
+
+  utxos.map(function (utxo) {
+    if (utxo.satoshis !== 0 && tempAmount < amount) {
+      const value = utxo.satoshis / 1e8;
+      tempAmount = tempAmount + value;
+      returnValue.push(utxo);
+    }
+  });
+  return returnValue;
 }

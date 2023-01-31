@@ -1,12 +1,13 @@
 {
-  "name": "@ravenrebels/ravencoin-jswallet", 
+  "name": "@ravenrebels/ravencoin-jswallet",
   "version": "0.0.1",
   "description": "Ravencoin wallet library for JavaScript",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs" ,
+  "module": "./dist/index.mjs",
   "types": "dist/types.d.ts",
   "scripts": {
-    "build": "parcel build ./src/ravencoinWallet.ts" 
+    "build": "parcel build ./src/ravencoinWallet.ts",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -24,11 +25,10 @@
     "@types/bitcore-lib": "0.15.3",
     "bitcore-lib": "^8.25.40",
     "coininfo": "^5.2.1"
-
   },
   "homepage": "https://github.com/ravenrebels/ravencoin-jswallet#readme",
   "devDependencies": {
-    "jest": "^29.3.1" ,
+    "jest": "^29.3.1",
     "@parcel/packager-ts": "^2.8.3",
     "@parcel/transformer-typescript-types": "^2.8.3",
     "assert": "^2.0.0",
