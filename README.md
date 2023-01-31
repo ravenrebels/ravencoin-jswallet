@@ -51,3 +51,23 @@ async function work() {
 work();
 
 ```
+
+
+## API
+```
+declare class Wallet {
+    rpc: (method: string, params: any[]) => Promise<any>; 
+    getAddressObjects(): IAddressMetaData[];
+    getAddresses(): Array<string>;
+    init(options: IOptions): Promise<void>;
+    hasHistory(addresses: Array<string>): Promise<boolean>;
+ 
+    getReceiveAddress(): Promise<string>;
+    getChangeAddress(): Promise<string>;
+    getUTXOs(): Promise<any>;
+    getPrivateKeyByAddress(address: string): string;
+    send(toAddress: string, amount: number): Promise<any>;
+    getAssets(): Promise<any>;
+    getBalance(): Promise<number>;
+}
+```
