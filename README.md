@@ -70,4 +70,11 @@ declare class Wallet {
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
 }
+export interface IOptions {
+    rpc_username?: string;
+    rpc_password?: string;
+    rpc_url?: string;
+    mnemonic: string;
+    network?: "rvn" | "rvn-test";
+}
 ```
