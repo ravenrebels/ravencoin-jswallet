@@ -13,7 +13,7 @@ To run these code examples
 1. Create an empty npm project
 2. Install `@ravenrebels/ravencoin-jswallet`
 3. Set "type" to "module" in your package.json
-
+4. Create a .mjs file called `index.mjs`
 ### Minimalistic example
 
 ```
