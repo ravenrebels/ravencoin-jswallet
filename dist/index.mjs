@@ -5,12 +5,11 @@ import {getRPC as $93qLg$getRPC, methods as $93qLg$methods} from "@ravenrebels/r
 
 
 
-
-
 const $9de421449659004c$export$ffff6aea08fd9487 = 1e8;
 
 
-var $c3676b79c37149df$require$ONE_FULL_COIN = $9de421449659004c$export$ffff6aea08fd9487;
+
+
 const $c3676b79c37149df$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const $c3676b79c37149df$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 //Avoid singleton (anti-pattern)
@@ -134,14 +133,17 @@ class $c3676b79c37149df$var$Wallet {
             if (b < amount) throw Error("Not enough money, " + b);
         }
         //GET UNSPENT TRANSACTION OUTPUTS
-        const unspent = await this.rpc((0, $93qLg$methods).getaddressutxos, [
+        const allUnspent = await this.rpc((0, $93qLg$methods).getaddressutxos, [
             {
                 addresses: addresses
             }
         ]);
+        //GET ENOUGH UTXOs FOR THIS TRANSACTION
+        const unspent = $c3676b79c37149df$export$aef5e6c96bd29914(allUnspent, amount * (0, $9de421449659004c$export$ffff6aea08fd9487));
         if (unspent.length === 0) throw Error("No unspent transactions outputs");
         const transaction = new $93qLg$Transaction();
         const utxoObjects = UTXOs.map((u)=>new $93qLg$Transaction.UnspentOutput(u));
+        const changeAddress = this._getFirstUnusedAddress(false);
         const privateKeys = utxoObjects.map((utxo)=>{
             const addy = utxo.address.toString();
             const key = this.getPrivateKeyByAddress(addy);
@@ -149,9 +151,9 @@ class $c3676b79c37149df$var$Wallet {
             return privateKey;
         });
         transaction.from(utxoObjects);
-        transaction.fee($c3676b79c37149df$require$ONE_FULL_COIN * 0.02);
-        transaction.to(toAddress, amount * $c3676b79c37149df$require$ONE_FULL_COIN);
-        transaction.change(addresses[1]); //TODO make dynamic
+        transaction.fee((0, $9de421449659004c$export$ffff6aea08fd9487) * 0.02);
+        transaction.to(toAddress, amount * (0, $9de421449659004c$export$ffff6aea08fd9487));
+        transaction.change(changeAddress); //TODO make dynamic
         transaction.sign(privateKeys);
         return await this.rpc((0, $93qLg$methods).sendrawtransaction, [
             transaction.serialize()
@@ -181,7 +183,7 @@ class $c3676b79c37149df$var$Wallet {
             includeAssets
         ];
         const balance = await this.rpc((0, $93qLg$methods).getaddressbalance, params);
-        return balance.balance / $c3676b79c37149df$require$ONE_FULL_COIN;
+        return balance.balance / (0, $9de421449659004c$export$ffff6aea08fd9487);
     }
 }
 var $c3676b79c37149df$export$2e2bcd8739ae039 = {
@@ -192,7 +194,19 @@ async function $c3676b79c37149df$export$99152e8d49ca4e7d(options) {
     await wallet.init(options);
     return wallet;
 }
+function $c3676b79c37149df$export$aef5e6c96bd29914(utxos, amount) {
+    let tempAmount = 0;
+    const returnValue = [];
+    utxos.map(function(utxo) {
+        if (utxo.satoshis !== 0 && tempAmount < amount) {
+            const value = utxo.satoshis / 1e8;
+            tempAmount = tempAmount + value;
+            returnValue.push(utxo);
+        }
+    });
+    return returnValue;
+}
 
 
-export {$c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
+export {$c3676b79c37149df$export$aef5e6c96bd29914 as getEnoughUTXOs, $c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
 //# sourceMappingURL=index.mjs.map

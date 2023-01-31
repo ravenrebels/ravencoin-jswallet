@@ -4,6 +4,15 @@ interface IAddressMetaData {
     path: string;
     privateKey: string;
 }
+interface IUTXO {
+    address: string;
+    assetName: string;
+    txid: string;
+    outputIndex: number;
+    script: string;
+    satoshis: number;
+    height: number;
+}
 declare class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
@@ -34,5 +43,6 @@ export interface IOptions {
     mnemonic: string;
     network?: "rvn" | "rvn-test";
 }
+export function getEnoughUTXOs(utxos: Array<IUTXO>, amount: number): Array<IUTXO>;
 
 //# sourceMappingURL=types.d.ts.map
