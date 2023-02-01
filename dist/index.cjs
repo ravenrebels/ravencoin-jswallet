@@ -16,14 +16,8 @@ function $parcel$export(e, n, v, s) {
 
 $parcel$defineInteropFlag(module.exports);
 
-$parcel$export(module.exports, "getEnoughUTXOs", () => $bf36305bcbc0cb23$export$aef5e6c96bd29914);
 $parcel$export(module.exports, "default", () => $bf36305bcbc0cb23$export$2e2bcd8739ae039);
 $parcel$export(module.exports, "createInstance", () => $bf36305bcbc0cb23$export$99152e8d49ca4e7d);
-
-
-const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
-
-
 const $30fffeab88bbc1c2$var$ONE_HUNDRED_MILLION = 1e8;
 function $30fffeab88bbc1c2$export$24d1144bbf44c6c6(rpc, addresses) {
     return rpc("getaddressdeltas", [
@@ -158,6 +152,13 @@ function $30fffeab88bbc1c2$export$6a4ffba0c6186ae7(UTXOs) {
 
 
 
+
+const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
+
+
+
+
+
 var $827163bad133a0dc$require$Buffer = $4aiOY$buffer.Buffer;
 async function $827163bad133a0dc$var$isValidAddress(rpc, address) {
     const obj = await $30fffeab88bbc1c2$export$f78173835dcde49f(rpc, address);
@@ -208,7 +209,7 @@ async function $827163bad133a0dc$var$_send(options) {
     //Remove UTXOs that are currently in mempool
     const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(rpc);
     UTXOs = UTXOs.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
-    const enoughRavencoinUTXOs = $827163bad133a0dc$var$getEnoughUTXOs(UTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
+    const enoughRavencoinUTXOs = $827163bad133a0dc$export$aef5e6c96bd29914(UTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
     //Sum up the whole unspent amount
     let unspentRavencoinAmount = $827163bad133a0dc$var$sumOfUTXOs(enoughRavencoinUTXOs);
     if (unspentRavencoinAmount <= 0) throw Error("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
@@ -253,7 +254,7 @@ async function $827163bad133a0dc$var$addAssetInputsAndOutputs(rpc, addresses, as
     let assetUTXOs = await $30fffeab88bbc1c2$export$61ff118ad91d2b8c(rpc, addresses, assetName);
     const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(rpc);
     assetUTXOs = assetUTXOs.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
-    const _UTXOs = $827163bad133a0dc$var$getEnoughUTXOs(assetUTXOs, amount);
+    const _UTXOs = $827163bad133a0dc$export$aef5e6c96bd29914(assetUTXOs, amount);
     const tempInputs = $30fffeab88bbc1c2$export$6a4ffba0c6186ae7(_UTXOs);
     tempInputs.map((item)=>inputs.push(item));
     outputs[toAddress] = {
@@ -284,16 +285,42 @@ async function $827163bad133a0dc$export$89db4734f6c919c4(rpc, fromAddressObjects
         assetName: assetName
     });
 }
-function $827163bad133a0dc$var$getEnoughUTXOs(utxos, amount) {
+function $827163bad133a0dc$export$aef5e6c96bd29914(utxos, amount) {
+    /*
+  Scenario ONE
+  Bob has 300 UTXO with 1 RVN each.
+  Bob has one UTXO with 400 RVN.
+
+  Bob intends to send 300 RVN
+  In this case the best thing to do is to use the single 400 UTXO
+
+  SCENARIO TWO
+
+  Alice have tons of small UTXOs like 0.03 RVN, 0.2 RVN, she wants to send 5 RVN.
+  In this case it makes sense to clean up the "dust", so you dont end up with a lot of small change.
+
+
+  */ //For small transactions,start with small transactions first.
     let tempAmount = 0;
     const returnValue = [];
     utxos.map(function(utxo) {
         if (utxo.satoshis !== 0 && tempAmount < amount) {
-            const value = utxo.satoshis / 1e8;
+            const value = utxo.satoshis / (0, $de29b860155088a6$export$ffff6aea08fd9487);
             tempAmount = tempAmount + value;
             returnValue.push(utxo);
         }
     });
+    //Did we use a MASSIVE amount of UTXOs to safisfy this transaction?
+    //In this case check if we do have one single UTXO that can satisfy our needs
+    if (returnValue.length > 10) {
+        const largerUTXO = utxos.find((utxo)=>utxo.satoshis / (0, $de29b860155088a6$export$ffff6aea08fd9487) > amount);
+        if (largerUTXO) {
+            console.info("We first found", returnValue.length, "UTXOs to send", amount, "so instead we choose one UTXO of", largerUTXO.satoshis / (0, $de29b860155088a6$export$ffff6aea08fd9487));
+            return [
+                largerUTXO
+            ];
+        }
+    }
     return returnValue;
 }
 function $827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) {
@@ -421,7 +448,6 @@ class $bf36305bcbc0cb23$var$Wallet {
         if (!toAddress) throw Error("toAddress seems invalid");
         console.log("Should send", amount, "to", toAddress);
         const addresses = this.getAddresses();
-        const UTXOs = await this.getUTXOs();
         //Add Ravencoin as Network to BITCORE
         //@ts-ignore
         const d = $4aiOY$coininfo.ravencoin.main.toBitcore();
@@ -440,18 +466,19 @@ class $bf36305bcbc0cb23$var$Wallet {
             }
         ]);
         if (balance.balance) {
-            const b = balance.balance / 1e8;
+            const b = balance.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
             if (b < amount) throw Error("Not enough money, " + b);
         }
         //GET UNSPENT TRANSACTION OUTPUTS
-        const allUnspent = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressutxos, [
-            {
-                addresses: addresses
-            }
-        ]);
+        let allUnspent = await this.getUTXOs();
+        const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(this.rpc);
+        //Filter out UTXOs currently in mempool
+        allUnspent = allUnspent.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
         //GET ENOUGH UTXOs FOR THIS TRANSACTION
-        const unspent = $bf36305bcbc0cb23$export$aef5e6c96bd29914(allUnspent, amount);
+        const unspent = $827163bad133a0dc$export$aef5e6c96bd29914(allUnspent, amount);
         if (unspent.length === 0) throw Error("No unspent transactions outputs");
+        console.log("Will use unspent");
+        console.log(unspent);
         const transaction = new $4aiOY$bitcorelib.Transaction();
         const utxoObjects = unspent.map((u)=>new $4aiOY$bitcorelib.Transaction.UnspentOutput(u));
         const changeAddress = await this._getFirstUnusedAddress(false);
@@ -461,10 +488,21 @@ class $bf36305bcbc0cb23$var$Wallet {
             const privateKey = new $4aiOY$bitcorelib.PrivateKey(key);
             return privateKey;
         });
+        console.log("Number of private keys used to sign transaction", privateKeys.length);
+        console.log("jultomte");
         transaction.from(utxoObjects);
-        transaction.fee((0, $de29b860155088a6$export$ffff6aea08fd9487) * 0.02);
+        console.log("jultomte 2");
+        //Lets not calculate the fee ourself, depend on bitcore-lib to do its magic
+        //transaction.fee(ONE_FULL_COIN * 0.02);
         transaction.to(toAddress, amount * (0, $de29b860155088a6$export$ffff6aea08fd9487));
+        console.log("jultomte 3");
         transaction.change(changeAddress); //TODO make dynamic
+        console.log("jultomte 4");
+        //UPDATE FEE
+        console.log("jultomte 5");
+        transaction.fee(transaction.getFee() * 100);
+        console.log("OK will use fee", transaction.getFee());
+        console.log("Serialize");
         transaction.sign(privateKeys);
         return await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).sendrawtransaction, [
             transaction.serialize()
@@ -504,18 +542,6 @@ async function $bf36305bcbc0cb23$export$99152e8d49ca4e7d(options) {
     const wallet = new $bf36305bcbc0cb23$var$Wallet();
     await wallet.init(options);
     return wallet;
-}
-function $bf36305bcbc0cb23$export$aef5e6c96bd29914(utxos, amount) {
-    let tempAmount = 0;
-    const returnValue = [];
-    utxos.map(function(utxo) {
-        if (utxo.satoshis !== 0 && tempAmount < amount) {
-            const value = utxo.satoshis / 1e8;
-            tempAmount = tempAmount + value;
-            returnValue.push(utxo);
-        }
-    });
-    return returnValue;
 }
 
 

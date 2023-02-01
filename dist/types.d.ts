@@ -1,12 +1,3 @@
-interface IUTXO {
-    address: string;
-    assetName: string;
-    txid: string;
-    outputIndex: number;
-    script: string;
-    satoshis: number;
-    height: number;
-}
 interface IAddressMetaData {
     address: string;
     WIF: string;
@@ -18,15 +9,6 @@ interface IAddressMetaData {
     WIF: string;
     path: string;
     privateKey: string;
-}
-interface IUTXO {
-    address: string;
-    assetName: string;
-    txid: string;
-    outputIndex: number;
-    script: string;
-    satoshis: number;
-    height: number;
 }
 interface ISend {
     assetName?: string;
@@ -63,6 +45,5 @@ export interface IOptions {
     mnemonic: string;
     network?: "rvn" | "rvn-test";
 }
-export function getEnoughUTXOs(utxos: Array<IUTXO>, amount: number): Array<IUTXO>;
 
 //# sourceMappingURL=types.d.ts.map

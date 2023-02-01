@@ -1,6 +1,6 @@
 const bitcore = require("bitcore-lib");
 const coininfo = require("coininfo");
-
+import * as blockchain from "./blockchain/blockchain";
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
 import { IAddressMetaData, IUTXO } from "./Types";
@@ -168,7 +168,6 @@ class Wallet {
     }
     console.log("Should send", amount, "to", toAddress);
     const addresses = this.getAddresses();
-    const UTXOs = await this.getUTXOs();
 
     //Add Ravencoin as Network to BITCORE
     //@ts-ignore
@@ -189,7 +188,7 @@ class Wallet {
       { addresses: addresses },
     ]);
     if (balance.balance) {
-      const b = balance.balance / 1e8;
+      const b = balance.balance / ONE_FULL_COIN;
 
       if (b < amount) {
         throw Error("Not enough money, " + b);
@@ -197,17 +196,24 @@ class Wallet {
     }
 
     //GET UNSPENT TRANSACTION OUTPUTS
-    const allUnspent = await this.rpc(methods.getaddressutxos, [
-      { addresses: addresses },
-    ]);
+    let allUnspent = await this.getUTXOs();
+
+    const mempool = await blockchain.getMempool(this.rpc);
+
+    //Filter out UTXOs currently in mempool
+    allUnspent = allUnspent.filter(
+      (UTXO) => Transactor.isUTXOInMempool(mempool, UTXO) === false
+    );
 
     //GET ENOUGH UTXOs FOR THIS TRANSACTION
-    const unspent = getEnoughUTXOs(allUnspent, amount);
+    const unspent = Transactor.getEnoughUTXOs(allUnspent, amount);
     if (unspent.length === 0) {
       throw Error("No unspent transactions outputs");
     }
-
+    console.log("Will use unspent");
+    console.log(unspent);
     const transaction = new bitcore.Transaction();
+
     const utxoObjects = unspent.map(
       (u) => new bitcore.Transaction.UnspentOutput(u)
     );
@@ -218,14 +224,34 @@ class Wallet {
       const addy = utxo.address.toString();
       const key = this.getPrivateKeyByAddress(addy);
       const privateKey = new bitcore.PrivateKey(key);
+
       return privateKey;
     });
+    console.log(
+      "Number of private keys used to sign transaction",
+      privateKeys.length
+    );
 
+    console.log("jultomte");
     transaction.from(utxoObjects);
-    transaction.fee(ONE_FULL_COIN * 0.02);
+
+    console.log("jultomte 2");
+    //Lets not calculate the fee ourself, depend on bitcore-lib to do its magic
+    //transaction.fee(ONE_FULL_COIN * 0.02);
     transaction.to(toAddress, amount * ONE_FULL_COIN);
+    console.log("jultomte 3");
     transaction.change(changeAddress); //TODO make dynamic
+    console.log("jultomte 4");
+
+    //UPDATE FEE
+
+    console.log("jultomte 5");
+
+    transaction.fee(transaction.getFee() * 100);
+    console.log("OK will use fee", transaction.getFee());
+    console.log("Serialize");
     transaction.sign(privateKeys);
+ 
 
     return await this.rpc(methods.sendrawtransaction, [
       transaction.serialize(),
@@ -266,21 +292,4 @@ export interface IOptions {
   rpc_url?: string;
   mnemonic: string;
   network?: "rvn" | "rvn-test";
-}
-
-export function getEnoughUTXOs(
-  utxos: Array<IUTXO>,
-  amount: number
-): Array<IUTXO> {
-  let tempAmount = 0;
-  const returnValue: Array<IUTXO> = [];
-
-  utxos.map(function (utxo) {
-    if (utxo.satoshis !== 0 && tempAmount < amount) {
-      const value = utxo.satoshis / 1e8;
-      tempAmount = tempAmount + value;
-      returnValue.push(utxo);
-    }
-  });
-  return returnValue;
 }

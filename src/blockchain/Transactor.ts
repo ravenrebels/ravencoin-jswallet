@@ -8,6 +8,7 @@ import {
 import * as blockchain from "./blockchain";
 
 import { ITransaction } from "../Types";
+import { ONE_FULL_COIN } from "../contants";
 
 interface IInternalSendIProp {
   fromAddressObjects: Array<IAddressMetaData>;
@@ -246,17 +247,58 @@ export async function send(
   return _send({ rpc, fromAddressObjects, toAddress, amount, assetName });
 }
 
-function getEnoughUTXOs(utxos: Array<IUTXO>, amount: number): Array<IUTXO> {
+export function getEnoughUTXOs(
+  utxos: Array<IUTXO>,
+  amount: number
+): Array<IUTXO> {
+  /*
+  Scenario ONE
+  Bob has 300 UTXO with 1 RVN each.
+  Bob has one UTXO with 400 RVN.
+
+  Bob intends to send 300 RVN
+  In this case the best thing to do is to use the single 400 UTXO
+
+  SCENARIO TWO
+
+  Alice have tons of small UTXOs like 0.03 RVN, 0.2 RVN, she wants to send 5 RVN.
+  In this case it makes sense to clean up the "dust", so you dont end up with a lot of small change.
+
+
+  */
+
+  //For small transactions,start with small transactions first.
   let tempAmount = 0;
+
   const returnValue: Array<IUTXO> = [];
 
   utxos.map(function (utxo) {
     if (utxo.satoshis !== 0 && tempAmount < amount) {
-      const value = utxo.satoshis / 1e8;
+      const value = utxo.satoshis / ONE_FULL_COIN;
       tempAmount = tempAmount + value;
       returnValue.push(utxo);
     }
   });
+
+  //Did we use a MASSIVE amount of UTXOs to safisfy this transaction?
+  //In this case check if we do have one single UTXO that can satisfy our needs
+  if (returnValue.length > 10) {
+    const largerUTXO = utxos.find(
+      (utxo) => utxo.satoshis / ONE_FULL_COIN > amount
+    );
+
+    if (largerUTXO) {
+      console.info(
+        "We first found",
+        returnValue.length,
+        "UTXOs to send",
+        amount,
+        "so instead we choose one UTXO of",
+        largerUTXO.satoshis / ONE_FULL_COIN
+      );
+      return [largerUTXO];
+    }
+  }
   return returnValue;
 }
 
