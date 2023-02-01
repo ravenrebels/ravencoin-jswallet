@@ -28,7 +28,7 @@ RavencoinWallet.createInstance({
    .then(console.log);
 ```
 
-### Show RVN and ASSETS balance
+### Send RVN and ASSETS
 
 ```
 //index.mjs very important that file extension is .mjs
@@ -40,18 +40,24 @@ const options = {
     "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace",
   network: "rvn-test",
 };
-
-console.log("Init wallet.......");
 const wallet = await RavencoinWallet.createInstance(options);
-const balance = await wallet.getBalance();
-console.log("Balance", balance.toLocaleString());
+const addy = await wallet.getReceiveAddress();
+console.log("My receive address", addy);
 
-//Send 313 RVN to account Barry Crump on https://testnet.ting.finance/signin/
+await wallet.send({
+  //Send 100 RVN
+  toAddress: "mhBKhj5FxzBu1h8U6pSB16pwmjP7xo4ehG",
+  amount: 100,
+});
+
+//Send 313 BUTTER tokens to Barry Crump on https://testnet.ting.finance/
 const transactionId = await wallet.send({
+  assetName: "BUTTER",
   amount: 313,
   toAddress: "mhBKhj5FxzBu1h8U6pSB16pwmjP7xo4ehG",
 });
 console.log("Sending", transactionId);
+
 
 
 
