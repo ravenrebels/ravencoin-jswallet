@@ -187,13 +187,14 @@ function $827163bad133a0dc$var$sumOfUTXOs(UTXOs) {
     //This is NOT the exact size since we will add an output for the change address to the transaction
     //Perhaps we should calculate size plus 10%?
     const size = $827163bad133a0dc$require$Buffer.from(raw).length / ONE_KILOBYTE;
+    console.log("Size of raw transaction", size);
     let fee = 0.02;
     //TODO should ask the "blockchain" **estimatesmartfee**
-    return fee * size;
+    return fee * Math.max(1, size);
 }
 async function $827163bad133a0dc$var$_send(options) {
     const { amount: amount , assetName: assetName , fromAddressObjects: fromAddressObjects , toAddress: toAddress , rpc: rpc  } = options;
-    const MAX_FEE = 1;
+    const MAX_FEE = 4;
     const isAssetTransfer = assetName !== "RVN";
     //VALIDATION
     if (await $827163bad133a0dc$var$isValidAddress(rpc, toAddress) === false) throw Error("Invalid address " + toAddress);
@@ -210,6 +211,7 @@ async function $827163bad133a0dc$var$_send(options) {
     const enoughRavencoinUTXOs = $827163bad133a0dc$var$getEnoughUTXOs(UTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
     //Sum up the whole unspent amount
     let unspentRavencoinAmount = $827163bad133a0dc$var$sumOfUTXOs(enoughRavencoinUTXOs);
+    if (unspentRavencoinAmount <= 0) throw Error("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
     console.log("Total amount of UTXOs Ravencon being used in this transaction", unspentRavencoinAmount.toLocaleString(), amount.toLocaleString());
     if (isAssetTransfer === false) {
         if (amount > unspentRavencoinAmount) throw Error("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentRavencoinAmount.toLocaleString());
@@ -221,7 +223,12 @@ async function $827163bad133a0dc$var$_send(options) {
     if (isAssetTransfer === true) await $827163bad133a0dc$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress);
     else if (isAssetTransfer === false) outputs[toAddress] = rvnAmount;
     const fee = await $827163bad133a0dc$var$getFee(rpc, inputs, outputs);
+    console.log("Fee for sending", assetName, fee);
+    console.log("Unspent RVN", unspentRavencoinAmount);
+    console.log("rvnAmount", rvnAmount);
+    console.log("Fee", fee);
     const ravencoinChangeAmount = unspentRavencoinAmount - rvnAmount - fee;
+    console.log("Ravencoin chnage amount", ravencoinChangeAmount);
     //Obviously we only add change address if there is any change
     if ($827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount) > 0) outputs[ravencoinChangeAddress] = $827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount);
     //Now we have enough UTXos, lets create a raw transactions
@@ -301,7 +308,8 @@ function $827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) {
         });
     });
     const index = listOfUTXOsInMempool.indexOf(format(UTXO.txid, UTXO.outputIndex));
-    return index > -1;
+    const isInMempool = index > -1;
+    return isInMempool;
 }
 
 

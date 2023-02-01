@@ -52,17 +52,17 @@ async function getFee(
   //This is NOT the exact size since we will add an output for the change address to the transaction
   //Perhaps we should calculate size plus 10%?
   const size = Buffer.from(raw).length / ONE_KILOBYTE;
-
+  console.log("Size of raw transaction", size);
   let fee = 0.02;
   //TODO should ask the "blockchain" **estimatesmartfee**
 
-  return fee * size;
+  return fee * Math.max(1, size);
 }
 
 async function _send(options: IInternalSendIProp): Promise<string> {
   const { amount, assetName, fromAddressObjects, toAddress, rpc } = options;
 
-  const MAX_FEE = 1;
+  const MAX_FEE = 4;
 
   const isAssetTransfer = assetName !== "RVN";
 
@@ -98,7 +98,11 @@ async function _send(options: IInternalSendIProp): Promise<string> {
 
   //Sum up the whole unspent amount
   let unspentRavencoinAmount = sumOfUTXOs(enoughRavencoinUTXOs);
-
+  if (unspentRavencoinAmount <= 0) {
+    throw Error(
+      "Not enough RVN to transfer asset, perhaps your wallet has pending transactions"
+    );
+  }
   console.log(
     "Total amount of UTXOs Ravencon being used in this transaction",
     unspentRavencoinAmount.toLocaleString(),
@@ -136,8 +140,13 @@ async function _send(options: IInternalSendIProp): Promise<string> {
   }
 
   const fee = await getFee(rpc, inputs, outputs);
-
+  console.log("Fee for sending", assetName, fee);
+  console.log("Unspent RVN", unspentRavencoinAmount);
+  console.log("rvnAmount", rvnAmount);
+  console.log("Fee", fee);
   const ravencoinChangeAmount = unspentRavencoinAmount - rvnAmount - fee;
+
+  console.log("Ravencoin chnage amount", ravencoinChangeAmount);
 
   //Obviously we only add change address if there is any change
   if (getTwoDecimalTrunc(ravencoinChangeAmount) > 0) {
@@ -270,5 +279,7 @@ export function isUTXOInMempool(
   const index = listOfUTXOsInMempool.indexOf(
     format(UTXO.txid, UTXO.outputIndex)
   );
-  return index > -1;
+  const isInMempool = index > -1;
+
+  return isInMempool;
 }
