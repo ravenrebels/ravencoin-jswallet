@@ -1,3 +1,7 @@
+interface ISendResult {
+    transactionId: string;
+    debug: any;
+}
 interface IAddressMetaData {
     address: string;
     WIF: string;
@@ -29,7 +33,7 @@ declare class Wallet {
     getChangeAddress(): Promise<string>;
     getUTXOs(): Promise<any>;
     getPrivateKeyByAddress(address: string): string;
-    send(options: ISend): Promise<any>;
+    send(options: ISend): Promise<ISendResult>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
 }

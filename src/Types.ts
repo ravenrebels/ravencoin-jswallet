@@ -8,6 +8,10 @@ export interface ISettings {
   headline: string;
 }
 
+export interface ISendResult {
+  transactionId: string;
+  debug: any;
+}
 export interface Asset {
   name: string;
   amount: number;

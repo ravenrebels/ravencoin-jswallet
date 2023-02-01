@@ -1,5 +1,6 @@
 import {
   IAddressMetaData,
+  ISendResult,
   IUTXO,
   IVout,
   IVout_when_creating_transactions,
@@ -60,9 +61,13 @@ async function getFee(
   return fee * Math.max(1, size);
 }
 
-async function _send(options: IInternalSendIProp): Promise<string> {
+async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   const { amount, assetName, fromAddressObjects, toAddress, rpc } = options;
 
+  const sendResult: ISendResult = {
+    transactionId: "undefined",
+    debug: [],
+  };
   const MAX_FEE = 4;
 
   const isAssetTransfer = assetName !== "RVN";
@@ -104,11 +109,8 @@ async function _send(options: IInternalSendIProp): Promise<string> {
       "Not enough RVN to transfer asset, perhaps your wallet has pending transactions"
     );
   }
-  console.log(
-    "Total amount of UTXOs Ravencon being used in this transaction",
-    unspentRavencoinAmount.toLocaleString(),
-    amount.toLocaleString()
-  );
+  sendResult.debug.unspentRVNAmount = unspentRavencoinAmount.toLocaleString();
+
   if (isAssetTransfer === false) {
     if (amount > unspentRavencoinAmount) {
       throw Error(
@@ -141,13 +143,13 @@ async function _send(options: IInternalSendIProp): Promise<string> {
   }
 
   const fee = await getFee(rpc, inputs, outputs);
-  console.log("Fee for sending", assetName, fee);
-  console.log("Unspent RVN", unspentRavencoinAmount);
-  console.log("rvnAmount", rvnAmount);
-  console.log("Fee", fee);
+  sendResult.debug.assetName = assetName;
+  sendResult.debug.fee = fee;
+  sendResult.debug.rvnAmount = 0;
+
   const ravencoinChangeAmount = unspentRavencoinAmount - rvnAmount - fee;
 
-  console.log("Ravencoin chnage amount", ravencoinChangeAmount);
+  sendResult.debug.rvnChangeAmount = ravencoinChangeAmount;
 
   //Obviously we only add change address if there is any change
   if (getTwoDecimalTrunc(ravencoinChangeAmount) > 0) {
@@ -184,7 +186,8 @@ async function _send(options: IInternalSendIProp): Promise<string> {
   const signedTransaction = await signedTransactionPromise;
 
   const txid = await blockchain.sendRawTransaction(rpc, signedTransaction);
-  return txid;
+  sendResult.transactionId = txid;
+  return sendResult;
 }
 
 async function addAssetInputsAndOutputs(
@@ -288,14 +291,7 @@ export function getEnoughUTXOs(
     );
 
     if (largerUTXO) {
-      console.info(
-        "We first found",
-        returnValue.length,
-        "UTXOs to send",
-        amount,
-        "so instead we choose one UTXO of",
-        largerUTXO.satoshis / ONE_FULL_COIN
-      );
+      //Send this one UTXO that covers it all
       return [largerUTXO];
     }
   }

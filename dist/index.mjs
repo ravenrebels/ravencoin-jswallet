@@ -181,6 +181,10 @@ function $8a6a99603cc26764$var$sumOfUTXOs(UTXOs) {
 }
 async function $8a6a99603cc26764$var$_send(options) {
     const { amount: amount , assetName: assetName , fromAddressObjects: fromAddressObjects , toAddress: toAddress , rpc: rpc  } = options;
+    const sendResult = {
+        transactionId: "undefined",
+        debug: []
+    };
     const MAX_FEE = 4;
     const isAssetTransfer = assetName !== "RVN";
     //VALIDATION
@@ -199,7 +203,7 @@ async function $8a6a99603cc26764$var$_send(options) {
     //Sum up the whole unspent amount
     let unspentRavencoinAmount = $8a6a99603cc26764$var$sumOfUTXOs(enoughRavencoinUTXOs);
     if (unspentRavencoinAmount <= 0) throw Error("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
-    console.log("Total amount of UTXOs Ravencon being used in this transaction", unspentRavencoinAmount.toLocaleString(), amount.toLocaleString());
+    sendResult.debug.unspentRVNAmount = unspentRavencoinAmount.toLocaleString();
     if (isAssetTransfer === false) {
         if (amount > unspentRavencoinAmount) throw Error("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentRavencoinAmount.toLocaleString());
     }
@@ -210,12 +214,11 @@ async function $8a6a99603cc26764$var$_send(options) {
     if (isAssetTransfer === true) await $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress);
     else if (isAssetTransfer === false) outputs[toAddress] = rvnAmount;
     const fee = await $8a6a99603cc26764$var$getFee(rpc, inputs, outputs);
-    console.log("Fee for sending", assetName, fee);
-    console.log("Unspent RVN", unspentRavencoinAmount);
-    console.log("rvnAmount", rvnAmount);
-    console.log("Fee", fee);
+    sendResult.debug.assetName = assetName;
+    sendResult.debug.fee = fee;
+    sendResult.debug.rvnAmount = 0;
     const ravencoinChangeAmount = unspentRavencoinAmount - rvnAmount - fee;
-    console.log("Ravencoin chnage amount", ravencoinChangeAmount);
+    sendResult.debug.rvnChangeAmount = ravencoinChangeAmount;
     //Obviously we only add change address if there is any change
     if ($8a6a99603cc26764$var$getTwoDecimalTrunc(ravencoinChangeAmount) > 0) outputs[ravencoinChangeAddress] = $8a6a99603cc26764$var$getTwoDecimalTrunc(ravencoinChangeAmount);
     //Now we have enough UTXos, lets create a raw transactions
@@ -234,7 +237,8 @@ async function $8a6a99603cc26764$var$_send(options) {
     });
     const signedTransaction = await signedTransactionPromise;
     const txid = await $de17ee1c983f5fa9$export$4e309754b4830e29(rpc, signedTransaction);
-    return txid;
+    sendResult.transactionId = txid;
+    return sendResult;
 }
 async function $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress) {
     let assetUTXOs = await $de17ee1c983f5fa9$export$61ff118ad91d2b8c(rpc, addresses, assetName);
@@ -300,12 +304,10 @@ function $8a6a99603cc26764$export$aef5e6c96bd29914(utxos, amount) {
     //In this case check if we do have one single UTXO that can satisfy our needs
     if (returnValue.length > 10) {
         const largerUTXO = utxos.find((utxo)=>utxo.satoshis / (0, $9de421449659004c$export$ffff6aea08fd9487) > amount);
-        if (largerUTXO) {
-            console.info("We first found", returnValue.length, "UTXOs to send", amount, "so instead we choose one UTXO of", largerUTXO.satoshis / (0, $9de421449659004c$export$ffff6aea08fd9487));
-            return [
-                largerUTXO
-            ];
-        }
+        if (largerUTXO) //Send this one UTXO that covers it all
+        return [
+            largerUTXO
+        ];
     }
     return returnValue;
 }
@@ -432,8 +434,11 @@ class $c3676b79c37149df$var$Wallet {
     async _sendRavencoin(toAddress, amount) {
         if (amount < 0) throw Error("Amount cannot be negative");
         if (!toAddress) throw Error("toAddress seems invalid");
-        console.log("Should send", amount, "to", toAddress);
         const addresses = this.getAddresses();
+        const sendResult = {
+            transactionId: "",
+            debug: {}
+        };
         //Add Ravencoin as Network to BITCORE
         //@ts-ignore
         const d = $93qLg$ravencoin.main.toBitcore();
@@ -461,10 +466,12 @@ class $c3676b79c37149df$var$Wallet {
         //Filter out UTXOs currently in mempool
         allUnspent = allUnspent.filter((UTXO)=>$8a6a99603cc26764$export$9ffd76c05265a057(mempool, UTXO) === false);
         //GET ENOUGH UTXOs FOR THIS TRANSACTION
-        const unspent = $8a6a99603cc26764$export$aef5e6c96bd29914(allUnspent, amount);
+        const unspent = $8a6a99603cc26764$export$aef5e6c96bd29914(allUnspent, amount + 1 /*to cover the fee*/ );
         if (unspent.length === 0) throw Error("No unspent transactions outputs");
-        console.log("Will use unspent");
-        console.log(unspent);
+        console.log("Will use", unspent.length, "UTXO to send", amount);
+        let amo = 0;
+        unspent.map((utxo)=>amo += utxo.satoshis / 1e8);
+        console.log("Amount of UTXO", amo);
         const transaction = new $93qLg$Transaction();
         const utxoObjects = unspent.map((u)=>new $93qLg$Transaction.UnspentOutput(u));
         const changeAddress = await this._getFirstUnusedAddress(false);
@@ -474,25 +481,19 @@ class $c3676b79c37149df$var$Wallet {
             const privateKey = new $93qLg$PrivateKey(key);
             return privateKey;
         });
-        console.log("Number of private keys used to sign transaction", privateKeys.length);
-        console.log("jultomte");
         transaction.from(utxoObjects);
-        console.log("jultomte 2");
-        //Lets not calculate the fee ourself, depend on bitcore-lib to do its magic
-        //transaction.fee(ONE_FULL_COIN * 0.02);
         transaction.to(toAddress, amount * (0, $9de421449659004c$export$ffff6aea08fd9487));
-        console.log("jultomte 3");
-        transaction.change(changeAddress); //TODO make dynamic
-        console.log("jultomte 4");
+        transaction.change(changeAddress);
         //UPDATE FEE
-        console.log("jultomte 5");
         transaction.fee(transaction.getFee() * 100);
-        console.log("OK will use fee", transaction.getFee());
-        console.log("Serialize");
+        sendResult.debug.fee = transaction.getFee() * 100;
+        console.log("OK want to send", amount, "has got", amo, "and fee is", transaction.getFee() / 1e8);
         transaction.sign(privateKeys);
-        return await this.rpc((0, $93qLg$methods).sendrawtransaction, [
+        const id = await this.rpc((0, $93qLg$methods).sendrawtransaction, [
             transaction.serialize()
         ]);
+        sendResult.transactionId = id;
+        return sendResult;
     }
     async getAssets() {
         const includeAssets = true;

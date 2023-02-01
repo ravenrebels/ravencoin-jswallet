@@ -3,7 +3,7 @@ const coininfo = require("coininfo");
 import * as blockchain from "./blockchain/blockchain";
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
-import { IAddressMetaData, IUTXO } from "./Types";
+import { IAddressMetaData, ISendResult, IUTXO } from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
 import * as Transactor from "./blockchain/Transactor";
@@ -145,7 +145,7 @@ class Wallet {
     return f.WIF;
   }
 
-  async send(options: ISend) {
+  async send(options: ISend): Promise<ISendResult> {
     const { amount, assetName, toAddress } = options;
     if (assetName && assetName !== "RVN") {
       return Transactor.send(
@@ -159,16 +159,22 @@ class Wallet {
       return this._sendRavencoin(toAddress, amount);
     }
   }
-  private async _sendRavencoin(toAddress: string, amount: number) {
+  private async _sendRavencoin(
+    toAddress: string,
+    amount: number
+  ): Promise<ISendResult> {
     if (amount < 0) {
       throw Error("Amount cannot be negative");
     }
     if (!toAddress) {
       throw Error("toAddress seems invalid");
     }
-    console.log("Should send", amount, "to", toAddress);
-    const addresses = this.getAddresses();
 
+    const addresses = this.getAddresses();
+    const sendResult: ISendResult = {
+      transactionId: "",
+      debug: {},
+    };
     //Add Ravencoin as Network to BITCORE
     //@ts-ignore
     const d = coininfo.ravencoin.main.toBitcore();
@@ -206,12 +212,14 @@ class Wallet {
     );
 
     //GET ENOUGH UTXOs FOR THIS TRANSACTION
-    const unspent = Transactor.getEnoughUTXOs(allUnspent, amount);
+    const unspent = Transactor.getEnoughUTXOs(allUnspent, amount + 1/*to cover the fee*/);
     if (unspent.length === 0) {
       throw Error("No unspent transactions outputs");
     }
-    console.log("Will use unspent");
-    console.log(unspent);
+    console.log("Will use", unspent.length, "UTXO to send", amount);
+    let amo = 0;
+    unspent.map((utxo) => (amo += utxo.satoshis / 1e8));
+    console.log("Amount of UTXO", amo);
     const transaction = new bitcore.Transaction();
 
     const utxoObjects = unspent.map(
@@ -227,28 +235,31 @@ class Wallet {
 
       return privateKey;
     });
-    console.log(
-      "Number of private keys used to sign transaction",
-      privateKeys.length
-    );
 
     transaction.from(utxoObjects);
-
-    //Lets not calculate the fee ourself, depend on bitcore-lib to do its magic
-    //transaction.fee(ONE_FULL_COIN * 0.02);
     transaction.to(toAddress, amount * ONE_FULL_COIN);
-
-    transaction.change(changeAddress); //TODO make dynamic
+    transaction.change(changeAddress);
 
     //UPDATE FEE
     transaction.fee(transaction.getFee() * 100);
-    console.log("OK will use fee", transaction.getFee());
+    sendResult.debug.fee = transaction.getFee() * 100;
 
+    console.log(
+      "OK want to send",
+      amount,
+      "has got",
+      amo,
+      "and fee is",
+      transaction.getFee() / 1e8
+    );
     transaction.sign(privateKeys);
 
-    return await this.rpc(methods.sendrawtransaction, [
+    const id = await this.rpc(methods.sendrawtransaction, [
       transaction.serialize(),
     ]);
+
+    sendResult.transactionId = id;
+    return sendResult;
   }
   async getAssets() {
     const includeAssets = true;
