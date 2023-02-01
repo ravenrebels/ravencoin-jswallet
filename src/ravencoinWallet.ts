@@ -232,26 +232,19 @@ class Wallet {
       privateKeys.length
     );
 
-    console.log("jultomte");
     transaction.from(utxoObjects);
 
-    console.log("jultomte 2");
     //Lets not calculate the fee ourself, depend on bitcore-lib to do its magic
     //transaction.fee(ONE_FULL_COIN * 0.02);
     transaction.to(toAddress, amount * ONE_FULL_COIN);
-    console.log("jultomte 3");
+
     transaction.change(changeAddress); //TODO make dynamic
-    console.log("jultomte 4");
 
     //UPDATE FEE
-
-    console.log("jultomte 5");
-
     transaction.fee(transaction.getFee() * 100);
     console.log("OK will use fee", transaction.getFee());
-    console.log("Serialize");
+
     transaction.sign(privateKeys);
- 
 
     return await this.rpc(methods.sendrawtransaction, [
       transaction.serialize(),
