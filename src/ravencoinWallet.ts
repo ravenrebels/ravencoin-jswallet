@@ -202,18 +202,18 @@ class Wallet {
     ]);
 
     //GET ENOUGH UTXOs FOR THIS TRANSACTION
-    const unspent = getEnoughUTXOs(allUnspent, amount * ONE_FULL_COIN);
+    const unspent = getEnoughUTXOs(allUnspent, amount);
     if (unspent.length === 0) {
       throw Error("No unspent transactions outputs");
     }
 
     const transaction = new bitcore.Transaction();
-    const utxoObjects = UTXOs.map(
+    const utxoObjects = unspent.map(
       (u) => new bitcore.Transaction.UnspentOutput(u)
     );
 
     const changeAddress = await this._getFirstUnusedAddress(false);
-    console.log("CHANGE ADDRESS", changeAddress);
+
     const privateKeys = utxoObjects.map((utxo) => {
       const addy = utxo.address.toString();
       const key = this.getPrivateKeyByAddress(addy);

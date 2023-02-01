@@ -48,7 +48,7 @@ async function getFee(
   //Create a raw transaction to get an aproximation for transaction size.
   const raw = await blockchain.createRawTransaction(rpc, inputs, outputs);
 
-  //Get the lengt of the string bytes not the string
+  //Get the length of the string bytes not the string
   //This is NOT the exact size since we will add an output for the change address to the transaction
   //Perhaps we should calculate size plus 10%?
   const size = Buffer.from(raw).length / ONE_KILOBYTE;

@@ -183,7 +183,7 @@ function $827163bad133a0dc$var$sumOfUTXOs(UTXOs) {
     const ONE_KILOBYTE = 1024;
     //Create a raw transaction to get an aproximation for transaction size.
     const raw = await $30fffeab88bbc1c2$export$3c514ecc803e4adc(rpc, inputs, outputs);
-    //Get the lengt of the string bytes not the string
+    //Get the length of the string bytes not the string
     //This is NOT the exact size since we will add an output for the change address to the transaction
     //Perhaps we should calculate size plus 10%?
     const size = $827163bad133a0dc$require$Buffer.from(raw).length / ONE_KILOBYTE;
@@ -450,12 +450,11 @@ class $bf36305bcbc0cb23$var$Wallet {
             }
         ]);
         //GET ENOUGH UTXOs FOR THIS TRANSACTION
-        const unspent = $bf36305bcbc0cb23$export$aef5e6c96bd29914(allUnspent, amount * (0, $de29b860155088a6$export$ffff6aea08fd9487));
+        const unspent = $bf36305bcbc0cb23$export$aef5e6c96bd29914(allUnspent, amount);
         if (unspent.length === 0) throw Error("No unspent transactions outputs");
         const transaction = new $4aiOY$bitcorelib.Transaction();
-        const utxoObjects = UTXOs.map((u)=>new $4aiOY$bitcorelib.Transaction.UnspentOutput(u));
+        const utxoObjects = unspent.map((u)=>new $4aiOY$bitcorelib.Transaction.UnspentOutput(u));
         const changeAddress = await this._getFirstUnusedAddress(false);
-        console.log("CHANGE ADDRESS", changeAddress);
         const privateKeys = utxoObjects.map((utxo)=>{
             const addy = utxo.address.toString();
             const key = this.getPrivateKeyByAddress(addy);
