@@ -6,8 +6,16 @@ import RavencoinKey from "@ravenrebels/ravencoin-key";
 import { IAddressMetaData, IUTXO } from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
+import * as Transactor from "./blockchain/Transactor";
+
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
+
+interface ISend {
+  assetName?: string;
+  toAddress: string;
+  amount: number;
+}
 
 //Avoid singleton (anti-pattern)
 //Meaning multiple instances of the wallet must be able to co-exist
@@ -137,13 +145,28 @@ class Wallet {
     return f.WIF;
   }
 
-  async send(toAddress: string, amount: number) {
+  async send(options: ISend) {
+    const { amount, assetName, toAddress } = options;
+    if (assetName && assetName !== "RVN") {
+      return Transactor.send(
+        this.rpc,
+        this.addressObjects,
+        toAddress,
+        amount,
+        assetName
+      );
+    } else {
+      return this._sendRavencoin(toAddress, amount);
+    }
+  }
+  private async _sendRavencoin(toAddress: string, amount: number) {
     if (amount < 0) {
       throw Error("Amount cannot be negative");
     }
     if (!toAddress) {
       throw Error("toAddress seems invalid");
     }
+    console.log("Should send", amount, "to", toAddress);
     const addresses = this.getAddresses();
     const UTXOs = await this.getUTXOs();
 
@@ -189,7 +212,8 @@ class Wallet {
       (u) => new bitcore.Transaction.UnspentOutput(u)
     );
 
-    const changeAddress = this._getFirstUnusedAddress(false);
+    const changeAddress = await this._getFirstUnusedAddress(false);
+    console.log("CHANGE ADDRESS", changeAddress);
     const privateKeys = utxoObjects.map((utxo) => {
       const addy = utxo.address.toString();
       const key = this.getPrivateKeyByAddress(addy);

@@ -1,3 +1,18 @@
+interface IUTXO {
+    address: string;
+    assetName: string;
+    txid: string;
+    outputIndex: number;
+    script: string;
+    satoshis: number;
+    height: number;
+}
+interface IAddressMetaData {
+    address: string;
+    WIF: string;
+    path: string;
+    privateKey: string;
+}
 interface IAddressMetaData {
     address: string;
     WIF: string;
@@ -13,6 +28,11 @@ interface IUTXO {
     satoshis: number;
     height: number;
 }
+interface ISend {
+    assetName?: string;
+    toAddress: string;
+    amount: number;
+}
 declare class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
@@ -27,7 +47,7 @@ declare class Wallet {
     getChangeAddress(): Promise<string>;
     getUTXOs(): Promise<any>;
     getPrivateKeyByAddress(address: string): string;
-    send(toAddress: string, amount: number): Promise<any>;
+    send(options: ISend): Promise<any>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
 }
