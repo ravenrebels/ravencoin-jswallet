@@ -442,6 +442,9 @@ class $bf36305bcbc0cb23$var$Wallet {
     }
     async send(options) {
         const { amount: amount , assetName: assetName , toAddress: toAddress  } = options;
+        //Validation
+        if (!toAddress) throw Error("Wallet.send  toAddress is mandatory");
+        if (!amount) throw Error("Wallet.send  amount is mandatory");
         if (assetName && assetName !== "RVN") return $827163bad133a0dc$export$89db4734f6c919c4(this.rpc, this.addressObjects, toAddress, amount, assetName);
         else return this._sendRavencoin(toAddress, amount);
     }

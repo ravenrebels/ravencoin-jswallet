@@ -147,6 +147,15 @@ class Wallet {
 
   async send(options: ISend): Promise<ISendResult> {
     const { amount, assetName, toAddress } = options;
+
+    //Validation
+    if (!toAddress) {
+      throw Error("Wallet.send  toAddress is mandatory");
+    }
+    if(!amount){
+      throw Error("Wallet.send  amount is mandatory");
+    }
+
     if (assetName && assetName !== "RVN") {
       return Transactor.send(
         this.rpc,
@@ -212,7 +221,10 @@ class Wallet {
     );
 
     //GET ENOUGH UTXOs FOR THIS TRANSACTION
-    const unspent = Transactor.getEnoughUTXOs(allUnspent, amount + 1/*to cover the fee*/);
+    const unspent = Transactor.getEnoughUTXOs(
+      allUnspent,
+      amount + 1 /*to cover the fee*/
+    );
     if (unspent.length === 0) {
       throw Error("No unspent transactions outputs");
     }
