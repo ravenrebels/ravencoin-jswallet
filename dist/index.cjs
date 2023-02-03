@@ -420,6 +420,17 @@ class $bf36305bcbc0cb23$var$Wallet {
         //IF we have not found one, return the first address
         return addresses[0];
     }
+    async getMempool() {
+        const method = (0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressmempool;
+        const includeAssets = true;
+        const params = [
+            {
+                addresses: this.getAddresses()
+            },
+            includeAssets
+        ];
+        return this.rpc(method, params);
+    }
     async getReceiveAddress() {
         const isExternal = true;
         return this._getFirstUnusedAddress(isExternal);

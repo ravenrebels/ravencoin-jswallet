@@ -8,6 +8,15 @@ export interface ISettings {
   headline: string;
 }
 
+export interface IAddressDelta{
+  assetName: string;
+  satoshis: number;
+  txid: string;
+  index: number;
+  blockindex: number;
+  height: number;
+  address: string;
+}
 export interface ISendResult {
   transactionId: string;
   debug: any;

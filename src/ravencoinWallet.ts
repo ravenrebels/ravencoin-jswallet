@@ -3,7 +3,7 @@ const coininfo = require("coininfo");
 import * as blockchain from "./blockchain/blockchain";
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
-import { IAddressMetaData, ISendResult, IUTXO } from "./Types";
+import { IAddressDelta, IAddressMetaData, ISendResult, IUTXO } from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
 import * as Transactor from "./blockchain/Transactor";
@@ -121,6 +121,12 @@ class Wallet {
     return addresses[0];
   }
 
+  async getMempool() :Promise<IAddressDelta[]>{
+    const method = methods.getaddressmempool;
+    const includeAssets = true;
+    const params = [{ addresses: this.getAddresses() }, includeAssets];
+    return this.rpc(method, params);
+  }
   async getReceiveAddress() {
     const isExternal = true;
     return this._getFirstUnusedAddress(isExternal);
@@ -152,7 +158,7 @@ class Wallet {
     if (!toAddress) {
       throw Error("Wallet.send  toAddress is mandatory");
     }
-    if(!amount){
+    if (!amount) {
       throw Error("Wallet.send  amount is mandatory");
     }
 

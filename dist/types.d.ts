@@ -1,3 +1,12 @@
+interface IAddressDelta {
+    assetName: string;
+    satoshis: number;
+    txid: string;
+    index: number;
+    blockindex: number;
+    height: number;
+    address: string;
+}
 interface ISendResult {
     transactionId: string;
     debug: any;
@@ -29,6 +38,7 @@ declare class Wallet {
     init(options: IOptions): Promise<void>;
     hasHistory(addresses: Array<string>): Promise<boolean>;
     _getFirstUnusedAddress(external: boolean): Promise<string>;
+    getMempool(): Promise<IAddressDelta[]>;
     getReceiveAddress(): Promise<string>;
     getChangeAddress(): Promise<string>;
     getUTXOs(): Promise<any>;
