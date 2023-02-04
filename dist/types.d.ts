@@ -32,6 +32,7 @@ declare class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
     addressObjects: Array<IAddressMetaData>;
+    receiveAddress: string;
     addressPosition: number;
     getAddressObjects(): IAddressMetaData[];
     getAddresses(): Array<string>;

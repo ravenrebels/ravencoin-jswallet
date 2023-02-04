@@ -1,7 +1,7 @@
 var $4aiOY$bitcorelib = require("bitcore-lib");
 var $4aiOY$coininfo = require("coininfo");
-var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 var $4aiOY$ravenrebelsravencoinrpc = require("@ravenrebels/ravencoin-rpc");
+var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 var $4aiOY$buffer = require("buffer");
 
 function $parcel$interopDefault(a) {
@@ -352,6 +352,7 @@ class $bf36305bcbc0cb23$var$Wallet {
     rpc = (0, $4aiOY$ravenrebelsravencoinrpc.getRPC)("anonymous", "anonymous", $bf36305bcbc0cb23$var$URL_MAINNET);
     _mnemonic = "";
     addressObjects = [];
+    receiveAddress = "";
     addressPosition = 0;
     getAddressObjects() {
         return this.addressObjects;
@@ -406,6 +407,16 @@ class $bf36305bcbc0cb23$var$Wallet {
         return asdf.length > 0;
     }
     async _getFirstUnusedAddress(external) {
+        //First, check if lastReveivedAddress
+        if (external === true && this.receiveAddress) {
+            const asdf = await this.hasHistory([
+                this.receiveAddress
+            ]);
+            if (asdf === false) {
+                console.log("Receive address no need to change");
+                return this.receiveAddress;
+            }
+        }
         const addresses = this.getAddresses();
         //even addresses are external, odd address are internal/changes
         for(let counter = 0; counter < addresses.length; counter++){
@@ -415,7 +426,10 @@ class $bf36305bcbc0cb23$var$Wallet {
             const asdf = await this.hasHistory([
                 address
             ]);
-            if (asdf === false) return address;
+            if (asdf === false) {
+                if (external === true) this.receiveAddress = address;
+                return address;
+            }
         }
         //IF we have not found one, return the first address
         return addresses[0];

@@ -1,6 +1,6 @@
 {
   "name": "@ravenrebels/ravencoin-jswallet",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Ravencoin wallet library for JavaScript",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -20,7 +20,6 @@
     "url": "https://github.com/ravenrebels/ravencoin-jswallet/issues"
   },
   "dependencies": {
- 
     "@ravenrebels/ravencoin-key": "^2.1.0",
     "@ravenrebels/ravencoin-rpc": "^0.2.5",
     "@types/bitcore-lib": "^0.15.3",

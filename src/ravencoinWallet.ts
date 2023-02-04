@@ -25,7 +25,7 @@ class Wallet {
   _mnemonic = "";
 
   addressObjects: Array<IAddressMetaData> = [];
-
+  receiveAddress = "";
   addressPosition = 0;
 
   getAddressObjects() {
@@ -42,6 +42,7 @@ class Wallet {
     let username = "anonymous";
     let password = "anonymous";
     let url = URL_MAINNET;
+
     //VALIDATION
     if (!options) {
       throw Error("option argument is mandatory");
@@ -99,6 +100,15 @@ class Wallet {
   }
 
   async _getFirstUnusedAddress(external: boolean) {
+    //First, check if lastReveivedAddress
+    if (external === true && this.receiveAddress) {
+      const asdf = await this.hasHistory([this.receiveAddress]);
+      if (asdf === false) {
+        console.log("Receive address no need to change");
+        return this.receiveAddress;
+      }
+    }
+
     const addresses = this.getAddresses();
     //even addresses are external, odd address are internal/changes
 
@@ -113,6 +123,9 @@ class Wallet {
       const asdf = await this.hasHistory([address]);
 
       if (asdf === false) {
+        if (external === true) {
+          this.receiveAddress = address;
+        }
         return address;
       }
     }
@@ -121,7 +134,7 @@ class Wallet {
     return addresses[0];
   }
 
-  async getMempool() :Promise<IAddressDelta[]>{
+  async getMempool(): Promise<IAddressDelta[]> {
     const method = methods.getaddressmempool;
     const includeAssets = true;
     const params = [{ addresses: this.getAddresses() }, includeAssets];

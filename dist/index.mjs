@@ -1,7 +1,7 @@
 import {Networks as $93qLg$Networks, Transaction as $93qLg$Transaction, PrivateKey as $93qLg$PrivateKey} from "bitcore-lib";
 import {ravencoin as $93qLg$ravencoin} from "coininfo";
-import $93qLg$ravenrebelsravencoinkey from "@ravenrebels/ravencoin-key";
 import {getRPC as $93qLg$getRPC, methods as $93qLg$methods} from "@ravenrebels/ravencoin-rpc";
+import $93qLg$ravenrebelsravencoinkey from "@ravenrebels/ravencoin-key";
 import {Buffer as $93qLg$Buffer} from "buffer";
 
 const $de17ee1c983f5fa9$var$ONE_HUNDRED_MILLION = 1e8;
@@ -338,6 +338,7 @@ class $c3676b79c37149df$var$Wallet {
     rpc = (0, $93qLg$getRPC)("anonymous", "anonymous", $c3676b79c37149df$var$URL_MAINNET);
     _mnemonic = "";
     addressObjects = [];
+    receiveAddress = "";
     addressPosition = 0;
     getAddressObjects() {
         return this.addressObjects;
@@ -392,6 +393,16 @@ class $c3676b79c37149df$var$Wallet {
         return asdf.length > 0;
     }
     async _getFirstUnusedAddress(external) {
+        //First, check if lastReveivedAddress
+        if (external === true && this.receiveAddress) {
+            const asdf = await this.hasHistory([
+                this.receiveAddress
+            ]);
+            if (asdf === false) {
+                console.log("Receive address no need to change");
+                return this.receiveAddress;
+            }
+        }
         const addresses = this.getAddresses();
         //even addresses are external, odd address are internal/changes
         for(let counter = 0; counter < addresses.length; counter++){
@@ -401,7 +412,10 @@ class $c3676b79c37149df$var$Wallet {
             const asdf = await this.hasHistory([
                 address
             ]);
-            if (asdf === false) return address;
+            if (asdf === false) {
+                if (external === true) this.receiveAddress = address;
+                return address;
+            }
         }
         //IF we have not found one, return the first address
         return addresses[0];
