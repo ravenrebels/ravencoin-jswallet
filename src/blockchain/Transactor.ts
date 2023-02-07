@@ -66,7 +66,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
 
   const sendResult: ISendResult = {
     transactionId: "undefined",
-    debug: [],
+    debug: {},
   };
   const MAX_FEE = 4;
 
@@ -158,7 +158,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   //Now we have enough UTXos, lets create a raw transactions
 
   const raw = await blockchain.createRawTransaction(rpc, inputs, outputs);
-
+  sendResult.debug.rawUnsignedTransaction = raw;
   //OK lets find the private keys (WIF) for input addresses
   type TPrivateKey = {
     [key: string]: string;
@@ -171,7 +171,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
       privateKeys[addy] = addressObject.WIF;
     }
   });
-
+  sendResult.debug.privateKeys = privateKeys;
   //Sign the transaction
   const keys: Array<string> = Object.values(privateKeys);
   const signedTransactionPromise = blockchain.signRawTransaction(
@@ -184,7 +184,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   });
 
   const signedTransaction = await signedTransactionPromise;
-
+  sendResult.debug.signedTransaction = signedTransaction;
   const txid = await blockchain.sendRawTransaction(rpc, signedTransaction);
   sendResult.transactionId = txid;
   return sendResult;

@@ -197,7 +197,7 @@ async function $827163bad133a0dc$var$_send(options) {
     const { amount: amount , assetName: assetName , fromAddressObjects: fromAddressObjects , toAddress: toAddress , rpc: rpc  } = options;
     const sendResult = {
         transactionId: "undefined",
-        debug: []
+        debug: {}
     };
     const MAX_FEE = 4;
     const isAssetTransfer = assetName !== "RVN";
@@ -237,12 +237,14 @@ async function $827163bad133a0dc$var$_send(options) {
     if ($827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount) > 0) outputs[ravencoinChangeAddress] = $827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount);
     //Now we have enough UTXos, lets create a raw transactions
     const raw = await $30fffeab88bbc1c2$export$3c514ecc803e4adc(rpc, inputs, outputs);
+    sendResult.debug.rawUnsignedTransaction = raw;
     const privateKeys = {};
     inputs.map(function(input) {
         const addy = input.address;
         const addressObject = fromAddressObjects.find((a)=>a.address === addy);
         if (addressObject) privateKeys[addy] = addressObject.WIF;
     });
+    sendResult.debug.privateKeys = privateKeys;
     //Sign the transaction
     const keys = Object.values(privateKeys);
     const signedTransactionPromise = $30fffeab88bbc1c2$export$4e98a95db76a53e1(rpc, raw, keys);
@@ -250,6 +252,7 @@ async function $827163bad133a0dc$var$_send(options) {
         console.dir(e);
     });
     const signedTransaction = await signedTransactionPromise;
+    sendResult.debug.signedTransaction = signedTransaction;
     const txid = await $30fffeab88bbc1c2$export$4e309754b4830e29(rpc, signedTransaction);
     sendResult.transactionId = txid;
     return sendResult;
