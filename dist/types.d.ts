@@ -1,3 +1,8 @@
+interface ISend {
+    assetName?: string;
+    toAddress: string;
+    amount: number;
+}
 interface IAddressDelta {
     assetName: string;
     satoshis: number;
@@ -22,11 +27,6 @@ interface IAddressMetaData {
     WIF: string;
     path: string;
     privateKey: string;
-}
-interface ISend {
-    assetName?: string;
-    toAddress: string;
-    amount: number;
 }
 declare class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;

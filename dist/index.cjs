@@ -158,6 +158,26 @@ const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
 
 
 
+class $e16394a5869d8429$export$2191b9da168c6cf0 extends Error {
+    constructor(message){
+        super(message); // (1)
+        this.name = "ValidationError"; // (2)
+    }
+}
+class $e16394a5869d8429$export$66c44d927ffead98 extends Error {
+    constructor(message){
+        super(message); // (1)
+        this.name = "InvalidAddressError"; // (2)
+    }
+}
+class $e16394a5869d8429$export$b276096bbba16879 extends Error {
+    constructor(message){
+        super(message); // (1)
+        this.name = "InsufficientFundsError"; // (2)
+    }
+}
+
+
 
 var $827163bad133a0dc$require$Buffer = $4aiOY$buffer.Buffer;
 async function $827163bad133a0dc$var$isValidAddress(rpc, address) {
@@ -202,9 +222,17 @@ async function $827163bad133a0dc$var$_send(options) {
     const MAX_FEE = 4;
     const isAssetTransfer = assetName !== "RVN";
     //VALIDATION
-    if (await $827163bad133a0dc$var$isValidAddress(rpc, toAddress) === false) throw Error("Invalid address " + toAddress);
-    if (amount < 0) throw Error("Cant send less than zero");
+    if (await $827163bad133a0dc$var$isValidAddress(rpc, toAddress) === false) throw new (0, $e16394a5869d8429$export$66c44d927ffead98)("Invalid address " + toAddress);
+    if (amount < 0) throw new (0, $e16394a5869d8429$export$2191b9da168c6cf0)("Cant send less than zero");
     const addresses = fromAddressObjects.map((a)=>a.address);
+    //Do we have enough of the asset?
+    if (isAssetTransfer === true) {
+        const b = await $30fffeab88bbc1c2$export$df96cd8d56be0ab1(rpc, addresses);
+        const a = b.find((asset)=>asset.assetName === assetName);
+        if (!a) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("You do not have any " + assetName);
+        const balance = a.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
+        if (balance < amount) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("You do not have " + amount + " " + assetName);
+    }
     //TODO change addresses should be checked with the blockchain,
     //find first unused change address
     const ravencoinChangeAddress = addresses[1];

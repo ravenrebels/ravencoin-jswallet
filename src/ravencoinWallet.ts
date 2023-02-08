@@ -3,7 +3,7 @@ const coininfo = require("coininfo");
 import * as blockchain from "./blockchain/blockchain";
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
-import { IAddressDelta, IAddressMetaData, ISendResult, IUTXO } from "./Types";
+import { IAddressDelta, IAddressMetaData, ISend, ISendResult, IUTXO } from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
 import * as Transactor from "./blockchain/Transactor";
@@ -11,11 +11,6 @@ import * as Transactor from "./blockchain/Transactor";
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 
-interface ISend {
-  assetName?: string;
-  toAddress: string;
-  amount: number;
-}
 
 //Avoid singleton (anti-pattern)
 //Meaning multiple instances of the wallet must be able to co-exist

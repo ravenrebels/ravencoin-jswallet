@@ -10,6 +10,7 @@ import * as blockchain from "./blockchain";
 
 import { ITransaction } from "../Types";
 import { ONE_FULL_COIN } from "../contants";
+import { InsufficientFundsError, InvalidAddressError, ValidationError } from "../Errors";
 
 interface IInternalSendIProp {
   fromAddressObjects: Array<IAddressMetaData>;
@@ -74,13 +75,28 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
 
   //VALIDATION
   if ((await isValidAddress(rpc, toAddress)) === false) {
-    throw Error("Invalid address " + toAddress);
+    throw new InvalidAddressError("Invalid address " + toAddress);
   }
   if (amount < 0) {
-    throw Error("Cant send less than zero");
+    throw new ValidationError("Cant send less than zero");
   }
 
   const addresses = fromAddressObjects.map((a) => a.address);
+
+  //Do we have enough of the asset?
+  if(isAssetTransfer === true){
+    const b = await blockchain.getBalance(rpc, addresses);
+    const a = b.find(asset => asset.assetName === assetName);
+    if(!a){        
+      throw new InsufficientFundsError("You do not have any " + assetName);
+    }
+    const balance = a.balance /ONE_FULL_COIN;
+    if(balance < amount){
+ 
+      throw new InsufficientFundsError("You do not have " + amount + " " + assetName);
+    }
+
+}
 
   //TODO change addresses should be checked with the blockchain,
   //find first unused change address

@@ -7,6 +7,11 @@ export interface ISettings {
   tagline: string;
   headline: string;
 }
+export interface ISend {
+  assetName?: string;
+  toAddress: string;
+  amount: number;
+}
 
 export interface IAddressDelta{
   assetName: string;
