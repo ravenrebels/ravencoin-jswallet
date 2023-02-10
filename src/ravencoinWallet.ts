@@ -18,7 +18,7 @@ const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 class Wallet {
   rpc = getRPC("anonymous", "anonymous", URL_MAINNET);
   _mnemonic = "";
-
+  network:"rvn" | "rvn-test" = "rvn";
   addressObjects: Array<IAddressMetaData> = [];
   receiveAddress = "";
   addressPosition = 0;
@@ -37,7 +37,7 @@ class Wallet {
     let username = "anonymous";
     let password = "anonymous";
     let url = URL_MAINNET;
-
+ 
     //VALIDATION
     if (!options) {
       throw Error("option argument is mandatory");
@@ -51,6 +51,9 @@ class Wallet {
     password = options.rpc_password || url;
     username = options.rpc_username || url;
 
+    if(options.network){
+      this.network = options.network
+    }
     if (options.network === "rvn-test" && !options.rpc_url) {
       url = URL_TESTNET;
     }

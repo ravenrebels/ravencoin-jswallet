@@ -91,8 +91,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
       throw new InsufficientFundsError("You do not have any " + assetName);
     }
     const balance = a.balance /ONE_FULL_COIN;
-    if(balance < amount){
- 
+    if(balance < amount){ 
       throw new InsufficientFundsError("You do not have " + amount + " " + assetName);
     }
 
@@ -121,7 +120,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   //Sum up the whole unspent amount
   let unspentRavencoinAmount = sumOfUTXOs(enoughRavencoinUTXOs);
   if (unspentRavencoinAmount <= 0) {
-    throw Error(
+    throw new InsufficientFundsError(
       "Not enough RVN to transfer asset, perhaps your wallet has pending transactions"
     );
   }
@@ -129,7 +128,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
 
   if (isAssetTransfer === false) {
     if (amount > unspentRavencoinAmount) {
-      throw Error(
+      throw new InsufficientFundsError(
         "Insufficient funds, cant send " +
           amount.toLocaleString() +
           " only have " +

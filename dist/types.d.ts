@@ -31,6 +31,7 @@ interface IAddressMetaData {
 declare class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
+    network: "rvn" | "rvn-test";
     addressObjects: Array<IAddressMetaData>;
     receiveAddress: string;
     addressPosition: number;

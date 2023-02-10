@@ -1,7 +1,7 @@
 import {Networks as $93qLg$Networks, Transaction as $93qLg$Transaction, PrivateKey as $93qLg$PrivateKey} from "bitcore-lib";
 import {ravencoin as $93qLg$ravencoin} from "coininfo";
-import {getRPC as $93qLg$getRPC, methods as $93qLg$methods} from "@ravenrebels/ravencoin-rpc";
 import $93qLg$ravenrebelsravencoinkey from "@ravenrebels/ravencoin-key";
+import {getRPC as $93qLg$getRPC, methods as $93qLg$methods} from "@ravenrebels/ravencoin-rpc";
 import {Buffer as $93qLg$Buffer} from "buffer";
 
 const $de17ee1c983f5fa9$var$ONE_HUNDRED_MILLION = 1e8;
@@ -230,10 +230,10 @@ async function $8a6a99603cc26764$var$_send(options) {
     const enoughRavencoinUTXOs = $8a6a99603cc26764$export$aef5e6c96bd29914(UTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
     //Sum up the whole unspent amount
     let unspentRavencoinAmount = $8a6a99603cc26764$var$sumOfUTXOs(enoughRavencoinUTXOs);
-    if (unspentRavencoinAmount <= 0) throw Error("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
+    if (unspentRavencoinAmount <= 0) throw new (0, $df4abebf0c223404$export$b276096bbba16879)("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
     sendResult.debug.unspentRVNAmount = unspentRavencoinAmount.toLocaleString();
     if (isAssetTransfer === false) {
-        if (amount > unspentRavencoinAmount) throw Error("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentRavencoinAmount.toLocaleString());
+        if (amount > unspentRavencoinAmount) throw new (0, $df4abebf0c223404$export$b276096bbba16879)("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentRavencoinAmount.toLocaleString());
     }
     const rvnAmount = isAssetTransfer ? 0 : amount;
     const inputs = $de17ee1c983f5fa9$export$6a4ffba0c6186ae7(enoughRavencoinUTXOs);
@@ -368,6 +368,7 @@ const $c3676b79c37149df$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/
 class $c3676b79c37149df$var$Wallet {
     rpc = (0, $93qLg$getRPC)("anonymous", "anonymous", $c3676b79c37149df$var$URL_MAINNET);
     _mnemonic = "";
+    network = "rvn";
     addressObjects = [];
     receiveAddress = "";
     addressPosition = 0;
@@ -390,6 +391,7 @@ class $c3676b79c37149df$var$Wallet {
         url = options.rpc_url || url;
         password = options.rpc_password || url;
         username = options.rpc_username || url;
+        if (options.network) this.network = options.network;
         if (options.network === "rvn-test" && !options.rpc_url) url = $c3676b79c37149df$var$URL_TESTNET;
         this.rpc = (0, $93qLg$getRPC)(username, password, url);
         //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
