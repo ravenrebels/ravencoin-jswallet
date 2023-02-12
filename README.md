@@ -6,6 +6,10 @@ Ravencoin wallet library for JavaScript
 
 EXPERIMENTAL. DO NOT USE IN PRODUCTION
 
+RVN transfers are signed by the JavaScript code, and safe. The private keys are never revelaed.
+BUT, when transfering other assets, the JavaScript code has to send the private keys to the Ravencoin node via RPC for signing.
+This is of course NOT safe.  We are working on "how to sign asset transfers in JavaScript".
+
 ## Example code
 
 To run these code examples
