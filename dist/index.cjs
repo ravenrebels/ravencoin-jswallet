@@ -267,8 +267,9 @@ async function $827163bad133a0dc$var$_send(options) {
     //Obviously we only add change address if there is any change
     if ($827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount) > 0) outputs[ravencoinChangeAddress] = $827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount);
     //Now we have enough UTXos, lets create a raw transactions
-    const raw = await $30fffeab88bbc1c2$export$3c514ecc803e4adc(rpc, inputs, outputs);
     sendResult.debug.inputs = inputs;
+    sendResult.debug.outputs = outputs;
+    const raw = await $30fffeab88bbc1c2$export$3c514ecc803e4adc(rpc, inputs, outputs);
     sendResult.debug.rawUnsignedTransaction = raw;
     const privateKeys = {};
     inputs.map(function(input) {
