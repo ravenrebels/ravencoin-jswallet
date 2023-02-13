@@ -10,7 +10,11 @@ import * as blockchain from "./blockchain";
 
 import { ITransaction } from "../Types";
 import { ONE_FULL_COIN } from "../contants";
-import { InsufficientFundsError, InvalidAddressError, ValidationError } from "../Errors";
+import {
+  InsufficientFundsError,
+  InvalidAddressError,
+  ValidationError,
+} from "../Errors";
 
 interface IInternalSendIProp {
   fromAddressObjects: Array<IAddressMetaData>;
@@ -84,18 +88,19 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   const addresses = fromAddressObjects.map((a) => a.address);
 
   //Do we have enough of the asset?
-  if(isAssetTransfer === true){
+  if (isAssetTransfer === true) {
     const b = await blockchain.getBalance(rpc, addresses);
-    const a = b.find(asset => asset.assetName === assetName);
-    if(!a){        
+    const a = b.find((asset) => asset.assetName === assetName);
+    if (!a) {
       throw new InsufficientFundsError("You do not have any " + assetName);
     }
-    const balance = a.balance /ONE_FULL_COIN;
-    if(balance < amount){ 
-      throw new InsufficientFundsError("You do not have " + amount + " " + assetName);
+    const balance = a.balance / ONE_FULL_COIN;
+    if (balance < amount) {
+      throw new InsufficientFundsError(
+        "You do not have " + amount + " " + assetName
+      );
     }
-
-}
+  }
 
   //TODO change addresses should be checked with the blockchain,
   //find first unused change address
@@ -143,7 +148,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   const outputs: any = {};
   //Add asset inputs
   if (isAssetTransfer === true) {
-   const assetUTXOs =  await addAssetInputsAndOutputs(
+    const assetUTXOs = await addAssetInputsAndOutputs(
       rpc,
       addresses,
       assetName,
@@ -172,9 +177,11 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
     outputs[ravencoinChangeAddress] = getTwoDecimalTrunc(ravencoinChangeAmount);
   }
   //Now we have enough UTXos, lets create a raw transactions
+  sendResult.debug.inputs = inputs;
+  sendResult.debug.outputs = outputs;
 
   const raw = await blockchain.createRawTransaction(rpc, inputs, outputs);
-  sendResult.debug.inputs = inputs;
+
   sendResult.debug.rawUnsignedTransaction = raw;
   //OK lets find the private keys (WIF) for input addresses
   type TPrivateKey = {
@@ -249,7 +256,7 @@ async function addAssetInputsAndOutputs(
     };
   }
 
-  return _UTXOs;//Return the UTXOs used for asset transfer
+  return _UTXOs; //Return the UTXOs used for asset transfer
 }
 
 function getTwoDecimalTrunc(num: number) {
