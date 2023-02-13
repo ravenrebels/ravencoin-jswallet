@@ -236,11 +236,14 @@ async function $8a6a99603cc26764$var$_send(options) {
         if (amount > unspentRavencoinAmount) throw new (0, $df4abebf0c223404$export$b276096bbba16879)("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentRavencoinAmount.toLocaleString());
     }
     const rvnAmount = isAssetTransfer ? 0 : amount;
+    sendResult.debug.rvnUTXOs = enoughRavencoinUTXOs;
     const inputs = $de17ee1c983f5fa9$export$6a4ffba0c6186ae7(enoughRavencoinUTXOs);
     const outputs = {};
     //Add asset inputs
-    if (isAssetTransfer === true) await $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress);
-    else if (isAssetTransfer === false) outputs[toAddress] = rvnAmount;
+    if (isAssetTransfer === true) {
+        const assetUTXOs = await $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress);
+        sendResult.debug.assetUTXOs = assetUTXOs;
+    } else if (isAssetTransfer === false) outputs[toAddress] = rvnAmount;
     const fee = await $8a6a99603cc26764$var$getFee(rpc, inputs, outputs);
     sendResult.debug.assetName = assetName;
     sendResult.debug.fee = fee;
@@ -251,6 +254,7 @@ async function $8a6a99603cc26764$var$_send(options) {
     if ($8a6a99603cc26764$var$getTwoDecimalTrunc(ravencoinChangeAmount) > 0) outputs[ravencoinChangeAddress] = $8a6a99603cc26764$var$getTwoDecimalTrunc(ravencoinChangeAmount);
     //Now we have enough UTXos, lets create a raw transactions
     const raw = await $de17ee1c983f5fa9$export$3c514ecc803e4adc(rpc, inputs, outputs);
+    sendResult.debug.inputs = inputs;
     sendResult.debug.rawUnsignedTransaction = raw;
     const privateKeys = {};
     inputs.map(function(input) {
@@ -290,6 +294,7 @@ async function $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, as
             [assetName]: assetSum - amount
         }
     };
+    return _UTXOs; //Return the UTXOs used for asset transfer
 }
 function $8a6a99603cc26764$var$getTwoDecimalTrunc(num) {
     //Found answer here https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary

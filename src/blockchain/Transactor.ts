@@ -138,12 +138,12 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   }
 
   const rvnAmount = isAssetTransfer ? 0 : amount;
-
+  sendResult.debug.rvnUTXOs = enoughRavencoinUTXOs;
   const inputs = blockchain.convertUTXOsToVOUT(enoughRavencoinUTXOs);
   const outputs: any = {};
   //Add asset inputs
   if (isAssetTransfer === true) {
-    await addAssetInputsAndOutputs(
+   const assetUTXOs =  await addAssetInputsAndOutputs(
       rpc,
       addresses,
       assetName,
@@ -153,6 +153,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
       toAddress,
       assetChangeAddress
     );
+    sendResult.debug.assetUTXOs = assetUTXOs;
   } else if (isAssetTransfer === false) {
     outputs[toAddress] = rvnAmount;
   }
@@ -173,6 +174,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   //Now we have enough UTXos, lets create a raw transactions
 
   const raw = await blockchain.createRawTransaction(rpc, inputs, outputs);
+  sendResult.debug.inputs = inputs;
   sendResult.debug.rawUnsignedTransaction = raw;
   //OK lets find the private keys (WIF) for input addresses
   type TPrivateKey = {
@@ -246,6 +248,8 @@ async function addAssetInputsAndOutputs(
       },
     };
   }
+
+  return _UTXOs;//Return the UTXOs used for asset transfer
 }
 
 function getTwoDecimalTrunc(num: number) {
