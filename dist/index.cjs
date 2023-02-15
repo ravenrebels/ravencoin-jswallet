@@ -3,6 +3,7 @@ var $4aiOY$coininfo = require("coininfo");
 var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 var $4aiOY$ravenrebelsravencoinrpc = require("@ravenrebels/ravencoin-rpc");
 var $4aiOY$buffer = require("buffer");
+var $4aiOY$ravenrebelsravencoinsigntransaction = require("@ravenrebels/ravencoin-sign-transaction");
 
 function $parcel$interopDefault(a) {
   return a && a.__esModule ? a.default : a;
@@ -29,7 +30,7 @@ function $30fffeab88bbc1c2$export$24d1144bbf44c6c6(rpc, addresses) {
 }
 function $30fffeab88bbc1c2$export$4e309754b4830e29(rpc, signedTransaction) {
     const p = rpc("sendrawtransaction", [
-        signedTransaction.hex
+        signedTransaction
     ]);
     p.catch((e)=>{
         console.log("send raw transaction");
@@ -158,6 +159,7 @@ const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
 
 
 
+
 class $e16394a5869d8429$export$2191b9da168c6cf0 extends Error {
     constructor(message){
         super(message); // (1)
@@ -237,11 +239,11 @@ async function $827163bad133a0dc$var$_send(options) {
     //find first unused change address
     const ravencoinChangeAddress = addresses[1];
     const assetChangeAddress = addresses[3];
-    let UTXOs = await $30fffeab88bbc1c2$export$c6afdd36019bc4f0(rpc, addresses);
+    let allRavencoinUTXOs = await $30fffeab88bbc1c2$export$c6afdd36019bc4f0(rpc, addresses);
     //Remove UTXOs that are currently in mempool
     const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(rpc);
-    UTXOs = UTXOs.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
-    const enoughRavencoinUTXOs = $827163bad133a0dc$export$aef5e6c96bd29914(UTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
+    allRavencoinUTXOs = allRavencoinUTXOs.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
+    const enoughRavencoinUTXOs = $827163bad133a0dc$export$aef5e6c96bd29914(allRavencoinUTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
     //Sum up the whole unspent amount
     let unspentRavencoinAmount = $827163bad133a0dc$var$sumOfUTXOs(enoughRavencoinUTXOs);
     if (unspentRavencoinAmount <= 0) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
@@ -279,12 +281,18 @@ async function $827163bad133a0dc$var$_send(options) {
     });
     sendResult.debug.privateKeys = privateKeys;
     //Sign the transaction
-    const keys = Object.values(privateKeys);
-    const signedTransactionPromise = $30fffeab88bbc1c2$export$4e98a95db76a53e1(rpc, raw, keys);
-    signedTransactionPromise.catch((e)=>{
-        console.dir(e);
-    });
-    const signedTransaction = await signedTransactionPromise;
+    /*
+  const keys: Array<string> = Object.values(privateKeys);
+  const signedTransactionPromise = blockchain.signRawTransaction(
+    rpc,
+    raw,
+    keys
+  );
+  signedTransactionPromise.catch((e: any) => {
+    console.dir(e);
+  });
+*/ const UTXOs = sendResult.debug.assetUTXOs.concat(enoughRavencoinUTXOs);
+    const signedTransaction = (0, $4aiOY$ravenrebelsravencoinsigntransaction.sign)(raw, UTXOs, privateKeys);
     sendResult.debug.signedTransaction = signedTransaction;
     const txid = await $30fffeab88bbc1c2$export$4e309754b4830e29(rpc, signedTransaction);
     sendResult.transactionId = txid;

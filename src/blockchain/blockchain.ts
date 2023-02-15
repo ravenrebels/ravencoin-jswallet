@@ -18,7 +18,8 @@ export function getAddressDeltas(rpc: RPCType, addresses: string[]) {
   ]);
 }
 export function sendRawTransaction(rpc: RPCType, signedTransaction: any) {
-  const p = rpc("sendrawtransaction", [signedTransaction.hex]);
+
+  const p = rpc("sendrawtransaction", [signedTransaction]);
   p.catch((e: any) => {
     console.log("send raw transaction");
     console.dir(e);

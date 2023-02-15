@@ -6,6 +6,7 @@ import {
   IVout_when_creating_transactions,
   RPCType,
 } from "../Types";
+import { sign } from "@ravenrebels/ravencoin-sign-transaction";
 import * as blockchain from "./blockchain";
 
 import { ITransaction } from "../Types";
@@ -22,6 +23,7 @@ interface IInternalSendIProp {
   assetName: string;
   toAddress: string;
   rpc: RPCType;
+  readOnly?: boolean;
 }
 
 async function isValidAddress(rpc: RPCType, address: string) {
@@ -107,7 +109,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   const ravencoinChangeAddress = addresses[1];
   const assetChangeAddress = addresses[3];
 
-  let UTXOs = await blockchain.getRavenUnspentTransactionOutputs(
+  let allRavencoinUTXOs = await blockchain.getRavenUnspentTransactionOutputs(
     rpc,
     addresses
   );
@@ -115,10 +117,12 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   //Remove UTXOs that are currently in mempool
   const mempool = await blockchain.getMempool(rpc);
 
-  UTXOs = UTXOs.filter((UTXO) => isUTXOInMempool(mempool, UTXO) === false);
+  allRavencoinUTXOs = allRavencoinUTXOs.filter(
+    (UTXO) => isUTXOInMempool(mempool, UTXO) === false
+  );
 
   const enoughRavencoinUTXOs = getEnoughUTXOs(
-    UTXOs,
+    allRavencoinUTXOs,
     isAssetTransfer ? 1 : amount + MAX_FEE
   );
 
@@ -197,6 +201,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   });
   sendResult.debug.privateKeys = privateKeys;
   //Sign the transaction
+  /*
   const keys: Array<string> = Object.values(privateKeys);
   const signedTransactionPromise = blockchain.signRawTransaction(
     rpc,
@@ -206,11 +211,15 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   signedTransactionPromise.catch((e: any) => {
     console.dir(e);
   });
+*/
 
-  const signedTransaction = await signedTransactionPromise;
+  const UTXOs = sendResult.debug.assetUTXOs.concat(enoughRavencoinUTXOs);
+  const signedTransaction = sign(raw, UTXOs, privateKeys);
   sendResult.debug.signedTransaction = signedTransaction;
+
   const txid = await blockchain.sendRawTransaction(rpc, signedTransaction);
   sendResult.transactionId = txid;
+
   return sendResult;
 }
 
@@ -273,7 +282,13 @@ export async function send(
   amount: number,
   assetName: string
 ) {
-  return _send({ rpc, fromAddressObjects, toAddress, amount, assetName });
+  return _send({
+    rpc,
+    fromAddressObjects,
+    toAddress,
+    amount,
+    assetName,
+  });
 }
 
 export function getEnoughUTXOs(

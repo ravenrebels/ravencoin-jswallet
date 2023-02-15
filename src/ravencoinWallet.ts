@@ -3,7 +3,13 @@ const coininfo = require("coininfo");
 import * as blockchain from "./blockchain/blockchain";
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
-import { IAddressDelta, IAddressMetaData, ISend, ISendResult, IUTXO } from "./Types";
+import {
+  IAddressDelta,
+  IAddressMetaData,
+  ISend,
+  ISendResult,
+  IUTXO,
+} from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
 import * as Transactor from "./blockchain/Transactor";
@@ -11,14 +17,13 @@ import * as Transactor from "./blockchain/Transactor";
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 
-
 //Avoid singleton (anti-pattern)
 //Meaning multiple instances of the wallet must be able to co-exist
 
 class Wallet {
   rpc = getRPC("anonymous", "anonymous", URL_MAINNET);
   _mnemonic = "";
-  network:"rvn" | "rvn-test" = "rvn";
+  network: "rvn" | "rvn-test" = "rvn";
   addressObjects: Array<IAddressMetaData> = [];
   receiveAddress = "";
   addressPosition = 0;
@@ -37,7 +42,7 @@ class Wallet {
     let username = "anonymous";
     let password = "anonymous";
     let url = URL_MAINNET;
- 
+
     //VALIDATION
     if (!options) {
       throw Error("option argument is mandatory");
@@ -51,8 +56,8 @@ class Wallet {
     password = options.rpc_password || url;
     username = options.rpc_username || url;
 
-    if(options.network){
-      this.network = options.network
+    if (options.network) {
+      this.network = options.network;
     }
     if (options.network === "rvn-test" && !options.rpc_url) {
       url = URL_TESTNET;
