@@ -1,5 +1,6 @@
 import {
   IAddressMetaData,
+  ISendInternalProps,
   ISendResult,
   IUTXO,
   IVout,
@@ -18,16 +19,6 @@ import {
   ValidationError,
 } from "../Errors";
 
-interface IInternalSendIProp {
-  amount: number;
-  assetName: string;
-  changeAddress: string;
-  fromAddressObjects: Array<IAddressMetaData>;
-  network: "rvn" | "rvn-test";
-  readOnly?: boolean;
-  rpc: RPCType;
-  toAddress: string;
-}
 
 async function isValidAddress(rpc: RPCType, address: string) {
   const obj = await blockchain.validateAddress(rpc, address);
@@ -88,22 +79,27 @@ function getDefaultSendResult() {
   };
   return sendResult;
 }
-async function _send(options: IInternalSendIProp): Promise<ISendResult> {
+export async function send(options: ISendInternalProps): Promise<ISendResult> {
   const {
     amount,
     assetName,
+    baseCurrency,
     changeAddress,
+    changeAddressAssets,
     fromAddressObjects,
     network,
     toAddress,
     rpc,
   } = options;
 
+  console.log("ChangeAddressAssets", changeAddressAssets);
+  console.log("ChangeAddress", changeAddress);
   const sendResult = getDefaultSendResult();
   const MAX_FEE = 4;
 
-  const isAssetTransfer = assetName !== "RVN";
+  const isAssetTransfer = assetName !== baseCurrency;
 
+  console.log("Is asset transfer", isAssetTransfer);
   //VALIDATION
   if ((await isValidAddress(rpc, toAddress)) === false) {
     throw new InvalidAddressError("Invalid address " + toAddress);
@@ -116,6 +112,9 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
 
   //Do we have enough of the asset?
   if (isAssetTransfer === true) {
+    if (!changeAddressAssets) {
+      throw new ValidationError("No changeAddressAssets");
+    }
     const b = await blockchain.getBalance(rpc, addresses);
     const a = b.find((asset) => asset.assetName === assetName);
     if (!a) {
@@ -129,12 +128,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
     }
   }
 
-  const ravencoinChangeAddress = changeAddress;
-  const assetChangeAddress = changeAddress;
-
-  console.log("Will send", assetName, "and use change address", changeAddress);
-
-  let allRavencoinUTXOs = await blockchain.getRavenUnspentTransactionOutputs(
+  let allBaseCurrencyUTXOs = await blockchain.getBaseCurrencyUTXOs(
     rpc,
     addresses
   );
@@ -142,43 +136,49 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   //Remove UTXOs that are currently in mempool
   const mempool = await blockchain.getMempool(rpc);
 
-  allRavencoinUTXOs = allRavencoinUTXOs.filter(
+  allBaseCurrencyUTXOs = allBaseCurrencyUTXOs.filter(
     (UTXO) => isUTXOInMempool(mempool, UTXO) === false
   );
 
-  const enoughRavencoinUTXOs = getEnoughUTXOs(
-    allRavencoinUTXOs,
+  const enoughBaseCurrencyUTXOs = getEnoughUTXOs(
+    allBaseCurrencyUTXOs,
     isAssetTransfer ? 1 : amount + MAX_FEE
   );
 
   //Sum up the whole unspent amount
-  let unspentRavencoinAmount = sumOfUTXOs(enoughRavencoinUTXOs);
-  if (unspentRavencoinAmount <= 0) {
+  let unspentBaseCurrencyAmount = sumOfUTXOs(enoughBaseCurrencyUTXOs);
+  if (unspentBaseCurrencyAmount <= 0) {
     throw new InsufficientFundsError(
       "Not enough RVN to transfer asset, perhaps your wallet has pending transactions"
     );
   }
-  sendResult.debug.unspentRVNAmount = unspentRavencoinAmount.toLocaleString();
+  sendResult.debug.unspentRVNAmount =
+    unspentBaseCurrencyAmount.toLocaleString();
 
   if (isAssetTransfer === false) {
-    if (amount > unspentRavencoinAmount) {
+    if (amount > unspentBaseCurrencyAmount) {
       throw new InsufficientFundsError(
         "Insufficient funds, cant send " +
           amount.toLocaleString() +
           " only have " +
-          unspentRavencoinAmount.toLocaleString()
+          unspentBaseCurrencyAmount.toLocaleString()
       );
     }
   }
 
-  const rvnAmount = isAssetTransfer ? 0 : amount;
-  sendResult.debug.rvnUTXOs = enoughRavencoinUTXOs;
-  const inputs = blockchain.convertUTXOsToVOUT(enoughRavencoinUTXOs);
+  const baseCurrencyAmountToSpend = isAssetTransfer ? 0 : amount;
+  sendResult.debug.rvnUTXOs = enoughBaseCurrencyUTXOs;
+  const inputs = blockchain.convertUTXOsToVOUT(enoughBaseCurrencyUTXOs);
   const outputs: any = {};
   //Add asset inputs
 
   sendResult.debug.assetUTXOs = [] as Array<IUTXO>;
   if (isAssetTransfer === true) {
+    if (!changeAddressAssets) {
+      throw new ValidationError(
+        "changeAddressAssets is mandatory when transfering assets"
+      );
+    }
     const assetUTXOs = await addAssetInputsAndOutputs(
       rpc,
       addresses,
@@ -187,11 +187,11 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
       inputs,
       outputs,
       toAddress,
-      assetChangeAddress
+      changeAddressAssets
     );
     sendResult.debug.assetUTXOs = assetUTXOs;
   } else if (isAssetTransfer === false) {
-    outputs[toAddress] = rvnAmount;
+    outputs[toAddress] = baseCurrencyAmountToSpend;
   }
 
   const fee = await getFee(rpc, inputs, outputs);
@@ -199,13 +199,14 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   sendResult.debug.fee = fee;
   sendResult.debug.rvnAmount = 0;
 
-  const ravencoinChangeAmount = unspentRavencoinAmount - rvnAmount - fee;
+  const baseCurrencyChangeAmount =
+    unspentBaseCurrencyAmount - baseCurrencyAmountToSpend - fee;
 
-  sendResult.debug.rvnChangeAmount = ravencoinChangeAmount;
+  sendResult.debug.rvnChangeAmount = baseCurrencyChangeAmount;
 
   //Obviously we only add change address if there is any change
-  if (getTwoDecimalTrunc(ravencoinChangeAmount) > 0) {
-    outputs[ravencoinChangeAddress] = getTwoDecimalTrunc(ravencoinChangeAmount);
+  if (getTwoDecimalTrunc(baseCurrencyChangeAmount) > 0) {
+    outputs[changeAddress] = getTwoDecimalTrunc(baseCurrencyChangeAmount);
   }
   //Now we have enough UTXos, lets create a raw transactions
   sendResult.debug.inputs = inputs;
@@ -215,7 +216,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
 
   sendResult.debug.rawUnsignedTransaction = raw;
   //OK lets find the private keys (WIF) for input addresses
- 
+
   const privateKeys: TPrivateKey = {};
   inputs.map(function (input: IVout_when_creating_transactions) {
     const addy = input.address;
@@ -227,19 +228,22 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   sendResult.debug.privateKeys = privateKeys;
 
   let UTXOs: Array<IUTXO> = [];
-  if (enoughRavencoinUTXOs) {
-    UTXOs = UTXOs.concat(enoughRavencoinUTXOs);
+  if (enoughBaseCurrencyUTXOs) {
+    UTXOs = UTXOs.concat(enoughBaseCurrencyUTXOs);
   }
 
   if (sendResult.debug.assetUTXOs) {
     UTXOs = UTXOs.concat(sendResult.debug.assetUTXOs);
   }
+  try {
+    const signedTransaction = sign(network, raw, UTXOs, privateKeys);
+    sendResult.debug.signedTransaction = signedTransaction;
 
-  const signedTransaction = sign(network, raw, UTXOs, privateKeys);
-  sendResult.debug.signedTransaction = signedTransaction;
-
-  const txid = await blockchain.sendRawTransaction(rpc, signedTransaction);
-  sendResult.transactionId = txid;
+    const txid = await blockchain.sendRawTransaction(rpc, signedTransaction);
+    sendResult.transactionId = txid;
+  } catch (e) {
+    sendResult.debug.error = e;
+  }
 
   return sendResult;
 }
@@ -252,7 +256,7 @@ async function addAssetInputsAndOutputs(
   inputs: IVout_when_creating_transactions[],
   outputs: any,
   toAddress: string,
-  assetChangeAddress: string
+  changeAddressAssets: string
 ): Promise<Array<IUTXO>> {
   let assetUTXOs = await blockchain.getAssetUnspentTransactionOutputs(
     rpc,
@@ -269,23 +273,37 @@ async function addAssetInputsAndOutputs(
   const tempInputs = blockchain.convertUTXOsToVOUT(_UTXOs);
   tempInputs.map((item) => inputs.push(item));
 
+  console.log("output before adding first asset", outputs);
   outputs[toAddress] = {
     transfer: {
       [assetName]: amount,
     },
   };
+  console.log("output after adding first asset", outputs);
 
   const assetSum = sumOfUTXOs(_UTXOs);
-
+  const needsChange = assetSum - amount > 0;
+  console.log("The sum of all ", assetName, "is", assetSum);
   //Only add change address if needed
-  if (assetSum - amount > 0) {
-    outputs[assetChangeAddress] = {
+  console.log(
+    needsChange,
+    "Will check if",
+    assetSum,
+    "minus",
+    amount,
+    "is larger than zero, if we need change"
+  );
+
+  if (needsChange) {
+    console.log("Will add change to address", changeAddressAssets);
+    outputs[changeAddressAssets] = {
       transfer: {
         [assetName]: assetSum - amount,
       },
     };
+    console.log("Outputs became", outputs);
   }
-
+  console.log("When about to return outputs are", outputs);
   return _UTXOs; //Return the UTXOs used for asset transfer
 }
 
@@ -295,7 +313,9 @@ function getTwoDecimalTrunc(num: number) {
   //We want it to be 77755.96
   return Math.trunc(num * 100) / 100;
 }
-
+/*
+//TODO why on earth do we send and call _send? merge to one please
+//TODO and for the love of the gods, replace many args with an option argument please
 export async function send(
   rpc: RPCType,
   fromAddressObjects: Array<IAddressMetaData>,
@@ -303,19 +323,23 @@ export async function send(
   amount: number,
   assetName: string,
   network: "rvn" | "rvn-test",
-  changeAddress: string
+  changeAddress: string,
+  changeAddressAssets: string,
+  baseCurrency: string
 ) {
   return _send({
-    rpc,
-    fromAddressObjects,
-    toAddress,
     amount,
     assetName,
-    network,
+    baseCurrency,
     changeAddress,
+    changeAddressAssets,
+    fromAddressObjects,
+    network,
+    rpc,
+    toAddress,
   });
 }
-
+*/
 export function getEnoughUTXOs(
   utxos: Array<IUTXO>,
   amount: number

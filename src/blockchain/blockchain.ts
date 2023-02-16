@@ -85,7 +85,7 @@ export function _sortUTXOs(list: Array<IUTXO>) {
     return 0;
   });
 }
-export async function getRavenUnspentTransactionOutputs(
+export async function getBaseCurrencyUTXOs(
   rpc: RPCType,
   addresses: Array<string>
 ): Promise<Array<IUTXO>> {

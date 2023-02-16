@@ -31,6 +31,7 @@ export interface ISendResult {
   debug: {
     assetName: string;
     assetUTXOs: Array<IUTXO>;
+    error?: any;
     fee: number;
     inputs: Array<IVout_when_creating_transactions>;
     outputs: any;
@@ -77,6 +78,18 @@ export interface ITransaction {
   txid: string;
   vout: IVout[];
   version?: number;
+}
+export interface ISendInternalProps {
+  amount: number;
+  assetName: string;
+  baseCurrency: string;
+  changeAddress: string;
+  changeAddressAssets?: string;
+  fromAddressObjects: Array<IAddressMetaData>;
+  network: "rvn" | "rvn-test";
+  readOnly?: boolean;
+  rpc: RPCType;
+  toAddress: string;
 }
 
 interface Vin {

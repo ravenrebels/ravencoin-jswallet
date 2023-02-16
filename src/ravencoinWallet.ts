@@ -1,6 +1,12 @@
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
-import { IAddressDelta, IAddressMetaData, ISend, ISendResult } from "./Types";
+import {
+  IAddressDelta,
+  IAddressMetaData,
+  ISend,
+  ISendInternalProps,
+  ISendResult,
+} from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
 import * as Transactor from "./blockchain/Transactor";
@@ -19,6 +25,14 @@ class Wallet {
   receiveAddress = "";
   changeAddress = "";
   addressPosition = 0;
+  baseCurrency = "RVN"; //Default is RVN but it could be EVR
+
+  setBaseCurrency(currency: string) {
+    this.baseCurrency = currency;
+  }
+  getBaseCurrency() {
+    return this.baseCurrency;
+  }
 
   getAddressObjects() {
     return this.addressObjects;
@@ -90,7 +104,10 @@ class Wallet {
     const obj = {
       addresses,
     };
-    const asdf = await this.rpc(methods.getaddresstxids, [obj, includeAssets]) as any;
+    const asdf = (await this.rpc(methods.getaddresstxids, [
+      obj,
+      includeAssets,
+    ])) as any;
     return asdf.length > 0;
   }
 
@@ -167,40 +184,52 @@ class Wallet {
   async send(options: ISend): Promise<ISendResult> {
     const { amount, assetName, toAddress } = options;
     const changeAddress = await this.getChangeAddress();
+
+    //Find the first change address after change address (emergency take the first).
+    const addresses = this.getAddresses();
+    let index = addresses.indexOf(changeAddress);
+    if (index > addresses.length) {
+      index = 1;
+    }
+    const changeAddressAssets = addresses[index + 2];
+
+    console.log("Change address for assets became", changeAddressAssets);
     //Validation
     if (!toAddress) {
       throw Error("Wallet.send  toAddress is mandatory");
     }
     if (!amount) {
-      throw Error("Wallet.send  amount is mandatory");
+      throw Error("Wallet.send amount is mandatory");
     }
-
-    return Transactor.send(
-      this.rpc,
-      this.addressObjects,
-      toAddress,
+    const props: ISendInternalProps = {
+      fromAddressObjects: this.addressObjects,
       amount,
       assetName,
-      this.network,
-      changeAddress
-    );
+      baseCurrency: this.baseCurrency,
+      changeAddress,
+      changeAddressAssets,
+      network: this.network,
+      rpc: this.rpc,
+      toAddress,
+    };
+    return Transactor.send(props);
   }
 
   async getAssets() {
     const includeAssets = true;
     const params = [{ addresses: this.getAddresses() }, includeAssets];
-    const balance = await this.rpc(methods.getaddressbalance, params) as any;
+    const balance = (await this.rpc(methods.getaddressbalance, params)) as any;
 
-    //Remove RVN
+    //Remove baseCurrency
     const result = balance.filter((obj) => {
-      return obj.assetName !== "RVN";
+      return obj.assetName !== this.baseCurrency;
     });
     return result;
   }
   async getBalance() {
     const includeAssets = false;
     const params = [{ addresses: this.getAddresses() }, includeAssets];
-    const balance = await this.rpc(methods.getaddressbalance, params) as any;
+    const balance = (await this.rpc(methods.getaddressbalance, params)) as any;
 
     return balance.balance / ONE_FULL_COIN;
   }

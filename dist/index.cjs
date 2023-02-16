@@ -91,7 +91,7 @@ function $30fffeab88bbc1c2$export$1021589f9720f1bb(list) {
         return 0;
     });
 }
-async function $30fffeab88bbc1c2$export$c6afdd36019bc4f0(rpc, addresses) {
+async function $30fffeab88bbc1c2$export$2c023684d71dad7(rpc, addresses) {
     const list = await rpc("getaddressutxos", [
         {
             addresses: addresses
@@ -229,56 +229,58 @@ function $827163bad133a0dc$var$getDefaultSendResult() {
     };
     return sendResult;
 }
-async function $827163bad133a0dc$var$_send(options) {
-    const { amount: amount , assetName: assetName , changeAddress: changeAddress , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
+async function $827163bad133a0dc$export$89db4734f6c919c4(options) {
+    const { amount: amount , assetName: assetName , baseCurrency: baseCurrency , changeAddress: changeAddress , changeAddressAssets: changeAddressAssets , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
+    console.log("ChangeAddressAssets", changeAddressAssets);
+    console.log("ChangeAddress", changeAddress);
     const sendResult = $827163bad133a0dc$var$getDefaultSendResult();
     const MAX_FEE = 4;
-    const isAssetTransfer = assetName !== "RVN";
+    const isAssetTransfer = assetName !== baseCurrency;
+    console.log("Is asset transfer", isAssetTransfer);
     //VALIDATION
     if (await $827163bad133a0dc$var$isValidAddress(rpc, toAddress) === false) throw new (0, $e16394a5869d8429$export$66c44d927ffead98)("Invalid address " + toAddress);
     if (amount < 0) throw new (0, $e16394a5869d8429$export$2191b9da168c6cf0)("Cant send less than zero");
     const addresses = fromAddressObjects.map((a)=>a.address);
     //Do we have enough of the asset?
     if (isAssetTransfer === true) {
+        if (!changeAddressAssets) throw new (0, $e16394a5869d8429$export$2191b9da168c6cf0)("No changeAddressAssets");
         const b = await $30fffeab88bbc1c2$export$df96cd8d56be0ab1(rpc, addresses);
         const a = b.find((asset)=>asset.assetName === assetName);
         if (!a) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("You do not have any " + assetName);
         const balance = a.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
         if (balance < amount) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("You do not have " + amount + " " + assetName);
     }
-    const ravencoinChangeAddress = changeAddress;
-    const assetChangeAddress = changeAddress;
-    console.log("Will send", assetName, "and use change address", changeAddress);
-    let allRavencoinUTXOs = await $30fffeab88bbc1c2$export$c6afdd36019bc4f0(rpc, addresses);
+    let allBaseCurrencyUTXOs = await $30fffeab88bbc1c2$export$2c023684d71dad7(rpc, addresses);
     //Remove UTXOs that are currently in mempool
     const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(rpc);
-    allRavencoinUTXOs = allRavencoinUTXOs.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
-    const enoughRavencoinUTXOs = $827163bad133a0dc$export$aef5e6c96bd29914(allRavencoinUTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
+    allBaseCurrencyUTXOs = allBaseCurrencyUTXOs.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
+    const enoughBaseCurrencyUTXOs = $827163bad133a0dc$export$aef5e6c96bd29914(allBaseCurrencyUTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
     //Sum up the whole unspent amount
-    let unspentRavencoinAmount = $827163bad133a0dc$var$sumOfUTXOs(enoughRavencoinUTXOs);
-    if (unspentRavencoinAmount <= 0) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
-    sendResult.debug.unspentRVNAmount = unspentRavencoinAmount.toLocaleString();
+    let unspentBaseCurrencyAmount = $827163bad133a0dc$var$sumOfUTXOs(enoughBaseCurrencyUTXOs);
+    if (unspentBaseCurrencyAmount <= 0) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
+    sendResult.debug.unspentRVNAmount = unspentBaseCurrencyAmount.toLocaleString();
     if (isAssetTransfer === false) {
-        if (amount > unspentRavencoinAmount) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentRavencoinAmount.toLocaleString());
+        if (amount > unspentBaseCurrencyAmount) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentBaseCurrencyAmount.toLocaleString());
     }
-    const rvnAmount = isAssetTransfer ? 0 : amount;
-    sendResult.debug.rvnUTXOs = enoughRavencoinUTXOs;
-    const inputs = $30fffeab88bbc1c2$export$6a4ffba0c6186ae7(enoughRavencoinUTXOs);
+    const baseCurrencyAmountToSpend = isAssetTransfer ? 0 : amount;
+    sendResult.debug.rvnUTXOs = enoughBaseCurrencyUTXOs;
+    const inputs = $30fffeab88bbc1c2$export$6a4ffba0c6186ae7(enoughBaseCurrencyUTXOs);
     const outputs = {};
     //Add asset inputs
     sendResult.debug.assetUTXOs = [];
     if (isAssetTransfer === true) {
-        const assetUTXOs = await $827163bad133a0dc$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress);
+        if (!changeAddressAssets) throw new (0, $e16394a5869d8429$export$2191b9da168c6cf0)("changeAddressAssets is mandatory when transfering assets");
+        const assetUTXOs = await $827163bad133a0dc$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, changeAddressAssets);
         sendResult.debug.assetUTXOs = assetUTXOs;
-    } else if (isAssetTransfer === false) outputs[toAddress] = rvnAmount;
+    } else if (isAssetTransfer === false) outputs[toAddress] = baseCurrencyAmountToSpend;
     const fee = await $827163bad133a0dc$var$getFee(rpc, inputs, outputs);
     sendResult.debug.assetName = assetName;
     sendResult.debug.fee = fee;
     sendResult.debug.rvnAmount = 0;
-    const ravencoinChangeAmount = unspentRavencoinAmount - rvnAmount - fee;
-    sendResult.debug.rvnChangeAmount = ravencoinChangeAmount;
+    const baseCurrencyChangeAmount = unspentBaseCurrencyAmount - baseCurrencyAmountToSpend - fee;
+    sendResult.debug.rvnChangeAmount = baseCurrencyChangeAmount;
     //Obviously we only add change address if there is any change
-    if ($827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount) > 0) outputs[ravencoinChangeAddress] = $827163bad133a0dc$var$getTwoDecimalTrunc(ravencoinChangeAmount);
+    if ($827163bad133a0dc$var$getTwoDecimalTrunc(baseCurrencyChangeAmount) > 0) outputs[changeAddress] = $827163bad133a0dc$var$getTwoDecimalTrunc(baseCurrencyChangeAmount);
     //Now we have enough UTXos, lets create a raw transactions
     sendResult.debug.inputs = inputs;
     sendResult.debug.outputs = outputs;
@@ -293,33 +295,47 @@ async function $827163bad133a0dc$var$_send(options) {
     });
     sendResult.debug.privateKeys = privateKeys;
     let UTXOs = [];
-    if (enoughRavencoinUTXOs) UTXOs = UTXOs.concat(enoughRavencoinUTXOs);
+    if (enoughBaseCurrencyUTXOs) UTXOs = UTXOs.concat(enoughBaseCurrencyUTXOs);
     if (sendResult.debug.assetUTXOs) UTXOs = UTXOs.concat(sendResult.debug.assetUTXOs);
-    const signedTransaction = (0, $4aiOY$ravenrebelsravencoinsigntransaction.sign)(network, raw, UTXOs, privateKeys);
-    sendResult.debug.signedTransaction = signedTransaction;
-    const txid = await $30fffeab88bbc1c2$export$4e309754b4830e29(rpc, signedTransaction);
-    sendResult.transactionId = txid;
+    try {
+        const signedTransaction = (0, $4aiOY$ravenrebelsravencoinsigntransaction.sign)(network, raw, UTXOs, privateKeys);
+        sendResult.debug.signedTransaction = signedTransaction;
+        const txid = await $30fffeab88bbc1c2$export$4e309754b4830e29(rpc, signedTransaction);
+        sendResult.transactionId = txid;
+    } catch (e) {
+        sendResult.debug.error = e;
+    }
     return sendResult;
 }
-async function $827163bad133a0dc$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress) {
+async function $827163bad133a0dc$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, changeAddressAssets) {
     let assetUTXOs = await $30fffeab88bbc1c2$export$61ff118ad91d2b8c(rpc, addresses, assetName);
     const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(rpc);
     assetUTXOs = assetUTXOs.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
     const _UTXOs = $827163bad133a0dc$export$aef5e6c96bd29914(assetUTXOs, amount);
     const tempInputs = $30fffeab88bbc1c2$export$6a4ffba0c6186ae7(_UTXOs);
     tempInputs.map((item)=>inputs.push(item));
+    console.log("output before adding first asset", outputs);
     outputs[toAddress] = {
         transfer: {
             [assetName]: amount
         }
     };
+    console.log("output after adding first asset", outputs);
     const assetSum = $827163bad133a0dc$var$sumOfUTXOs(_UTXOs);
+    const needsChange = assetSum - amount > 0;
+    console.log("The sum of all ", assetName, "is", assetSum);
     //Only add change address if needed
-    if (assetSum - amount > 0) outputs[assetChangeAddress] = {
-        transfer: {
-            [assetName]: assetSum - amount
-        }
-    };
+    console.log(needsChange, "Will check if", assetSum, "minus", amount, "is larger than zero, if we need change");
+    if (needsChange) {
+        console.log("Will add change to address", changeAddressAssets);
+        outputs[changeAddressAssets] = {
+            transfer: {
+                [assetName]: assetSum - amount
+            }
+        };
+        console.log("Outputs became", outputs);
+    }
+    console.log("When about to return outputs are", outputs);
     return _UTXOs; //Return the UTXOs used for asset transfer
 }
 function $827163bad133a0dc$var$getTwoDecimalTrunc(num) {
@@ -327,17 +343,6 @@ function $827163bad133a0dc$var$getTwoDecimalTrunc(num) {
     //In JavaScript the number 77866.98 minus 111 minus 0.2 equals 77755.95999999999
     //We want it to be 77755.96
     return Math.trunc(num * 100) / 100;
-}
-async function $827163bad133a0dc$export$89db4734f6c919c4(rpc, fromAddressObjects, toAddress, amount, assetName, network, changeAddress) {
-    return $827163bad133a0dc$var$_send({
-        rpc: rpc,
-        fromAddressObjects: fromAddressObjects,
-        toAddress: toAddress,
-        amount: amount,
-        assetName: assetName,
-        network: network,
-        changeAddress: changeAddress
-    });
 }
 function $827163bad133a0dc$export$aef5e6c96bd29914(utxos, amount) {
     /*
@@ -404,6 +409,13 @@ class $bf36305bcbc0cb23$var$Wallet {
     receiveAddress = "";
     changeAddress = "";
     addressPosition = 0;
+    baseCurrency = "RVN";
+    setBaseCurrency(currency) {
+        this.baseCurrency = currency;
+    }
+    getBaseCurrency() {
+        return this.baseCurrency;
+    }
     getAddressObjects() {
         return this.addressObjects;
     }
@@ -522,10 +534,27 @@ class $bf36305bcbc0cb23$var$Wallet {
     async send(options) {
         const { amount: amount , assetName: assetName , toAddress: toAddress  } = options;
         const changeAddress = await this.getChangeAddress();
+        //Find the first change address after change address (emergency take the first).
+        const addresses = this.getAddresses();
+        let index = addresses.indexOf(changeAddress);
+        if (index > addresses.length) index = 1;
+        const changeAddressAssets = addresses[index + 2];
+        console.log("Change address for assets became", changeAddressAssets);
         //Validation
         if (!toAddress) throw Error("Wallet.send  toAddress is mandatory");
-        if (!amount) throw Error("Wallet.send  amount is mandatory");
-        return $827163bad133a0dc$export$89db4734f6c919c4(this.rpc, this.addressObjects, toAddress, amount, assetName, this.network, changeAddress);
+        if (!amount) throw Error("Wallet.send amount is mandatory");
+        const props = {
+            fromAddressObjects: this.addressObjects,
+            amount: amount,
+            assetName: assetName,
+            baseCurrency: this.baseCurrency,
+            changeAddress: changeAddress,
+            changeAddressAssets: changeAddressAssets,
+            network: this.network,
+            rpc: this.rpc,
+            toAddress: toAddress
+        };
+        return $827163bad133a0dc$export$89db4734f6c919c4(props);
     }
     async getAssets() {
         const includeAssets = true;
@@ -536,9 +565,9 @@ class $bf36305bcbc0cb23$var$Wallet {
             includeAssets
         ];
         const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
-        //Remove RVN
+        //Remove baseCurrency
         const result = balance.filter((obj)=>{
-            return obj.assetName !== "RVN";
+            return obj.assetName !== this.baseCurrency;
         });
         return result;
     }

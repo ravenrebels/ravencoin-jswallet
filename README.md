@@ -6,9 +6,9 @@ Ravencoin wallet library for JavaScript
 
 EXPERIMENTAL. DO NOT USE IN PRODUCTION
 
-RVN transfers are signed by the JavaScript code, and are safe. The private keys are never revealed.
-BUT, when transfering other assets, the JavaScript code has to send the private keys to the Ravencoin node via RPC for signing.
-This is of course NOT safe.  We are working on "how to sign asset transfers in JavaScript".
+This lib needs a lot of testing before being used in production.
+Only use on mainnet if you "play around".
+This lib supports EVR as well (see section at the end)
 
 ## Example code
 
@@ -65,6 +65,15 @@ console.log("Sending", transactionId);
 
 
 
+```
+
+## Evrmore
+
+To support EVR instead of RVN
+Create an instance of wallet and set baseCurrency
+
+```
+wallet.setBaseCurrency("EVR");
 ```
 
 ## API

@@ -20,6 +20,7 @@ interface ISendResult {
     debug: {
         assetName: string;
         assetUTXOs: Array<IUTXO>;
+        error?: any;
         fee: number;
         inputs: Array<IVout_when_creating_transactions>;
         outputs: any;
@@ -76,6 +77,9 @@ declare class Wallet {
     receiveAddress: string;
     changeAddress: string;
     addressPosition: number;
+    baseCurrency: string;
+    setBaseCurrency(currency: string): void;
+    getBaseCurrency(): string;
     getAddressObjects(): IAddressMetaData[];
     getAddresses(): Array<string>;
     init(options: IOptions): Promise<void>;
