@@ -8,12 +8,12 @@ export interface ISettings {
   headline: string;
 }
 export interface ISend {
-  assetName?: string;
+  assetName: string;
   toAddress: string;
   amount: number;
 }
 
-export interface IAddressDelta{
+export interface IAddressDelta {
   assetName: string;
   satoshis: number;
   txid: string;
@@ -22,9 +22,26 @@ export interface IAddressDelta{
   height: number;
   address: string;
 }
+export type TPrivateKey = {
+  [key: string]: string;
+};
+
 export interface ISendResult {
   transactionId: string;
-  debug: any;
+  debug: {
+    assetName: string;
+    assetUTXOs: Array<IUTXO>;
+    fee: number;
+    inputs: Array<IVout_when_creating_transactions>;
+    outputs: any;
+    privateKeys?: TPrivateKey;
+    rawUnsignedTransaction?: string;
+    rvnAmount: number;
+    rvnChangeAmount: number;
+    rvnUTXOs: Array<IUTXO>;
+    signedTransaction?: string;
+    unspentRVNAmount: any;
+  };
 }
 export interface Asset {
   name: string;
@@ -124,6 +141,7 @@ export interface IUTXO {
   script: string;
   satoshis: number;
   height: number;
+  value: number;
 }
 export interface IAssetMetaData {
   assetName: string;

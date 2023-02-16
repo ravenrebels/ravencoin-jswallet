@@ -1,15 +1,6 @@
-const bitcore = require("bitcore-lib");
-const coininfo = require("coininfo");
-import * as blockchain from "./blockchain/blockchain";
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
-import {
-  IAddressDelta,
-  IAddressMetaData,
-  ISend,
-  ISendResult,
-  IUTXO,
-} from "./Types";
+import { IAddressDelta, IAddressMetaData, ISend, ISendResult } from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
 import * as Transactor from "./blockchain/Transactor";
@@ -26,6 +17,7 @@ class Wallet {
   network: "rvn" | "rvn-test" = "rvn";
   addressObjects: Array<IAddressMetaData> = [];
   receiveAddress = "";
+  changeAddress = "";
   addressPosition = 0;
 
   getAddressObjects() {
@@ -98,17 +90,22 @@ class Wallet {
     const obj = {
       addresses,
     };
-    const asdf = await this.rpc(methods.getaddresstxids, [obj, includeAssets]);
+    const asdf = await this.rpc(methods.getaddresstxids, [obj, includeAssets]) as any;
     return asdf.length > 0;
   }
 
   async _getFirstUnusedAddress(external: boolean) {
-    //First, check if lastReveivedAddress
+    //First, check if lastReceivedAddress
     if (external === true && this.receiveAddress) {
       const asdf = await this.hasHistory([this.receiveAddress]);
       if (asdf === false) {
-        console.log("Receive address no need to change");
         return this.receiveAddress;
+      }
+    }
+    if (external === false && this.changeAddress) {
+      const asdf = await this.hasHistory([this.changeAddress]);
+      if (asdf === false) {
+        return this.changeAddress;
       }
     }
 
@@ -123,9 +120,9 @@ class Wallet {
 
       //If an address has tenth of thousands of transactions, getHistory will throw an exception
 
-      const asdf = await this.hasHistory([address]);
+      const hasHistory = await this.hasHistory([address]);
 
-      if (asdf === false) {
+      if (hasHistory === false) {
         if (external === true) {
           this.receiveAddress = address;
         }
@@ -141,7 +138,7 @@ class Wallet {
     const method = methods.getaddressmempool;
     const includeAssets = true;
     const params = [{ addresses: this.getAddresses() }, includeAssets];
-    return this.rpc(method, params);
+    return this.rpc(method, params) as Promise<IAddressDelta[]>;
   }
   async getReceiveAddress() {
     const isExternal = true;
@@ -169,7 +166,7 @@ class Wallet {
 
   async send(options: ISend): Promise<ISendResult> {
     const { amount, assetName, toAddress } = options;
-
+    const changeAddress = await this.getChangeAddress();
     //Validation
     if (!toAddress) {
       throw Error("Wallet.send  toAddress is mandatory");
@@ -178,128 +175,21 @@ class Wallet {
       throw Error("Wallet.send  amount is mandatory");
     }
 
-    if (assetName && assetName !== "RVN") {
-      return Transactor.send(
-        this.rpc,
-        this.addressObjects,
-        toAddress,
-        amount,
-        assetName,
-        this.network,
-      );
-    } else {
-      return this._sendRavencoin(toAddress, amount);
-    }
-  }
-  private async _sendRavencoin(
-    toAddress: string,
-    amount: number
-  ): Promise<ISendResult> {
-    if (amount < 0) {
-      throw Error("Amount cannot be negative");
-    }
-    if (!toAddress) {
-      throw Error("toAddress seems invalid");
-    }
-
-    const addresses = this.getAddresses();
-    const sendResult: ISendResult = {
-      transactionId: "",
-      debug: {},
-    };
-    //Add Ravencoin as Network to BITCORE
-    //@ts-ignore
-    const d = coininfo.ravencoin.main.toBitcore();
-    d.name = "ravencoin";
-    d.alias = "RVN";
-    bitcore.Networks.add(d);
-
-    //According to the source file bitcore.Networks.get has two arguments, the second argument keys is OPTIONAL
-    //The TypescriptTypes says that the second arguments is mandatory, so ignore that
-    //@ts-ignore
-    const ravencoin = bitcore.Networks.get("RVN");
-
-    //GET UNSPET OUTPUTS (UTXO)
-    //Configure RPC bridge
-
-    const balance = await this.rpc(methods.getaddressbalance, [
-      { addresses: addresses },
-    ]);
-    if (balance.balance) {
-      const b = balance.balance / ONE_FULL_COIN;
-
-      if (b < amount) {
-        throw Error("Not enough money, " + b);
-      }
-    }
-
-    //GET UNSPENT TRANSACTION OUTPUTS
-    let allUnspent = await this.getUTXOs();
-
-    const mempool = await blockchain.getMempool(this.rpc);
-
-    //Filter out UTXOs currently in mempool
-    allUnspent = allUnspent.filter(
-      (UTXO) => Transactor.isUTXOInMempool(mempool, UTXO) === false
-    );
-
-    //GET ENOUGH UTXOs FOR THIS TRANSACTION
-    const unspent = Transactor.getEnoughUTXOs(
-      allUnspent,
-      amount + 1 /*to cover the fee*/
-    );
-    if (unspent.length === 0) {
-      throw Error("No unspent transactions outputs");
-    }
-    console.log("Will use", unspent.length, "UTXO to send", amount);
-    let amo = 0;
-    unspent.map((utxo) => (amo += utxo.satoshis / 1e8));
-    console.log("Amount of UTXO", amo);
-    const transaction = new bitcore.Transaction();
-
-    const utxoObjects = unspent.map(
-      (u) => new bitcore.Transaction.UnspentOutput(u)
-    );
-
-    const changeAddress = await this._getFirstUnusedAddress(false);
-
-    const privateKeys = utxoObjects.map((utxo) => {
-      const addy = utxo.address.toString();
-      const key = this.getPrivateKeyByAddress(addy);
-      const privateKey = new bitcore.PrivateKey(key);
-
-      return privateKey;
-    });
-
-    transaction.from(utxoObjects);
-    transaction.to(toAddress, amount * ONE_FULL_COIN);
-    transaction.change(changeAddress);
-
-    //UPDATE FEE
-    transaction.fee(transaction.getFee() * 100);
-    sendResult.debug.fee = transaction.getFee() * 100;
-
-    console.log(
-      "OK want to send",
+    return Transactor.send(
+      this.rpc,
+      this.addressObjects,
+      toAddress,
       amount,
-      "has got",
-      amo,
-      "and fee is",
-      transaction.getFee() / 1e8
+      assetName,
+      this.network,
+      changeAddress
     );
-    transaction.sign(privateKeys);
-
-    const id = await this.rpc(methods.sendrawtransaction, [
-      transaction.serialize(),
-    ]);
-
-    sendResult.transactionId = id;
-    return sendResult;
   }
+
   async getAssets() {
     const includeAssets = true;
     const params = [{ addresses: this.getAddresses() }, includeAssets];
-    const balance = await this.rpc(methods.getaddressbalance, params);
+    const balance = await this.rpc(methods.getaddressbalance, params) as any;
 
     //Remove RVN
     const result = balance.filter((obj) => {
@@ -310,7 +200,7 @@ class Wallet {
   async getBalance() {
     const includeAssets = false;
     const params = [{ addresses: this.getAddresses() }, includeAssets];
-    const balance = await this.rpc(methods.getaddressbalance, params);
+    const balance = await this.rpc(methods.getaddressbalance, params) as any;
 
     return balance.balance / ONE_FULL_COIN;
   }

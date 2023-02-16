@@ -1,5 +1,5 @@
 interface ISend {
-    assetName?: string;
+    assetName: string;
     toAddress: string;
     amount: number;
 }
@@ -12,9 +12,40 @@ interface IAddressDelta {
     height: number;
     address: string;
 }
+type TPrivateKey = {
+    [key: string]: string;
+};
 interface ISendResult {
     transactionId: string;
-    debug: any;
+    debug: {
+        assetName: string;
+        assetUTXOs: Array<IUTXO>;
+        fee: number;
+        inputs: Array<IVout_when_creating_transactions>;
+        outputs: any;
+        privateKeys?: TPrivateKey;
+        rawUnsignedTransaction?: string;
+        rvnAmount: number;
+        rvnChangeAmount: number;
+        rvnUTXOs: Array<IUTXO>;
+        signedTransaction?: string;
+        unspentRVNAmount: any;
+    };
+}
+interface IVout_when_creating_transactions {
+    txid: string;
+    vout: number;
+    address: string;
+}
+interface IUTXO {
+    address: string;
+    assetName: string;
+    txid: string;
+    outputIndex: number;
+    script: string;
+    satoshis: number;
+    height: number;
+    value: number;
 }
 interface IAddressMetaData {
     address: string;
@@ -27,6 +58,15 @@ interface IAddressMetaData {
     WIF: string;
     path: string;
     privateKey: string;
+}
+interface IUTXO {
+    address: string;
+    assetName: string;
+    txid: string;
+    outputIndex: number;
+    script: string;
+    satoshis: number;
+    height: number;
 }
 declare class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
@@ -34,6 +74,7 @@ declare class Wallet {
     network: "rvn" | "rvn-test";
     addressObjects: Array<IAddressMetaData>;
     receiveAddress: string;
+    changeAddress: string;
     addressPosition: number;
     getAddressObjects(): IAddressMetaData[];
     getAddresses(): Array<string>;

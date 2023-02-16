@@ -1,5 +1,3 @@
-var $4aiOY$bitcorelib = require("bitcore-lib");
-var $4aiOY$coininfo = require("coininfo");
 var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 var $4aiOY$ravenrebelsravencoinrpc = require("@ravenrebels/ravencoin-rpc");
 var $4aiOY$buffer = require("buffer");
@@ -19,6 +17,12 @@ $parcel$defineInteropFlag(module.exports);
 
 $parcel$export(module.exports, "default", () => $bf36305bcbc0cb23$export$2e2bcd8739ae039);
 $parcel$export(module.exports, "createInstance", () => $bf36305bcbc0cb23$export$99152e8d49ca4e7d);
+
+
+const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
+
+
+
 const $30fffeab88bbc1c2$var$ONE_HUNDRED_MILLION = 1e8;
 function $30fffeab88bbc1c2$export$24d1144bbf44c6c6(rpc, addresses) {
     return rpc("getaddressdeltas", [
@@ -153,13 +157,6 @@ function $30fffeab88bbc1c2$export$6a4ffba0c6186ae7(UTXOs) {
 
 
 
-
-const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
-
-
-
-
-
 class $e16394a5869d8429$export$2191b9da168c6cf0 extends Error {
     constructor(message){
         super(message); // (1)
@@ -215,12 +212,26 @@ function $827163bad133a0dc$var$sumOfUTXOs(UTXOs) {
     //TODO should ask the "blockchain" **estimatesmartfee**
     return fee * Math.max(1, size);
 }
-async function $827163bad133a0dc$var$_send(options) {
-    const { amount: amount , assetName: assetName , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
+function $827163bad133a0dc$var$getDefaultSendResult() {
     const sendResult = {
         transactionId: "undefined",
-        debug: {}
+        debug: {
+            assetName: "",
+            assetUTXOs: [],
+            fee: 0,
+            inputs: [],
+            outputs: null,
+            rvnChangeAmount: 0,
+            rvnUTXOs: [],
+            unspentRVNAmount: "",
+            rvnAmount: 0
+        }
     };
+    return sendResult;
+}
+async function $827163bad133a0dc$var$_send(options) {
+    const { amount: amount , assetName: assetName , changeAddress: changeAddress , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
+    const sendResult = $827163bad133a0dc$var$getDefaultSendResult();
     const MAX_FEE = 4;
     const isAssetTransfer = assetName !== "RVN";
     //VALIDATION
@@ -235,10 +246,9 @@ async function $827163bad133a0dc$var$_send(options) {
         const balance = a.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
         if (balance < amount) throw new (0, $e16394a5869d8429$export$b276096bbba16879)("You do not have " + amount + " " + assetName);
     }
-    //TODO change addresses should be checked with the blockchain,
-    //find first unused change address
-    const ravencoinChangeAddress = addresses[1];
-    const assetChangeAddress = addresses[3];
+    const ravencoinChangeAddress = changeAddress;
+    const assetChangeAddress = changeAddress;
+    console.log("Will send", assetName, "and use change address", changeAddress);
     let allRavencoinUTXOs = await $30fffeab88bbc1c2$export$c6afdd36019bc4f0(rpc, addresses);
     //Remove UTXOs that are currently in mempool
     const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(rpc);
@@ -256,6 +266,7 @@ async function $827163bad133a0dc$var$_send(options) {
     const inputs = $30fffeab88bbc1c2$export$6a4ffba0c6186ae7(enoughRavencoinUTXOs);
     const outputs = {};
     //Add asset inputs
+    sendResult.debug.assetUTXOs = [];
     if (isAssetTransfer === true) {
         const assetUTXOs = await $827163bad133a0dc$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, assetChangeAddress);
         sendResult.debug.assetUTXOs = assetUTXOs;
@@ -273,6 +284,7 @@ async function $827163bad133a0dc$var$_send(options) {
     sendResult.debug.outputs = outputs;
     const raw = await $30fffeab88bbc1c2$export$3c514ecc803e4adc(rpc, inputs, outputs);
     sendResult.debug.rawUnsignedTransaction = raw;
+    //OK lets find the private keys (WIF) for input addresses
     const privateKeys = {};
     inputs.map(function(input) {
         const addy = input.address;
@@ -280,7 +292,9 @@ async function $827163bad133a0dc$var$_send(options) {
         if (addressObject) privateKeys[addy] = addressObject.WIF;
     });
     sendResult.debug.privateKeys = privateKeys;
-    const UTXOs = sendResult.debug.assetUTXOs.concat(enoughRavencoinUTXOs);
+    let UTXOs = [];
+    if (enoughRavencoinUTXOs) UTXOs = UTXOs.concat(enoughRavencoinUTXOs);
+    if (sendResult.debug.assetUTXOs) UTXOs = UTXOs.concat(sendResult.debug.assetUTXOs);
     const signedTransaction = (0, $4aiOY$ravenrebelsravencoinsigntransaction.sign)(network, raw, UTXOs, privateKeys);
     sendResult.debug.signedTransaction = signedTransaction;
     const txid = await $30fffeab88bbc1c2$export$4e309754b4830e29(rpc, signedTransaction);
@@ -314,14 +328,15 @@ function $827163bad133a0dc$var$getTwoDecimalTrunc(num) {
     //We want it to be 77755.96
     return Math.trunc(num * 100) / 100;
 }
-async function $827163bad133a0dc$export$89db4734f6c919c4(rpc, fromAddressObjects, toAddress, amount, assetName, network) {
+async function $827163bad133a0dc$export$89db4734f6c919c4(rpc, fromAddressObjects, toAddress, amount, assetName, network, changeAddress) {
     return $827163bad133a0dc$var$_send({
         rpc: rpc,
         fromAddressObjects: fromAddressObjects,
         toAddress: toAddress,
         amount: amount,
         assetName: assetName,
-        network: network
+        network: network,
+        changeAddress: changeAddress
     });
 }
 function $827163bad133a0dc$export$aef5e6c96bd29914(utxos, amount) {
@@ -377,8 +392,6 @@ function $827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) {
 }
 
 
-
-
 const $bf36305bcbc0cb23$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const $bf36305bcbc0cb23$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 //Avoid singleton (anti-pattern)
@@ -389,6 +402,7 @@ class $bf36305bcbc0cb23$var$Wallet {
     network = "rvn";
     addressObjects = [];
     receiveAddress = "";
+    changeAddress = "";
     addressPosition = 0;
     getAddressObjects() {
         return this.addressObjects;
@@ -444,15 +458,18 @@ class $bf36305bcbc0cb23$var$Wallet {
         return asdf.length > 0;
     }
     async _getFirstUnusedAddress(external) {
-        //First, check if lastReveivedAddress
+        //First, check if lastReceivedAddress
         if (external === true && this.receiveAddress) {
             const asdf = await this.hasHistory([
                 this.receiveAddress
             ]);
-            if (asdf === false) {
-                console.log("Receive address no need to change");
-                return this.receiveAddress;
-            }
+            if (asdf === false) return this.receiveAddress;
+        }
+        if (external === false && this.changeAddress) {
+            const asdf = await this.hasHistory([
+                this.changeAddress
+            ]);
+            if (asdf === false) return this.changeAddress;
         }
         const addresses = this.getAddresses();
         //even addresses are external, odd address are internal/changes
@@ -460,10 +477,10 @@ class $bf36305bcbc0cb23$var$Wallet {
             if (external && counter % 2 !== 0) continue;
             const address = addresses[counter];
             //If an address has tenth of thousands of transactions, getHistory will throw an exception
-            const asdf = await this.hasHistory([
+            const hasHistory = await this.hasHistory([
                 address
             ]);
-            if (asdf === false) {
+            if (hasHistory === false) {
                 if (external === true) this.receiveAddress = address;
                 return address;
             }
@@ -504,75 +521,11 @@ class $bf36305bcbc0cb23$var$Wallet {
     }
     async send(options) {
         const { amount: amount , assetName: assetName , toAddress: toAddress  } = options;
+        const changeAddress = await this.getChangeAddress();
         //Validation
         if (!toAddress) throw Error("Wallet.send  toAddress is mandatory");
         if (!amount) throw Error("Wallet.send  amount is mandatory");
-        if (assetName && assetName !== "RVN") return $827163bad133a0dc$export$89db4734f6c919c4(this.rpc, this.addressObjects, toAddress, amount, assetName, this.network);
-        else return this._sendRavencoin(toAddress, amount);
-    }
-    async _sendRavencoin(toAddress, amount) {
-        if (amount < 0) throw Error("Amount cannot be negative");
-        if (!toAddress) throw Error("toAddress seems invalid");
-        const addresses = this.getAddresses();
-        const sendResult = {
-            transactionId: "",
-            debug: {}
-        };
-        //Add Ravencoin as Network to BITCORE
-        //@ts-ignore
-        const d = $4aiOY$coininfo.ravencoin.main.toBitcore();
-        d.name = "ravencoin";
-        d.alias = "RVN";
-        $4aiOY$bitcorelib.Networks.add(d);
-        //According to the source file bitcore.Networks.get has two arguments, the second argument keys is OPTIONAL
-        //The TypescriptTypes says that the second arguments is mandatory, so ignore that
-        //@ts-ignore
-        const ravencoin = $4aiOY$bitcorelib.Networks.get("RVN");
-        //GET UNSPET OUTPUTS (UTXO)
-        //Configure RPC bridge
-        const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, [
-            {
-                addresses: addresses
-            }
-        ]);
-        if (balance.balance) {
-            const b = balance.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
-            if (b < amount) throw Error("Not enough money, " + b);
-        }
-        //GET UNSPENT TRANSACTION OUTPUTS
-        let allUnspent = await this.getUTXOs();
-        const mempool = await $30fffeab88bbc1c2$export$6bbaa6939a98b630(this.rpc);
-        //Filter out UTXOs currently in mempool
-        allUnspent = allUnspent.filter((UTXO)=>$827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) === false);
-        //GET ENOUGH UTXOs FOR THIS TRANSACTION
-        const unspent = $827163bad133a0dc$export$aef5e6c96bd29914(allUnspent, amount + 1 /*to cover the fee*/ );
-        if (unspent.length === 0) throw Error("No unspent transactions outputs");
-        console.log("Will use", unspent.length, "UTXO to send", amount);
-        let amo = 0;
-        unspent.map((utxo)=>amo += utxo.satoshis / 1e8);
-        console.log("Amount of UTXO", amo);
-        const transaction = new $4aiOY$bitcorelib.Transaction();
-        const utxoObjects = unspent.map((u)=>new $4aiOY$bitcorelib.Transaction.UnspentOutput(u));
-        const changeAddress = await this._getFirstUnusedAddress(false);
-        const privateKeys = utxoObjects.map((utxo)=>{
-            const addy = utxo.address.toString();
-            const key = this.getPrivateKeyByAddress(addy);
-            const privateKey = new $4aiOY$bitcorelib.PrivateKey(key);
-            return privateKey;
-        });
-        transaction.from(utxoObjects);
-        transaction.to(toAddress, amount * (0, $de29b860155088a6$export$ffff6aea08fd9487));
-        transaction.change(changeAddress);
-        //UPDATE FEE
-        transaction.fee(transaction.getFee() * 100);
-        sendResult.debug.fee = transaction.getFee() * 100;
-        console.log("OK want to send", amount, "has got", amo, "and fee is", transaction.getFee() / 1e8);
-        transaction.sign(privateKeys);
-        const id = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).sendrawtransaction, [
-            transaction.serialize()
-        ]);
-        sendResult.transactionId = id;
-        return sendResult;
+        return $827163bad133a0dc$export$89db4734f6c919c4(this.rpc, this.addressObjects, toAddress, amount, assetName, this.network, changeAddress);
     }
     async getAssets() {
         const includeAssets = true;

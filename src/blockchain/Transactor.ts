@@ -5,6 +5,7 @@ import {
   IVout,
   IVout_when_creating_transactions,
   RPCType,
+  TPrivateKey,
 } from "../Types";
 import { sign } from "@ravenrebels/ravencoin-sign-transaction";
 import * as blockchain from "./blockchain";
@@ -18,13 +19,14 @@ import {
 } from "../Errors";
 
 interface IInternalSendIProp {
-  fromAddressObjects: Array<IAddressMetaData>;
   amount: number;
   assetName: string;
-  toAddress: string;
-  rpc: RPCType;
-  readOnly?: boolean;
+  changeAddress: string;
+  fromAddressObjects: Array<IAddressMetaData>;
   network: "rvn" | "rvn-test";
+  readOnly?: boolean;
+  rpc: RPCType;
+  toAddress: string;
 }
 
 async function isValidAddress(rpc: RPCType, address: string) {
@@ -69,14 +71,35 @@ async function getFee(
   return fee * Math.max(1, size);
 }
 
-async function _send(options: IInternalSendIProp): Promise<ISendResult> {
-  const { amount, assetName, fromAddressObjects, network, toAddress, rpc } =
-    options;
-
+function getDefaultSendResult() {
   const sendResult: ISendResult = {
     transactionId: "undefined",
-    debug: {},
+    debug: {
+      assetName: "",
+      assetUTXOs: [],
+      fee: 0,
+      inputs: [],
+      outputs: null,
+      rvnChangeAmount: 0,
+      rvnUTXOs: [],
+      unspentRVNAmount: "",
+      rvnAmount: 0,
+    },
   };
+  return sendResult;
+}
+async function _send(options: IInternalSendIProp): Promise<ISendResult> {
+  const {
+    amount,
+    assetName,
+    changeAddress,
+    fromAddressObjects,
+    network,
+    toAddress,
+    rpc,
+  } = options;
+
+  const sendResult = getDefaultSendResult();
   const MAX_FEE = 4;
 
   const isAssetTransfer = assetName !== "RVN";
@@ -106,10 +129,10 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
     }
   }
 
-  //TODO change addresses should be checked with the blockchain,
-  //find first unused change address
-  const ravencoinChangeAddress = addresses[1];
-  const assetChangeAddress = addresses[3];
+  const ravencoinChangeAddress = changeAddress;
+  const assetChangeAddress = changeAddress;
+
+  console.log("Will send", assetName, "and use change address", changeAddress);
 
   let allRavencoinUTXOs = await blockchain.getRavenUnspentTransactionOutputs(
     rpc,
@@ -153,6 +176,8 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   const inputs = blockchain.convertUTXOsToVOUT(enoughRavencoinUTXOs);
   const outputs: any = {};
   //Add asset inputs
+
+  sendResult.debug.assetUTXOs = [] as Array<IUTXO>;
   if (isAssetTransfer === true) {
     const assetUTXOs = await addAssetInputsAndOutputs(
       rpc,
@@ -190,9 +215,7 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
 
   sendResult.debug.rawUnsignedTransaction = raw;
   //OK lets find the private keys (WIF) for input addresses
-  type TPrivateKey = {
-    [key: string]: string;
-  };
+ 
   const privateKeys: TPrivateKey = {};
   inputs.map(function (input: IVout_when_creating_transactions) {
     const addy = input.address;
@@ -203,7 +226,15 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
   });
   sendResult.debug.privateKeys = privateKeys;
 
-  const UTXOs = sendResult.debug.assetUTXOs.concat(enoughRavencoinUTXOs);
+  let UTXOs: Array<IUTXO> = [];
+  if (enoughRavencoinUTXOs) {
+    UTXOs = UTXOs.concat(enoughRavencoinUTXOs);
+  }
+
+  if (sendResult.debug.assetUTXOs) {
+    UTXOs = UTXOs.concat(sendResult.debug.assetUTXOs);
+  }
+
   const signedTransaction = sign(network, raw, UTXOs, privateKeys);
   sendResult.debug.signedTransaction = signedTransaction;
 
@@ -222,7 +253,7 @@ async function addAssetInputsAndOutputs(
   outputs: any,
   toAddress: string,
   assetChangeAddress: string
-) {
+): Promise<Array<IUTXO>> {
   let assetUTXOs = await blockchain.getAssetUnspentTransactionOutputs(
     rpc,
     addresses,
@@ -271,7 +302,8 @@ export async function send(
   toAddress: string,
   amount: number,
   assetName: string,
-  network: "rvn" | "rvn-test"
+  network: "rvn" | "rvn-test",
+  changeAddress: string
 ) {
   return _send({
     rpc,
@@ -280,6 +312,7 @@ export async function send(
     amount,
     assetName,
     network,
+    changeAddress,
   });
 }
 
