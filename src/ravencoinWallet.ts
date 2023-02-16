@@ -184,7 +184,8 @@ class Wallet {
         this.addressObjects,
         toAddress,
         amount,
-        assetName
+        assetName,
+        this.network,
       );
     } else {
       return this._sendRavencoin(toAddress, amount);

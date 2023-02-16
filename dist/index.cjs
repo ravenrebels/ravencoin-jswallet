@@ -216,7 +216,7 @@ function $827163bad133a0dc$var$sumOfUTXOs(UTXOs) {
     return fee * Math.max(1, size);
 }
 async function $827163bad133a0dc$var$_send(options) {
-    const { amount: amount , assetName: assetName , fromAddressObjects: fromAddressObjects , toAddress: toAddress , rpc: rpc  } = options;
+    const { amount: amount , assetName: assetName , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
     const sendResult = {
         transactionId: "undefined",
         debug: {}
@@ -280,19 +280,8 @@ async function $827163bad133a0dc$var$_send(options) {
         if (addressObject) privateKeys[addy] = addressObject.WIF;
     });
     sendResult.debug.privateKeys = privateKeys;
-    //Sign the transaction
-    /*
-  const keys: Array<string> = Object.values(privateKeys);
-  const signedTransactionPromise = blockchain.signRawTransaction(
-    rpc,
-    raw,
-    keys
-  );
-  signedTransactionPromise.catch((e: any) => {
-    console.dir(e);
-  });
-*/ const UTXOs = sendResult.debug.assetUTXOs.concat(enoughRavencoinUTXOs);
-    const signedTransaction = (0, $4aiOY$ravenrebelsravencoinsigntransaction.sign)(raw, UTXOs, privateKeys);
+    const UTXOs = sendResult.debug.assetUTXOs.concat(enoughRavencoinUTXOs);
+    const signedTransaction = (0, $4aiOY$ravenrebelsravencoinsigntransaction.sign)(network, raw, UTXOs, privateKeys);
     sendResult.debug.signedTransaction = signedTransaction;
     const txid = await $30fffeab88bbc1c2$export$4e309754b4830e29(rpc, signedTransaction);
     sendResult.transactionId = txid;
@@ -325,13 +314,14 @@ function $827163bad133a0dc$var$getTwoDecimalTrunc(num) {
     //We want it to be 77755.96
     return Math.trunc(num * 100) / 100;
 }
-async function $827163bad133a0dc$export$89db4734f6c919c4(rpc, fromAddressObjects, toAddress, amount, assetName) {
+async function $827163bad133a0dc$export$89db4734f6c919c4(rpc, fromAddressObjects, toAddress, amount, assetName, network) {
     return $827163bad133a0dc$var$_send({
         rpc: rpc,
         fromAddressObjects: fromAddressObjects,
         toAddress: toAddress,
         amount: amount,
-        assetName: assetName
+        assetName: assetName,
+        network: network
     });
 }
 function $827163bad133a0dc$export$aef5e6c96bd29914(utxos, amount) {
@@ -517,7 +507,7 @@ class $bf36305bcbc0cb23$var$Wallet {
         //Validation
         if (!toAddress) throw Error("Wallet.send  toAddress is mandatory");
         if (!amount) throw Error("Wallet.send  amount is mandatory");
-        if (assetName && assetName !== "RVN") return $827163bad133a0dc$export$89db4734f6c919c4(this.rpc, this.addressObjects, toAddress, amount, assetName);
+        if (assetName && assetName !== "RVN") return $827163bad133a0dc$export$89db4734f6c919c4(this.rpc, this.addressObjects, toAddress, amount, assetName, this.network);
         else return this._sendRavencoin(toAddress, amount);
     }
     async _sendRavencoin(toAddress, amount) {

@@ -24,6 +24,7 @@ interface IInternalSendIProp {
   toAddress: string;
   rpc: RPCType;
   readOnly?: boolean;
+  network: "rvn" | "rvn-test";
 }
 
 async function isValidAddress(rpc: RPCType, address: string) {
@@ -69,7 +70,8 @@ async function getFee(
 }
 
 async function _send(options: IInternalSendIProp): Promise<ISendResult> {
-  const { amount, assetName, fromAddressObjects, toAddress, rpc } = options;
+  const { amount, assetName, fromAddressObjects, network, toAddress, rpc } =
+    options;
 
   const sendResult: ISendResult = {
     transactionId: "undefined",
@@ -200,21 +202,9 @@ async function _send(options: IInternalSendIProp): Promise<ISendResult> {
     }
   });
   sendResult.debug.privateKeys = privateKeys;
-  //Sign the transaction
-  /*
-  const keys: Array<string> = Object.values(privateKeys);
-  const signedTransactionPromise = blockchain.signRawTransaction(
-    rpc,
-    raw,
-    keys
-  );
-  signedTransactionPromise.catch((e: any) => {
-    console.dir(e);
-  });
-*/
 
   const UTXOs = sendResult.debug.assetUTXOs.concat(enoughRavencoinUTXOs);
-  const signedTransaction = sign(raw, UTXOs, privateKeys);
+  const signedTransaction = sign(network, raw, UTXOs, privateKeys);
   sendResult.debug.signedTransaction = signedTransaction;
 
   const txid = await blockchain.sendRawTransaction(rpc, signedTransaction);
@@ -280,7 +270,8 @@ export async function send(
   fromAddressObjects: Array<IAddressMetaData>,
   toAddress: string,
   amount: number,
-  assetName: string
+  assetName: string,
+  network: "rvn" | "rvn-test"
 ) {
   return _send({
     rpc,
@@ -288,6 +279,7 @@ export async function send(
     toAddress,
     amount,
     assetName,
+    network,
   });
 }
 
