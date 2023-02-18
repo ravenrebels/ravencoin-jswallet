@@ -3,6 +3,7 @@ interface ISend {
     toAddress: string;
     amount: number;
 }
+type ChainType = "rvn" | "rvn-test" | "evr" | "evr-test";
 interface IAddressDelta {
     assetName: string;
     satoshis: number;
@@ -72,7 +73,7 @@ interface IUTXO {
 declare class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
-    network: "rvn" | "rvn-test";
+    network: ChainType;
     addressObjects: Array<IAddressMetaData>;
     receiveAddress: string;
     changeAddress: string;
@@ -104,7 +105,7 @@ export interface IOptions {
     rpc_password?: string;
     rpc_url?: string;
     mnemonic: string;
-    network?: "rvn" | "rvn-test";
+    network?: ChainType;
 }
 
 //# sourceMappingURL=types.d.ts.map

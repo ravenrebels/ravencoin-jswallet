@@ -1,6 +1,7 @@
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
 import {
+  ChainType,
   IAddressDelta,
   IAddressMetaData,
   ISend,
@@ -20,7 +21,7 @@ const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 class Wallet {
   rpc = getRPC("anonymous", "anonymous", URL_MAINNET);
   _mnemonic = "";
-  network: "rvn" | "rvn-test" = "rvn";
+  network: ChainType = "rvn";
   addressObjects: Array<IAddressMetaData> = [];
   receiveAddress = "";
   changeAddress = "";
@@ -76,14 +77,13 @@ class Wallet {
     this._mnemonic = options.mnemonic;
     let isLast20ExternalAddressesUnused = false;
     const ACCOUNT = 0;
-    const network = options.network || "rvn";
 
     while (isLast20ExternalAddressesUnused === false) {
       const tempAddresses = [] as string[];
 
       for (let i = 0; i < 20; i++) {
         const o = RavencoinKey.getAddressPair(
-          network,
+          this.network,
           this._mnemonic,
           ACCOUNT,
           this.addressPosition
@@ -249,5 +249,5 @@ export interface IOptions {
   rpc_password?: string;
   rpc_url?: string;
   mnemonic: string;
-  network?: "rvn" | "rvn-test";
+  network?: ChainType;
 }

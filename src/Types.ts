@@ -12,7 +12,7 @@ export interface ISend {
   toAddress: string;
   amount: number;
 }
-
+export type ChainType = "rvn" | "rvn-test" | "evr" | "evr-test";
 export interface IAddressDelta {
   assetName: string;
   satoshis: number;
@@ -86,7 +86,7 @@ export interface ISendInternalProps {
   changeAddress: string;
   changeAddressAssets?: string;
   fromAddressObjects: Array<IAddressMetaData>;
-  network: "rvn" | "rvn-test";
+  network: ChainType;
   readOnly?: boolean;
   rpc: RPCType;
   toAddress: string;

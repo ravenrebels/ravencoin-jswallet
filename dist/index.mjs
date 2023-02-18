@@ -217,12 +217,9 @@ function $8a6a99603cc26764$var$getDefaultSendResult() {
 }
 async function $8a6a99603cc26764$export$89db4734f6c919c4(options) {
     const { amount: amount , assetName: assetName , baseCurrency: baseCurrency , changeAddress: changeAddress , changeAddressAssets: changeAddressAssets , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
-    console.log("ChangeAddressAssets", changeAddressAssets);
-    console.log("ChangeAddress", changeAddress);
     const sendResult = $8a6a99603cc26764$var$getDefaultSendResult();
     const MAX_FEE = 4;
     const isAssetTransfer = assetName !== baseCurrency;
-    console.log("Is asset transfer", isAssetTransfer);
     //VALIDATION
     if (await $8a6a99603cc26764$var$isValidAddress(rpc, toAddress) === false) throw new (0, $df4abebf0c223404$export$66c44d927ffead98)("Invalid address " + toAddress);
     if (amount < 0) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Cant send less than zero");
@@ -300,28 +297,18 @@ async function $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, as
     const _UTXOs = $8a6a99603cc26764$export$aef5e6c96bd29914(assetUTXOs, amount);
     const tempInputs = $de17ee1c983f5fa9$export$6a4ffba0c6186ae7(_UTXOs);
     tempInputs.map((item)=>inputs.push(item));
-    console.log("output before adding first asset", outputs);
     outputs[toAddress] = {
         transfer: {
             [assetName]: amount
         }
     };
-    console.log("output after adding first asset", outputs);
     const assetSum = $8a6a99603cc26764$var$sumOfUTXOs(_UTXOs);
     const needsChange = assetSum - amount > 0;
-    console.log("The sum of all ", assetName, "is", assetSum);
-    //Only add change address if needed
-    console.log(needsChange, "Will check if", assetSum, "minus", amount, "is larger than zero, if we need change");
-    if (needsChange) {
-        console.log("Will add change to address", changeAddressAssets);
-        outputs[changeAddressAssets] = {
-            transfer: {
-                [assetName]: assetSum - amount
-            }
-        };
-        console.log("Outputs became", outputs);
-    }
-    console.log("When about to return outputs are", outputs);
+    if (needsChange) outputs[changeAddressAssets] = {
+        transfer: {
+            [assetName]: assetSum - amount
+        }
+    };
     return _UTXOs; //Return the UTXOs used for asset transfer
 }
 function $8a6a99603cc26764$var$getTwoDecimalTrunc(num) {
@@ -430,11 +417,10 @@ class $c3676b79c37149df$var$Wallet {
         this._mnemonic = options.mnemonic;
         let isLast20ExternalAddressesUnused = false;
         const ACCOUNT = 0;
-        const network = options.network || "rvn";
         while(isLast20ExternalAddressesUnused === false){
             const tempAddresses = [];
             for(let i = 0; i < 20; i++){
-                const o = (0, $93qLg$ravenrebelsravencoinkey).getAddressPair(network, this._mnemonic, ACCOUNT, this.addressPosition);
+                const o = (0, $93qLg$ravenrebelsravencoinkey).getAddressPair(this.network, this._mnemonic, ACCOUNT, this.addressPosition);
                 this.addressObjects.push(o.external);
                 this.addressObjects.push(o.internal);
                 this.addressPosition++;

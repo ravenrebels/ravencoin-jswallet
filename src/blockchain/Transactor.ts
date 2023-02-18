@@ -19,7 +19,6 @@ import {
   ValidationError,
 } from "../Errors";
 
-
 async function isValidAddress(rpc: RPCType, address: string) {
   const obj = await blockchain.validateAddress(rpc, address);
   return obj.isvalid === true;
@@ -92,14 +91,11 @@ export async function send(options: ISendInternalProps): Promise<ISendResult> {
     rpc,
   } = options;
 
-  console.log("ChangeAddressAssets", changeAddressAssets);
-  console.log("ChangeAddress", changeAddress);
   const sendResult = getDefaultSendResult();
   const MAX_FEE = 4;
 
   const isAssetTransfer = assetName !== baseCurrency;
 
-  console.log("Is asset transfer", isAssetTransfer);
   //VALIDATION
   if ((await isValidAddress(rpc, toAddress)) === false) {
     throw new InvalidAddressError("Invalid address " + toAddress);
@@ -273,37 +269,22 @@ async function addAssetInputsAndOutputs(
   const tempInputs = blockchain.convertUTXOsToVOUT(_UTXOs);
   tempInputs.map((item) => inputs.push(item));
 
-  console.log("output before adding first asset", outputs);
   outputs[toAddress] = {
     transfer: {
       [assetName]: amount,
     },
   };
-  console.log("output after adding first asset", outputs);
 
   const assetSum = sumOfUTXOs(_UTXOs);
   const needsChange = assetSum - amount > 0;
-  console.log("The sum of all ", assetName, "is", assetSum);
-  //Only add change address if needed
-  console.log(
-    needsChange,
-    "Will check if",
-    assetSum,
-    "minus",
-    amount,
-    "is larger than zero, if we need change"
-  );
 
   if (needsChange) {
-    console.log("Will add change to address", changeAddressAssets);
     outputs[changeAddressAssets] = {
       transfer: {
         [assetName]: assetSum - amount,
       },
     };
-    console.log("Outputs became", outputs);
   }
-  console.log("When about to return outputs are", outputs);
   return _UTXOs; //Return the UTXOs used for asset transfer
 }
 
@@ -313,33 +294,6 @@ function getTwoDecimalTrunc(num: number) {
   //We want it to be 77755.96
   return Math.trunc(num * 100) / 100;
 }
-/*
-//TODO why on earth do we send and call _send? merge to one please
-//TODO and for the love of the gods, replace many args with an option argument please
-export async function send(
-  rpc: RPCType,
-  fromAddressObjects: Array<IAddressMetaData>,
-  toAddress: string,
-  amount: number,
-  assetName: string,
-  network: "rvn" | "rvn-test",
-  changeAddress: string,
-  changeAddressAssets: string,
-  baseCurrency: string
-) {
-  return _send({
-    amount,
-    assetName,
-    baseCurrency,
-    changeAddress,
-    changeAddressAssets,
-    fromAddressObjects,
-    network,
-    rpc,
-    toAddress,
-  });
-}
-*/
 export function getEnoughUTXOs(
   utxos: Array<IUTXO>,
   amount: number
