@@ -52,6 +52,7 @@ await wallet.send({
   //Send 100 RVN
   toAddress: "mhBKhj5FxzBu1h8U6pSB16pwmjP7xo4ehG",
   amount: 100,
+  assetName:"RVN",
 });
 
 //Send 313 BUTTER tokens to Barry Crump on https://testnet.ting.finance/
