@@ -70,7 +70,7 @@ interface IUTXO {
     satoshis: number;
     height: number;
 }
-declare class Wallet {
+export class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
     network: ChainType;
@@ -79,6 +79,7 @@ declare class Wallet {
     changeAddress: string;
     addressPosition: number;
     baseCurrency: string;
+    offlineMode: boolean;
     setBaseCurrency(currency: string): void;
     getBaseCurrency(): string;
     getAddressObjects(): IAddressMetaData[];
@@ -100,12 +101,14 @@ declare const _default: {
 };
 export default _default;
 export function createInstance(options: IOptions): Promise<Wallet>;
+export function getBaseCurrencyByNetwork(network: ChainType): string;
 export interface IOptions {
+    mnemonic: string;
+    network?: ChainType;
     rpc_username?: string;
     rpc_password?: string;
     rpc_url?: string;
-    mnemonic: string;
-    network?: ChainType;
+    offlineMode?: boolean;
 }
 
 //# sourceMappingURL=types.d.ts.map

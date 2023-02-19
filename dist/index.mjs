@@ -372,9 +372,7 @@ function $8a6a99603cc26764$export$9ffd76c05265a057(mempool, UTXO) {
 
 const $c3676b79c37149df$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const $c3676b79c37149df$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
-//Avoid singleton (anti-pattern)
-//Meaning multiple instances of the wallet must be able to co-exist
-class $c3676b79c37149df$var$Wallet {
+class $c3676b79c37149df$export$bcca3ea514774656 {
     rpc = (0, $93qLg$getRPC)("anonymous", "anonymous", $c3676b79c37149df$var$URL_MAINNET);
     _mnemonic = "";
     network = "rvn";
@@ -383,6 +381,7 @@ class $c3676b79c37149df$var$Wallet {
     changeAddress = "";
     addressPosition = 0;
     baseCurrency = "RVN";
+    offlineMode = false;
     setBaseCurrency(currency) {
         this.baseCurrency = currency;
     }
@@ -404,11 +403,15 @@ class $c3676b79c37149df$var$Wallet {
         let url = $c3676b79c37149df$var$URL_MAINNET;
         //VALIDATION
         if (!options) throw Error("option argument is mandatory");
+        if (options.offlineMode === true) this.offlineMode = true;
         if (!options.mnemonic) throw Error("option.mnemonic is mandatory");
         url = options.rpc_url || url;
         password = options.rpc_password || url;
         username = options.rpc_username || url;
-        if (options.network) this.network = options.network;
+        if (options.network) {
+            this.network = options.network;
+            this.setBaseCurrency($c3676b79c37149df$export$af0c167f1aa2328f(options.network));
+        }
         if (options.network === "rvn-test" && !options.rpc_url) url = $c3676b79c37149df$var$URL_TESTNET;
         this.rpc = (0, $93qLg$getRPC)(username, password, url);
         //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
@@ -426,7 +429,9 @@ class $c3676b79c37149df$var$Wallet {
                 this.addressPosition++;
                 tempAddresses.push(o.external.address + "");
             }
-            //If no history, break
+            if (this.offlineMode === true) //BREAK generation of addresses and do NOT check history on the network
+            isLast20ExternalAddressesUnused = true;
+            else //If no history, break
             isLast20ExternalAddressesUnused = false === await this.hasHistory(tempAddresses);
         }
     }
@@ -559,11 +564,20 @@ var $c3676b79c37149df$export$2e2bcd8739ae039 = {
     createInstance: $c3676b79c37149df$export$99152e8d49ca4e7d
 };
 async function $c3676b79c37149df$export$99152e8d49ca4e7d(options) {
-    const wallet = new $c3676b79c37149df$var$Wallet();
+    const wallet = new $c3676b79c37149df$export$bcca3ea514774656();
     await wallet.init(options);
     return wallet;
 }
+function $c3676b79c37149df$export$af0c167f1aa2328f(network) {
+    const map = {
+        evr: "EVR",
+        "evr-test": "EVR",
+        rvn: "RVN",
+        "rvn-test": "RVN"
+    };
+    return map[network];
+}
 
 
-export {$c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
+export {$c3676b79c37149df$export$bcca3ea514774656 as Wallet, $c3676b79c37149df$export$af0c167f1aa2328f as getBaseCurrencyByNetwork, $c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
 //# sourceMappingURL=index.mjs.map

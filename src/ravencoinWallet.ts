@@ -18,7 +18,7 @@ const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 //Avoid singleton (anti-pattern)
 //Meaning multiple instances of the wallet must be able to co-exist
 
-class Wallet {
+export class Wallet {
   rpc = getRPC("anonymous", "anonymous", URL_MAINNET);
   _mnemonic = "";
   network: ChainType = "rvn";
@@ -27,7 +27,7 @@ class Wallet {
   changeAddress = "";
   addressPosition = 0;
   baseCurrency = "RVN"; //Default is RVN but it could be EVR
-
+  offlineMode = false;
   setBaseCurrency(currency: string) {
     this.baseCurrency = currency;
   }
@@ -55,6 +55,9 @@ class Wallet {
       throw Error("option argument is mandatory");
     }
 
+    if (options.offlineMode === true) {
+      this.offlineMode = true;
+    }
     if (!options.mnemonic) {
       throw Error("option.mnemonic is mandatory");
     }
@@ -65,6 +68,7 @@ class Wallet {
 
     if (options.network) {
       this.network = options.network;
+      this.setBaseCurrency(getBaseCurrencyByNetwork(options.network));
     }
     if (options.network === "rvn-test" && !options.rpc_url) {
       url = URL_TESTNET;
@@ -94,9 +98,15 @@ class Wallet {
 
         tempAddresses.push(o.external.address + "");
       }
-      //If no history, break
-      isLast20ExternalAddressesUnused =
-        false === (await this.hasHistory(tempAddresses));
+
+      if (this.offlineMode === true) {
+        //BREAK generation of addresses and do NOT check history on the network
+        isLast20ExternalAddressesUnused = true;
+      } else {
+        //If no history, break
+        isLast20ExternalAddressesUnused =
+          false === (await this.hasHistory(tempAddresses));
+      }
     }
   }
   async hasHistory(addresses: Array<string>): Promise<boolean> {
@@ -238,16 +248,27 @@ class Wallet {
 export default {
   createInstance,
 };
-export async function createInstance(options: IOptions) {
+export async function createInstance(options: IOptions): Promise<Wallet> {
   const wallet = new Wallet();
   await wallet.init(options);
   return wallet;
 }
 
+export function getBaseCurrencyByNetwork(network: ChainType): string {
+  const map = {
+    evr: "EVR",
+    "evr-test": "EVR",
+    rvn: "RVN",
+    "rvn-test": "RVN",
+  };
+  return map[network];
+}
 export interface IOptions {
+  mnemonic: string;
+  network?: ChainType;
   rpc_username?: string;
   rpc_password?: string;
   rpc_url?: string;
-  mnemonic: string;
-  network?: ChainType;
+
+  offlineMode?: boolean;
 }
