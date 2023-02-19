@@ -192,7 +192,12 @@ export class Wallet {
   }
 
   async send(options: ISend): Promise<ISendResult> {
-    const { amount, assetName, toAddress } = options;
+    const { amount, toAddress } = options;
+    let { assetName } = options;
+
+    if (!assetName) {
+      assetName = this.baseCurrency;
+    }
     const changeAddress = await this.getChangeAddress();
 
     //Find the first change address after change address (emergency take the first).
