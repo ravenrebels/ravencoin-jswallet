@@ -509,7 +509,9 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         return f.WIF;
     }
     async send(options) {
-        const { amount: amount , assetName: assetName , toAddress: toAddress  } = options;
+        const { amount: amount , toAddress: toAddress  } = options;
+        let { assetName: assetName  } = options;
+        if (!assetName) assetName = this.baseCurrency;
         const changeAddress = await this.getChangeAddress();
         //Find the first change address after change address (emergency take the first).
         const addresses = this.getAddresses();
