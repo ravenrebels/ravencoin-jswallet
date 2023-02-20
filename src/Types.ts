@@ -8,7 +8,7 @@ export interface ISettings {
   headline: string;
 }
 export interface ISend {
-  assetName: string;
+  assetName?: string;
   toAddress: string;
   amount: number;
 }
