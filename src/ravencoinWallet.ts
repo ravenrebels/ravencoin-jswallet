@@ -208,7 +208,7 @@ export class Wallet {
     }
     const changeAddressAssets = addresses[index + 2];
 
-    console.log("Change address for assets became", changeAddressAssets);
+ 
     //Validation
     if (!toAddress) {
       throw Error("Wallet.send  toAddress is mandatory");

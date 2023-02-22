@@ -534,7 +534,6 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         let index = addresses.indexOf(changeAddress);
         if (index > addresses.length) index = 1;
         const changeAddressAssets = addresses[index + 2];
-        console.log("Change address for assets became", changeAddressAssets);
         //Validation
         if (!toAddress) throw Error("Wallet.send  toAddress is mandatory");
         if (!amount) throw Error("Wallet.send amount is mandatory");
