@@ -48,6 +48,7 @@ const wallet = await RavencoinWallet.createInstance(options);
 const addy = await wallet.getReceiveAddress();
 console.log("My receive address", addy);
 
+//Send 100 RVN to Barry Crump on https://testnet.ting.finance/
 await wallet.send({
   //Send 100 RVN
   toAddress: "mhBKhj5FxzBu1h8U6pSB16pwmjP7xo4ehG",
@@ -62,10 +63,6 @@ const transactionId = await wallet.send({
   toAddress: "mhBKhj5FxzBu1h8U6pSB16pwmjP7xo4ehG",
 });
 console.log("Sending", transactionId);
-
-
-
-
 ```
 
 ## Evrmore
@@ -78,5 +75,21 @@ wallet.setBaseCurrency("EVR");
 ```
 
 ## API
+
+When you create your instance of a wallet you can specify some stuff.
+
+You can set network to be something else than RVN, for example EVR.
+
+You can specify your own RPC node URL and username/password
+
+```
+export interface IOptions {
+    mnemonic: string;
+    network?: ChainType;
+    rpc_username?: string;
+    rpc_password?: string;
+    rpc_url?: string;
+}
+```
 
 [Check the TypeScript definitions ](./dist/types.d.ts)

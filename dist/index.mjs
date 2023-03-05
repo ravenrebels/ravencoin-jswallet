@@ -1,5 +1,5 @@
-import $93qLg$ravenrebelsravencoinkey from "@ravenrebels/ravencoin-key";
 import {getRPC as $93qLg$getRPC, methods as $93qLg$methods} from "@ravenrebels/ravencoin-rpc";
+import $93qLg$ravenrebelsravencoinkey from "@ravenrebels/ravencoin-key";
 import {Buffer as $93qLg$Buffer} from "buffer";
 import {sign as $93qLg$sign} from "@ravenrebels/ravencoin-sign-transaction";
 

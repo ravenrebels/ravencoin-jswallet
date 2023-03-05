@@ -1,5 +1,5 @@
-var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 var $4aiOY$ravenrebelsravencoinrpc = require("@ravenrebels/ravencoin-rpc");
+var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 var $4aiOY$buffer = require("buffer");
 var $4aiOY$ravenrebelsravencoinsigntransaction = require("@ravenrebels/ravencoin-sign-transaction");
 
