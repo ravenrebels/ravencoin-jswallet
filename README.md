@@ -85,7 +85,7 @@ You can specify your own RPC node URL and username/password
 ```
 export interface IOptions {
     mnemonic: string;
-    network?: ChainType;
+    network?: ChainType; (that is "rvn" | "rvn-test" | "evr" | "evr-test")
     rpc_username?: string;
     rpc_password?: string;
     rpc_url?: string;
