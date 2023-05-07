@@ -114,11 +114,17 @@ export class Wallet {
     const obj = {
       addresses,
     };
-    const asdf = (await this.rpc(methods.getaddresstxids, [
+
+    const asdf = (await this.rpc(methods.getaddressbalance, [
       obj,
       includeAssets,
     ])) as any;
-    return asdf.length > 0;
+
+    //@ts-ignore
+    const hasReceived = Object.values(asdf).find(asset => asset.received > 0);
+
+    
+    return !!hasReceived;
   }
 
   async _getFirstUnusedAddress(external: boolean) {
@@ -208,7 +214,6 @@ export class Wallet {
     }
     const changeAddressAssets = addresses[index + 2];
 
- 
     //Validation
     if (!toAddress) {
       throw Error("Wallet.send  toAddress is mandatory");

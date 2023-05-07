@@ -456,11 +456,13 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         const obj = {
             addresses: addresses
         };
-        const asdf = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddresstxids, [
+        const asdf = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, [
             obj,
             includeAssets
         ]);
-        return asdf.length > 0;
+        //@ts-ignore
+        const hasReceived = Object.values(asdf).find((asset)=>asset.received > 0);
+        return !!hasReceived;
     }
     async _getFirstUnusedAddress(external) {
         //First, check if lastReceivedAddress
