@@ -80,7 +80,7 @@ When you create your instance of a wallet you can specify some stuff.
 
 You can set network to be something else than RVN, for example EVR.
 
-You can specify your own RPC node URL and username/password
+You can specify your own RPC node URL and username/password.
 
 ```
 export interface IOptions {
@@ -91,5 +91,15 @@ export interface IOptions {
     rpc_url?: string;
 }
 ```
+[Check the TypeScript definitions ](./dist/types.d.ts) for all the details
+### Run your own blockchain node
+If you want to run your own internet exposed Node, checkout our RPC proxy.
+With **RPC proxy** and **Cloudlare** you can get a secure endpoint like
+https://rpc.mydomain.com/rpc
+checkout 
+- https://github.com/ravenrebels/ravencoin-rpc-proxy
+- https://www.cloudflare.com/products/tunnel/
 
-[Check the TypeScript definitions ](./dist/types.d.ts)
+
+
+
