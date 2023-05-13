@@ -390,8 +390,9 @@ function $827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) {
 
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
 const $fdd8716063277f2b$var$WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
-async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet) {
+async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet, onlineMode) {
     const privateKey = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinkey))).getAddressByWIF(wallet.network, WIF);
+    const result = {};
     const rpc = wallet.rpc;
     const obj = {
         addresses: [
@@ -412,9 +413,13 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet) {
         obj2
     ]);
     const UTXOs = assetUTXOs.concat(baseCurrencyUTXOs);
+    result.UTXOs = UTXOs;
     console.log("UTXOS", UTXOs);
     //Create a raw transaction with ALL UTXOs
-    if (UTXOs.length === 0) return null;
+    if (UTXOs.length === 0) {
+        result.errorDescription = "Address " + privateKey.address + " does has no funds";
+        return result;
+    }
     const balanceObject = {};
     UTXOs.map((utxo)=>{
         if (!balanceObject[utxo.assetName]) balanceObject[utxo.assetName] = 0;
@@ -435,6 +440,7 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet) {
             }
         };
     });
+    result.outputs = outputs;
     console.log(outputs);
     //Convert from UTXO format ot INPUT fomat
     const inputs = UTXOs.map((utxo, index)=>{
@@ -445,8 +451,7 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet) {
        } 
        */ const input = {
             txid: utxo.txid,
-            vout: utxo.outputIndex,
-            sequence: index
+            vout: utxo.outputIndex
         };
         return input;
     });
@@ -459,9 +464,11 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet) {
         [privateKey.address]: WIF
     };
     const signedHex = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinsigntransaction))).sign(wallet.network, rawHex, UTXOs, privateKeys);
-    return rpc("sendrawtransaction", [
+    result.rawTransaction = signedHex;
+    if (onlineMode === true) result.transactionId = await rpc("sendrawtransaction", [
         signedHex
     ]);
+    return result;
 }
 
 
@@ -483,9 +490,17 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
     getBaseCurrency() {
         return this.baseCurrency;
     }
-    sweep(WIF) {
+    /**
+   * Sweeping a private key means to send all the funds the address holds to your your wallet.
+   * The private key you sweep do not become a part of your wallet.
+   *
+   * NOTE: the address you sweep needs to cointain enough RVN to pay for the transaction
+   *
+   * @param WIF the private key of the address that you want move funds from
+   * @returns either a string, that is the transaction id or null if there were no funds to send
+   */ sweep(WIF, onlineMode) {
         const wallet = this;
-        return (0, $fdd8716063277f2b$export$322a62cff28f560a)(WIF, wallet);
+        return (0, $fdd8716063277f2b$export$322a62cff28f560a)(WIF, wallet, onlineMode);
     }
     getAddressObjects() {
         return this.addressObjects;

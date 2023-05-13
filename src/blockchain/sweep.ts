@@ -2,6 +2,7 @@ import RavencoinKey, { Network } from "@ravenrebels/ravencoin-key";
 import Signer from "@ravenrebels/ravencoin-sign-transaction";
 
 import { Wallet } from "../ravencoinWallet";
+import { IInput, SweepResult } from "../Types";
 
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
 const WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
@@ -14,10 +15,12 @@ const WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
  */
 export async function sweep(
   WIF: string,
-  wallet: Wallet
-): Promise<string | null> {
+  wallet: Wallet,
+  onlineMode: boolean
+): Promise<SweepResult> {
   const privateKey = RavencoinKey.getAddressByWIF(wallet.network, WIF);
 
+  const result: SweepResult = {};
   const rpc = wallet.rpc;
   const obj = {
     addresses: [privateKey.address],
@@ -31,11 +34,14 @@ export async function sweep(
 
   const assetUTXOs = await rpc("getaddressutxos", [obj2]);
   const UTXOs = assetUTXOs.concat(baseCurrencyUTXOs);
+  result.UTXOs = UTXOs;
   console.log("UTXOS", UTXOs);
   //Create a raw transaction with ALL UTXOs
 
   if (UTXOs.length === 0) {
-    return null;
+    result.errorDescription =
+      "Address " + privateKey.address + " does has no funds";
+    return result;
   }
   const balanceObject = {};
 
@@ -69,11 +75,11 @@ export async function sweep(
       };
     }
   });
-
+  result.outputs = outputs;
   console.log(outputs);
 
   //Convert from UTXO format ot INPUT fomat
-  const inputs = UTXOs.map((utxo, index) => {
+  const inputs: Array<IInput> = UTXOs.map((utxo, index) => {
     /*   {
          "txid":"id",                      (string, required) The transaction id
          "vout":n,                         (number, required) The output number
@@ -81,10 +87,9 @@ export async function sweep(
        } 
        */
 
-    const input = {
+    const input: IInput = {
       txid: utxo.txid,
       vout: utxo.outputIndex,
-      sequence: index,
     };
     return input;
   });
@@ -95,5 +100,10 @@ export async function sweep(
     [privateKey.address]: WIF,
   };
   const signedHex = Signer.sign(wallet.network, rawHex, UTXOs, privateKeys);
-  return rpc("sendrawtransaction", [signedHex]);
+  result.rawTransaction = signedHex;
+  if (onlineMode === true) {
+    result.transactionId = await rpc("sendrawtransaction", [signedHex]);
+  }
+
+  return result;
 }

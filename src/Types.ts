@@ -22,6 +22,17 @@ export interface IAddressDelta {
   height: number;
   address: string;
 }
+
+export interface SweepResult {
+  errorDescription?: string;
+  fromAddress?: string;
+  inputs?: Array<IInput>;
+  outputs?: any;
+  rawTransaction?: string;
+  toAddresses?: string[];
+  transactionId?: string;
+  UTXOs?: Array<IUTXO>;
+}
 export type TPrivateKey = {
   [key: string]: string;
 };
@@ -182,7 +193,7 @@ export interface IConfig {
 export interface IInput {
   txid: string;
   vout: number;
-  address: string;
+  address?: string;
 }
 
 export type RPCType = (arg1: string, arg2: any[]) => any;

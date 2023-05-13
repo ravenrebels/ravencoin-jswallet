@@ -13,6 +13,16 @@ interface IAddressDelta {
     height: number;
     address: string;
 }
+interface SweepResult {
+    errorDescription?: string;
+    fromAddress?: string;
+    inputs?: Array<IInput>;
+    outputs?: any;
+    rawTransaction?: string;
+    toAddresses?: string[];
+    transactionId?: string;
+    UTXOs?: Array<IUTXO>;
+}
 type TPrivateKey = {
     [key: string]: string;
 };
@@ -55,6 +65,11 @@ interface IAddressMetaData {
     path: string;
     privateKey: string;
 }
+interface IInput {
+    txid: string;
+    vout: number;
+    address?: string;
+}
 interface IAddressMetaData {
     address: string;
     WIF: string;
@@ -82,7 +97,16 @@ export class Wallet {
     offlineMode: boolean;
     setBaseCurrency(currency: string): void;
     getBaseCurrency(): string;
-    sweep(WIF: string): Promise<string>;
+    /**
+     * Sweeping a private key means to send all the funds the address holds to your your wallet.
+     * The private key you sweep do not become a part of your wallet.
+     *
+     * NOTE: the address you sweep needs to cointain enough RVN to pay for the transaction
+     *
+     * @param WIF the private key of the address that you want move funds from
+     * @returns either a string, that is the transaction id or null if there were no funds to send
+     */
+    sweep(WIF: string, onlineMode: boolean): Promise<SweepResult>;
     getAddressObjects(): IAddressMetaData[];
     getAddresses(): Array<string>;
     init(options: IOptions): Promise<void>;
