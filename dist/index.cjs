@@ -386,6 +386,85 @@ function $827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) {
 }
 
 
+
+
+//sight rate burger maid melody slogan attitude gas account sick awful hammer
+const $fdd8716063277f2b$var$WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
+async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet) {
+    const privateKey = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinkey))).getAddressByWIF(wallet.network, WIF);
+    const rpc = wallet.rpc;
+    const obj = {
+        addresses: [
+            privateKey.address
+        ]
+    };
+    const baseCurrencyUTXOs = await rpc("getaddressutxos", [
+        obj
+    ]);
+    console.log("Processing address", privateKey.address);
+    const obj2 = {
+        addresses: [
+            privateKey.address
+        ],
+        assetName: "*"
+    };
+    const assetUTXOs = await rpc("getaddressutxos", [
+        obj2
+    ]);
+    const UTXOs = assetUTXOs.concat(baseCurrencyUTXOs);
+    console.log("UTXOS", UTXOs);
+    //Create a raw transaction with ALL UTXOs
+    if (UTXOs.length === 0) return null;
+    const balanceObject = {};
+    UTXOs.map((utxo)=>{
+        if (!balanceObject[utxo.assetName]) balanceObject[utxo.assetName] = 0;
+        balanceObject[utxo.assetName] += utxo.satoshis;
+    });
+    const keys = Object.keys(balanceObject);
+    console.log("we need", keys.length, "addresses");
+    //Start simple, get the first addreses from the wallet
+    const outputs = {};
+    const fixedFee = 0.02; // should do for now
+    keys.map((assetName, index)=>{
+        const address = wallet.getAddresses()[index];
+        const amount = balanceObject[assetName] / 1e8;
+        if (assetName === wallet.baseCurrency) outputs[address] = amount - fixedFee;
+        else outputs[address] = {
+            transfer: {
+                [assetName]: amount
+            }
+        };
+    });
+    console.log(outputs);
+    //Convert from UTXO format ot INPUT fomat
+    const inputs = UTXOs.map((utxo, index)=>{
+        /*   {
+         "txid":"id",                      (string, required) The transaction id
+         "vout":n,                         (number, required) The output number
+         "sequence":n                      (number, optional) The sequence number
+       } 
+       */ const input = {
+            txid: utxo.txid,
+            vout: utxo.outputIndex,
+            sequence: index
+        };
+        return input;
+    });
+    //Create raw transaction
+    const rawHex = await rpc("createrawtransaction", [
+        inputs,
+        outputs
+    ]);
+    const privateKeys = {
+        [privateKey.address]: WIF
+    };
+    const signedHex = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinsigntransaction))).sign(wallet.network, rawHex, UTXOs, privateKeys);
+    return rpc("sendrawtransaction", [
+        signedHex
+    ]);
+}
+
+
 const $bf36305bcbc0cb23$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const $bf36305bcbc0cb23$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 class $bf36305bcbc0cb23$export$bcca3ea514774656 {
@@ -403,6 +482,10 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
     }
     getBaseCurrency() {
         return this.baseCurrency;
+    }
+    sweep(WIF) {
+        const wallet = this;
+        return (0, $fdd8716063277f2b$export$322a62cff28f560a)(WIF, wallet);
     }
     getAddressObjects() {
         return this.addressObjects;

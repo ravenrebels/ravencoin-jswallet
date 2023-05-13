@@ -7,13 +7,16 @@
   "types": "dist/types.d.ts",
   "scripts": {
     "build": "parcel build ./src/ravencoinWallet.ts",
-    "test": "jest"
+    "test": "jest",
+    "test:sweep": "jest ./src/sweep.test.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ravenrebels/ravencoin-jswallet.git"
   },
-  "keywords": ["Ravencoin"],
+  "keywords": [
+    "Ravencoin"
+  ],
   "author": "",
   "license": "MIT",
   "bugs": {

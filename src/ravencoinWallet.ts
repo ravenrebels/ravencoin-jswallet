@@ -12,6 +12,8 @@ import { ONE_FULL_COIN } from "./contants";
 
 import * as Transactor from "./blockchain/Transactor";
 
+import { sweep } from "./blockchain/sweep";
+
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 
@@ -34,7 +36,10 @@ export class Wallet {
   getBaseCurrency() {
     return this.baseCurrency;
   }
-
+  sweep(WIF: string) {
+    const wallet = this;
+    return sweep(WIF, wallet);
+  }
   getAddressObjects() {
     return this.addressObjects;
   }
@@ -121,9 +126,8 @@ export class Wallet {
     ])) as any;
 
     //@ts-ignore
-    const hasReceived = Object.values(asdf).find(asset => asset.received > 0);
+    const hasReceived = Object.values(asdf).find((asset) => asset.received > 0);
 
-    
     return !!hasReceived;
   }
 

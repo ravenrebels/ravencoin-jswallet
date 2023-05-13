@@ -82,6 +82,7 @@ export class Wallet {
     offlineMode: boolean;
     setBaseCurrency(currency: string): void;
     getBaseCurrency(): string;
+    sweep(WIF: string): Promise<string>;
     getAddressObjects(): IAddressMetaData[];
     getAddresses(): Array<string>;
     init(options: IOptions): Promise<void>;
@@ -91,7 +92,7 @@ export class Wallet {
     getReceiveAddress(): Promise<string>;
     getChangeAddress(): Promise<string>;
     getUTXOs(): Promise<any>;
-    getPrivateKeyByAddress(address: string): string;
+    getPrivateKeyByAddress(address: string): any;
     send(options: ISend): Promise<ISendResult>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
