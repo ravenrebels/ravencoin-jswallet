@@ -36,6 +36,15 @@ export class Wallet {
   getBaseCurrency() {
     return this.baseCurrency;
   }
+  /**
+   * Sweeping a private key means to send all the funds the address holds to your your wallet. 
+   * The private key you sweep do not become a part of your wallet.
+   * 
+   * NOTE: the address you sweep needs to cointain enough RVN to pay for the transaction
+   * 
+   * @param WIF the private key of the address that you want move funds from
+   * @returns either a string, that is the transaction id or null if there were no funds to send
+   */
   sweep(WIF: string) {
     const wallet = this;
     return sweep(WIF, wallet);
