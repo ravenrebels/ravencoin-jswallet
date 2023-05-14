@@ -109,3 +109,4 @@ typings/
 .parcel-cache
 !/src/test.js
 !dist/*
+!/src/sweep.test.js
