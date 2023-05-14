@@ -5,13 +5,13 @@ interface ISend {
 }
 type ChainType = "rvn" | "rvn-test" | "evr" | "evr-test";
 interface IAddressDelta {
+    address: string;
     assetName: string;
-    satoshis: number;
-    txid: string;
-    index: number;
     blockindex: number;
     height: number;
-    address: string;
+    index: number;
+    satoshis: number;
+    txid: string;
 }
 interface SweepResult {
     errorDescription?: string;
@@ -112,6 +112,7 @@ export class Wallet {
     init(options: IOptions): Promise<void>;
     hasHistory(addresses: Array<string>): Promise<boolean>;
     _getFirstUnusedAddress(external: boolean): Promise<string>;
+    getHistory(): Promise<IAddressDelta>;
     getMempool(): Promise<IAddressDelta[]>;
     getReceiveAddress(): Promise<string>;
     getChangeAddress(): Promise<string>;

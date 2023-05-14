@@ -14,13 +14,13 @@ export interface ISend {
 }
 export type ChainType = "rvn" | "rvn-test" | "evr" | "evr-test";
 export interface IAddressDelta {
+  address: string;
   assetName: string;
-  satoshis: number;
-  txid: string;
-  index: number;
   blockindex: number;
   height: number;
-  address: string;
+  index: number;
+  satoshis: number;
+  txid: string;
 }
 
 export interface SweepResult {

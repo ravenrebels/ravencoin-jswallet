@@ -182,6 +182,12 @@ export class Wallet {
     return addresses[0];
   }
 
+  async getHistory(): Promise<IAddressDelta> {
+    const assetName = ""; //Must be empty string, NOT "*"
+    const addresses = this.getAddresses();
+    const deltas = this.rpc(methods.getaddressdeltas, [{ addresses, assetName }]);
+    return deltas;
+  }
   async getMempool(): Promise<IAddressDelta[]> {
     const method = methods.getaddressmempool;
     const includeAssets = true;

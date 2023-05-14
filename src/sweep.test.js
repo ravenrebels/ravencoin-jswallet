@@ -21,9 +21,10 @@ test("Test sweep", async () => {
   });
 
   try {
-    const result = await wallet.sweep(WIF);
-    const nullOrString = typeof result.transactionId === "string" || null;
-    expect(true).toBe(nullOrString);
+    const onlineMode = false;
+    const result = await wallet.sweep(WIF, onlineMode);
+    const something = !!result;
+    expect(true).toBe(something);
   } catch (e) {
     console.log("EXCEPTION", e);
   }

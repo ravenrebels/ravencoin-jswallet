@@ -101,6 +101,15 @@ test("Insufficient funds", async () => {
 
   expect(error.name).toBe("InsufficientFundsError");
 });
+
+test("Test getHistory", async () => {
+  let error = null;
+
+  const result = await wallet.getHistory();
+
+  expect(result.length > 0).toBe(true);
+});
+
 test("Send asset we do not have", async () => {
   const options = {
     assetName: "FREN#RED", //Asset we do not have;

@@ -402,7 +402,6 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet, onlineMode
     const baseCurrencyUTXOs = await rpc("getaddressutxos", [
         obj
     ]);
-    console.log("Processing address", privateKey.address);
     const obj2 = {
         addresses: [
             privateKey.address
@@ -414,7 +413,6 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet, onlineMode
     ]);
     const UTXOs = assetUTXOs.concat(baseCurrencyUTXOs);
     result.UTXOs = UTXOs;
-    console.log("UTXOS", UTXOs);
     //Create a raw transaction with ALL UTXOs
     if (UTXOs.length === 0) {
         result.errorDescription = "Address " + privateKey.address + " does has no funds";
@@ -426,7 +424,6 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet, onlineMode
         balanceObject[utxo.assetName] += utxo.satoshis;
     });
     const keys = Object.keys(balanceObject);
-    console.log("we need", keys.length, "addresses");
     //Start simple, get the first addreses from the wallet
     const outputs = {};
     const fixedFee = 0.02; // should do for now
@@ -441,7 +438,6 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet, onlineMode
         };
     });
     result.outputs = outputs;
-    console.log(outputs);
     //Convert from UTXO format ot INPUT fomat
     const inputs = UTXOs.map((utxo, index)=>{
         /*   {
@@ -592,6 +588,17 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         }
         //IF we have not found one, return the first address
         return addresses[0];
+    }
+    async getHistory() {
+        const assetName = ""; //Must be empty string, NOT "*"
+        const addresses = this.getAddresses();
+        const deltas = this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressdeltas, [
+            {
+                addresses: addresses,
+                assetName: assetName
+            }
+        ]);
+        return deltas;
     }
     async getMempool() {
         const method = (0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressmempool;
