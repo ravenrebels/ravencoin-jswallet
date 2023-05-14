@@ -26,7 +26,6 @@ export async function sweep(
     addresses: [privateKey.address],
   };
   const baseCurrencyUTXOs = await rpc("getaddressutxos", [obj]);
-  console.log("Processing address", privateKey.address);
   const obj2 = {
     addresses: [privateKey.address],
     assetName: "*",
@@ -35,7 +34,6 @@ export async function sweep(
   const assetUTXOs = await rpc("getaddressutxos", [obj2]);
   const UTXOs = assetUTXOs.concat(baseCurrencyUTXOs);
   result.UTXOs = UTXOs;
-  console.log("UTXOS", UTXOs);
   //Create a raw transaction with ALL UTXOs
 
   if (UTXOs.length === 0) {
@@ -54,7 +52,6 @@ export async function sweep(
   });
 
   const keys = Object.keys(balanceObject);
-  console.log("we need", keys.length, "addresses");
 
   //Start simple, get the first addreses from the wallet
 
@@ -76,7 +73,6 @@ export async function sweep(
     }
   });
   result.outputs = outputs;
-  console.log(outputs);
 
   //Convert from UTXO format ot INPUT fomat
   const inputs: Array<IInput> = UTXOs.map((utxo, index) => {
