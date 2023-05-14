@@ -112,7 +112,7 @@ export class Wallet {
     init(options: IOptions): Promise<void>;
     hasHistory(addresses: Array<string>): Promise<boolean>;
     _getFirstUnusedAddress(external: boolean): Promise<string>;
-    getHistory(): Promise<IAddressDelta>;
+    getHistory(): Promise<IAddressDelta[]>;
     getMempool(): Promise<IAddressDelta[]>;
     getReceiveAddress(): Promise<string>;
     getChangeAddress(): Promise<string>;
