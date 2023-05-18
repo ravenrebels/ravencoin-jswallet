@@ -1,10 +1,14 @@
 # ravencoin-jswallet
 
-Ravencoin wallet library for JavaScript
+Ravencoin wallet library for JavaScript.
+By default it interacts with the Ravencoin blockchain using RPC services from
+https://rpc.ting.finance/ for both testnet and mainnet.
+You are free to use any RPC-service you like, including your own.
+See section [An Internal Link to a Section Heading](#run-your-own-blockchain-node) for more info
 
 ##
 
-EXPERIMENTAL. DO NOT USE IN PRODUCTION
+EXPERIMENTAL.  
 
 This lib needs a lot of testing before being used in production.
 Only use on mainnet if you "play around".
