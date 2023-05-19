@@ -113,6 +113,7 @@ export class Wallet {
         this.addressPosition++;
 
         tempAddresses.push(o.external.address + "");
+        tempAddresses.push(o.internal.address + "");
       }
 
       if (this.offlineMode === true) {

@@ -522,6 +522,7 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
                 this.addressObjects.push(o.internal);
                 this.addressPosition++;
                 tempAddresses.push(o.external.address + "");
+                tempAddresses.push(o.internal.address + "");
             }
             if (this.offlineMode === true) //BREAK generation of addresses and do NOT check history on the network
             isLast20ExternalAddressesUnused = true;
