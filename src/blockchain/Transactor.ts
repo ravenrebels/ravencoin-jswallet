@@ -288,7 +288,7 @@ async function addAssetInputsAndOutputs(
   return _UTXOs; //Return the UTXOs used for asset transfer
 }
 
-function getTwoDecimalTrunc(num: number) {
+export function getTwoDecimalTrunc(num: number) {
   //Found answer here https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary
   //In JavaScript the number 77866.98 minus 111 minus 0.2 equals 77755.95999999999
   //We want it to be 77755.96

@@ -3,8 +3,10 @@ import Signer from "@ravenrebels/ravencoin-sign-transaction";
 
 import { Wallet } from "../ravencoinWallet";
 import { IInput, SweepResult } from "../Types";
+import { getTwoDecimalTrunc } from "./Transactor";
 
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
+//OH easter egg ;)
 const WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
 
 /**
@@ -38,7 +40,7 @@ export async function sweep(
 
   if (UTXOs.length === 0) {
     result.errorDescription =
-      "Address " + privateKey.address + " does has no funds";
+      "Address " + privateKey.address + " has no funds";
     return result;
   }
   const balanceObject = {};
@@ -46,8 +48,7 @@ export async function sweep(
   UTXOs.map((utxo) => {
     if (!balanceObject[utxo.assetName]) {
       balanceObject[utxo.assetName] = 0;
-    }
-
+    } 
     balanceObject[utxo.assetName] += utxo.satoshis;
   });
 
@@ -63,7 +64,7 @@ export async function sweep(
     const amount = balanceObject[assetName] / 1e8;
 
     if (assetName === wallet.baseCurrency) {
-      outputs[address] = amount - fixedFee;
+      outputs[address] = getTwoDecimalTrunc(amount - fixedFee);
     } else {
       outputs[address] = {
         transfer: {

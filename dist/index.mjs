@@ -263,7 +263,7 @@ async function $8a6a99603cc26764$export$89db4734f6c919c4(options) {
     const baseCurrencyChangeAmount = unspentBaseCurrencyAmount - baseCurrencyAmountToSpend - fee;
     sendResult.debug.rvnChangeAmount = baseCurrencyChangeAmount;
     //Obviously we only add change address if there is any change
-    if ($8a6a99603cc26764$var$getTwoDecimalTrunc(baseCurrencyChangeAmount) > 0) outputs[changeAddress] = $8a6a99603cc26764$var$getTwoDecimalTrunc(baseCurrencyChangeAmount);
+    if ($8a6a99603cc26764$export$82aafe8193f6c0ba(baseCurrencyChangeAmount) > 0) outputs[changeAddress] = $8a6a99603cc26764$export$82aafe8193f6c0ba(baseCurrencyChangeAmount);
     //Now we have enough UTXos, lets create a raw transactions
     sendResult.debug.inputs = inputs;
     sendResult.debug.outputs = outputs;
@@ -311,7 +311,7 @@ async function $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, as
     };
     return _UTXOs; //Return the UTXOs used for asset transfer
 }
-function $8a6a99603cc26764$var$getTwoDecimalTrunc(num) {
+function $8a6a99603cc26764$export$82aafe8193f6c0ba(num) {
     //Found answer here https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary
     //In JavaScript the number 77866.98 minus 111 minus 0.2 equals 77755.95999999999
     //We want it to be 77755.96
@@ -372,7 +372,9 @@ function $8a6a99603cc26764$export$9ffd76c05265a057(mempool, UTXO) {
 
 
 
+
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
+//OH easter egg ;)
 const $67c46d86d9d50c48$var$WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
 async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode) {
     const privateKey = (0, $93qLg$ravenrebelsravencoinkey).getAddressByWIF(wallet.network, WIF);
@@ -399,7 +401,7 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
     result.UTXOs = UTXOs;
     //Create a raw transaction with ALL UTXOs
     if (UTXOs.length === 0) {
-        result.errorDescription = "Address " + privateKey.address + " does has no funds";
+        result.errorDescription = "Address " + privateKey.address + " has no funds";
         return result;
     }
     const balanceObject = {};
@@ -414,7 +416,7 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
     keys.map((assetName, index)=>{
         const address = wallet.getAddresses()[index];
         const amount = balanceObject[assetName] / 1e8;
-        if (assetName === wallet.baseCurrency) outputs[address] = amount - fixedFee;
+        if (assetName === wallet.baseCurrency) outputs[address] = (0, $8a6a99603cc26764$export$82aafe8193f6c0ba)(amount - fixedFee);
         else outputs[address] = {
             transfer: {
                 [assetName]: amount
