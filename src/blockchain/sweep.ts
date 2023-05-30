@@ -54,7 +54,7 @@ export async function sweep(
 
   const keys = Object.keys(balanceObject);
 
-  //Start simple, get the first addreses from the wallet
+  //Start simple, get the first addresses from the wallet
 
   const outputs = {};
 
@@ -75,7 +75,7 @@ export async function sweep(
   });
   result.outputs = outputs;
 
-  //Convert from UTXO format ot INPUT fomat
+  //Convert from UTXO format to INPUT fomat
   const inputs: Array<IInput> = UTXOs.map((utxo, index) => {
     /*   {
          "txid":"id",                      (string, required) The transaction id

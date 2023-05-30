@@ -233,10 +233,19 @@ export class Wallet {
     //Find the first change address after change address (emergency take the first).
     const addresses = this.getAddresses();
     let index = addresses.indexOf(changeAddress);
-    if (index > addresses.length) {
+    if (index > addresses.length - 2) {
+      index = 1;
+    }
+    if (index === -1) {
       index = 1;
     }
     const changeAddressAssets = addresses[index + 2];
+ 
+    if (changeAddressAssets === changeAddress) {
+      throw Error(
+        "Internal Error, changeAddress and changeAddressAssets cannot be the same"
+      );
+    }
 
     //Validation
     if (!toAddress) {

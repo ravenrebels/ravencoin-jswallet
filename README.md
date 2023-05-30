@@ -104,6 +104,23 @@ checkout
 - https://github.com/ravenrebels/ravencoin-rpc-proxy
 - https://www.cloudflare.com/products/tunnel/
 
+## Advanced - pure RPC
+
+You have access to the underlaying RPC function, wallet.rpc.
+See example
+```
+import RavencoinWallet from "@ravenrebels/ravencoin-jswallet"; 
+async function main(){
+  const wallet = await RavencoinWallet.createInstance({
+    mnemonic: "horse sort develop lab chest talk gift damp session sun festival squirrel",
+    network: "rvn-test",
+  });
+  const blockhash = await wallet.rpc("getbestblockhash", []);
+  const block = await wallet.rpc("getblock", [blockhash]); 
+  console.log(block); 
+}
+main(); 
+```
 
 
 

@@ -410,7 +410,7 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
         balanceObject[utxo.assetName] += utxo.satoshis;
     });
     const keys = Object.keys(balanceObject);
-    //Start simple, get the first addreses from the wallet
+    //Start simple, get the first addresses from the wallet
     const outputs = {};
     const fixedFee = 0.02; // should do for now
     keys.map((assetName, index)=>{
@@ -424,7 +424,7 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
         };
     });
     result.outputs = outputs;
-    //Convert from UTXO format ot INPUT fomat
+    //Convert from UTXO format to INPUT fomat
     const inputs = UTXOs.map((utxo, index)=>{
         /*   {
          "txid":"id",                      (string, required) The transaction id
@@ -626,8 +626,10 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         //Find the first change address after change address (emergency take the first).
         const addresses = this.getAddresses();
         let index = addresses.indexOf(changeAddress);
-        if (index > addresses.length) index = 1;
+        if (index > addresses.length - 2) index = 1;
+        if (index === -1) index = 1;
         const changeAddressAssets = addresses[index + 2];
+        if (changeAddressAssets === changeAddress) throw Error("Internal Error, changeAddress and changeAddressAssets cannot be the same");
         //Validation
         if (!toAddress) throw Error("Wallet.send  toAddress is mandatory");
         if (!amount) throw Error("Wallet.send amount is mandatory");
