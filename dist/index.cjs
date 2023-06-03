@@ -209,7 +209,6 @@ function $827163bad133a0dc$var$sumOfUTXOs(UTXOs) {
     //This is NOT the exact size since we will add an output for the change address to the transaction
     //Perhaps we should calculate size plus 10%?
     const size = $827163bad133a0dc$require$Buffer.from(raw).length / ONE_KILOBYTE;
-    console.log("Size of raw transaction", size);
     let fee = 0.02;
     //TODO should ask the "blockchain" **estimatesmartfee**
     return fee * Math.max(1, size);
@@ -220,6 +219,7 @@ function $827163bad133a0dc$var$getDefaultSendResult() {
         debug: {
             assetName: "",
             assetUTXOs: [],
+            amount: 0,
             fee: 0,
             inputs: [],
             outputs: null,
@@ -234,6 +234,7 @@ function $827163bad133a0dc$var$getDefaultSendResult() {
 async function $827163bad133a0dc$export$89db4734f6c919c4(options) {
     const { amount: amount , assetName: assetName , baseCurrency: baseCurrency , changeAddress: changeAddress , changeAddressAssets: changeAddressAssets , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
     const sendResult = $827163bad133a0dc$var$getDefaultSendResult();
+    sendResult.debug.amount = amount;
     const MAX_FEE = 4;
     const isAssetTransfer = assetName !== baseCurrency;
     //VALIDATION
@@ -647,8 +648,10 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         const changeAddressAssets = addresses[index + 2];
         if (changeAddressAssets === changeAddress) throw Error("Internal Error, changeAddress and changeAddressAssets cannot be the same");
         //Validation
-        if (!toAddress) throw Error("Wallet.send  toAddress is mandatory");
+        if (!toAddress) throw Error("Wallet.send toAddress is mandatory");
         if (!amount) throw Error("Wallet.send amount is mandatory");
+        if (changeAddress === toAddress) throw Error("Wallet.send change address cannot be the same as toAddress " + changeAddress);
+        if (changeAddressAssets === toAddress) throw Error("Wallet.send change address for assets cannot be the same as toAddress " + changeAddressAssets);
         const props = {
             fromAddressObjects: this.addressObjects,
             amount: amount,

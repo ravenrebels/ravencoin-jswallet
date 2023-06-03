@@ -240,7 +240,7 @@ export class Wallet {
       index = 1;
     }
     const changeAddressAssets = addresses[index + 2];
- 
+
     if (changeAddressAssets === changeAddress) {
       throw Error(
         "Internal Error, changeAddress and changeAddressAssets cannot be the same"
@@ -249,10 +249,23 @@ export class Wallet {
 
     //Validation
     if (!toAddress) {
-      throw Error("Wallet.send  toAddress is mandatory");
+      throw Error("Wallet.send toAddress is mandatory");
     }
     if (!amount) {
       throw Error("Wallet.send amount is mandatory");
+    }
+
+    if (changeAddress === toAddress) {
+      throw Error(
+        "Wallet.send change address cannot be the same as toAddress " +
+          changeAddress
+      );
+    }
+    if (changeAddressAssets === toAddress) {
+      throw Error(
+        "Wallet.send change address for assets cannot be the same as toAddress " +
+          changeAddressAssets
+      );
     }
     const props: ISendInternalProps = {
       fromAddressObjects: this.addressObjects,

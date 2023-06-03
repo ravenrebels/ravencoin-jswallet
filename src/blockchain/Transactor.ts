@@ -54,7 +54,6 @@ async function getFee(
   //This is NOT the exact size since we will add an output for the change address to the transaction
   //Perhaps we should calculate size plus 10%?
   const size = Buffer.from(raw).length / ONE_KILOBYTE;
-  console.log("Size of raw transaction", size);
   let fee = 0.02;
   //TODO should ask the "blockchain" **estimatesmartfee**
 
@@ -67,6 +66,7 @@ function getDefaultSendResult() {
     debug: {
       assetName: "",
       assetUTXOs: [],
+      amount: 0,
       fee: 0,
       inputs: [],
       outputs: null,
@@ -92,6 +92,7 @@ export async function send(options: ISendInternalProps): Promise<ISendResult> {
   } = options;
 
   const sendResult = getDefaultSendResult();
+  sendResult.debug.amount = amount;
   const MAX_FEE = 4;
 
   const isAssetTransfer = assetName !== baseCurrency;

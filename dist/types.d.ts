@@ -29,6 +29,7 @@ type TPrivateKey = {
 interface ISendResult {
     transactionId: string;
     debug: {
+        amount: number;
         assetName: string;
         assetUTXOs: Array<IUTXO>;
         error?: any;
@@ -117,7 +118,7 @@ export class Wallet {
     getReceiveAddress(): Promise<string>;
     getChangeAddress(): Promise<string>;
     getUTXOs(): Promise<any>;
-    getPrivateKeyByAddress(address: string): any;
+    getPrivateKeyByAddress(address: string): string;
     send(options: ISend): Promise<ISendResult>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;

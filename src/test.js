@@ -126,3 +126,29 @@ test("Send asset we do not have", async () => {
 
   expect(error.name).toBe("InsufficientFundsError");
 });
+
+test("Change and to address cant be the same", async () => {
+  const mnemonic = "bla bla bla";
+
+  wallet = await RavencoinWallet.createInstance({
+    mnemonic,
+    network: "rvn-test",
+  });
+
+  let error = null;
+  const changeAddress = await wallet.getChangeAddress();
+  try {
+    await wallet.send({
+      toAddress: changeAddress,
+      amount: 1,
+    });
+  } catch (e) {
+    error = e;
+  }
+  const changeAddressAndToAddressTheSame =
+    (error + "").indexOf(
+      "Wallet.send change address cannot be the same as toAddress"
+    ) > -1;
+
+  expect(changeAddressAndToAddressTheSame).toBe(true);
+});
