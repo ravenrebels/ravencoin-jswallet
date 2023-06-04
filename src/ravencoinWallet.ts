@@ -95,9 +95,25 @@ export class Wallet {
     //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
     //That is one history lookup intead of 20
     this._mnemonic = options.mnemonic;
-    let isLast20ExternalAddressesUnused = false;
+
     const ACCOUNT = 0;
 
+    //Should we create an extra amount of addresses at startup?
+    if (options.minAmountOfAddresses) {
+      for (let i = 0; i < options.minAmountOfAddresses; i++) {
+        const o = RavencoinKey.getAddressPair(
+          this.network,
+          this._mnemonic,
+          ACCOUNT,
+          this.addressPosition
+        );
+        this.addressObjects.push(o.external);
+        this.addressObjects.push(o.internal);
+        this.addressPosition++;
+      }
+    }
+
+    let isLast20ExternalAddressesUnused = false;
     while (isLast20ExternalAddressesUnused === false) {
       const tempAddresses = [] as string[];
 
@@ -321,6 +337,7 @@ export function getBaseCurrencyByNetwork(network: ChainType): string {
 }
 export interface IOptions {
   mnemonic: string;
+  minAmountOfAddresses?: number;
   network?: ChainType;
   rpc_username?: string;
   rpc_password?: string;

@@ -474,15 +474,6 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet, onlineMode
 const $bf36305bcbc0cb23$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const $bf36305bcbc0cb23$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 class $bf36305bcbc0cb23$export$bcca3ea514774656 {
-    rpc = (0, $4aiOY$ravenrebelsravencoinrpc.getRPC)("anonymous", "anonymous", $bf36305bcbc0cb23$var$URL_MAINNET);
-    _mnemonic = "";
-    network = "rvn";
-    addressObjects = [];
-    receiveAddress = "";
-    changeAddress = "";
-    addressPosition = 0;
-    baseCurrency = "RVN";
-    offlineMode = false;
     setBaseCurrency(currency) {
         this.baseCurrency = currency;
     }
@@ -531,8 +522,15 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
         //That is one history lookup intead of 20
         this._mnemonic = options.mnemonic;
-        let isLast20ExternalAddressesUnused = false;
         const ACCOUNT = 0;
+        //Should we create an extra amount of addresses at startup?
+        if (options.minAmountOfAddresses) for(let i = 0; i < options.minAmountOfAddresses; i++){
+            const o = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinkey))).getAddressPair(this.network, this._mnemonic, ACCOUNT, this.addressPosition);
+            this.addressObjects.push(o.external);
+            this.addressObjects.push(o.internal);
+            this.addressPosition++;
+        }
+        let isLast20ExternalAddressesUnused = false;
         while(isLast20ExternalAddressesUnused === false){
             const tempAddresses = [];
             for(let i = 0; i < 20; i++){
@@ -690,6 +688,18 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         ];
         const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
         return balance.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
+    }
+    constructor(){
+        this.rpc = (0, $4aiOY$ravenrebelsravencoinrpc.getRPC)("anonymous", "anonymous", $bf36305bcbc0cb23$var$URL_MAINNET);
+        this._mnemonic = "";
+        this.network = "rvn";
+        this.addressObjects = [];
+        this.receiveAddress = "";
+        this.changeAddress = "";
+        this.addressPosition = 0;
+        this.baseCurrency = "RVN" //Default is RVN but it could be EVR
+        ;
+        this.offlineMode = false;
     }
 }
 var $bf36305bcbc0cb23$export$2e2bcd8739ae039 = {

@@ -152,3 +152,19 @@ test("Change and to address cant be the same", async () => {
 
   expect(changeAddressAndToAddressTheSame).toBe(true);
 });
+
+test("Min amount of addresses", async () => {
+  const mnemonic = "bla bla bla";
+
+  const minAmountOfAddresses = 1000;
+  wallet = await RavencoinWallet.createInstance({
+    mnemonic,
+    network: "rvn-test",
+    minAmountOfAddresses,
+    offlineMode: true,
+  });
+
+  expect(wallet.getAddresses().length).toBeGreaterThanOrEqual(
+    minAmountOfAddresses
+  );
+});

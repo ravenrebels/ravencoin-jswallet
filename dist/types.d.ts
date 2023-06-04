@@ -131,6 +131,7 @@ export function createInstance(options: IOptions): Promise<Wallet>;
 export function getBaseCurrencyByNetwork(network: ChainType): string;
 export interface IOptions {
     mnemonic: string;
+    minAmountOfAddresses?: number;
     network?: ChainType;
     rpc_username?: string;
     rpc_password?: string;
