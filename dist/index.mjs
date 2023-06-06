@@ -605,6 +605,23 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         const isExternal = false;
         return this._getFirstUnusedAddress(isExternal);
     }
+    /**
+   *
+   * @param assetName if present, only return UTXOs for that asset, otherwise for all assets
+   * @returns UTXOs for assets
+   */ async getAssetUTXOs(assetName) {
+        //If no asset name, set to wildcard, meaning all assets
+        const _assetName = !assetName ? "*" : assetName;
+        const chainInfo = false;
+        const params = [
+            {
+                addresses: this.getAddresses(),
+                chainInfo: chainInfo,
+                assetName: _assetName
+            }
+        ];
+        return this.rpc((0, $93qLg$methods).getaddressutxos, params);
+    }
     async getUTXOs() {
         return this.rpc((0, $93qLg$methods).getaddressutxos, [
             {

@@ -117,6 +117,12 @@ export class Wallet {
     getMempool(): Promise<IAddressDelta[]>;
     getReceiveAddress(): Promise<string>;
     getChangeAddress(): Promise<string>;
+    /**
+     *
+     * @param assetName if present, only return UTXOs for that asset, otherwise for all assets
+     * @returns UTXOs for assets
+     */
+    getAssetUTXOs(assetName?: string): Promise<any>;
     getUTXOs(): Promise<any>;
     getPrivateKeyByAddress(address: string): string;
     send(options: ISend): Promise<ISendResult>;

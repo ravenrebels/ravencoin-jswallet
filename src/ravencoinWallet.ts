@@ -222,6 +222,21 @@ export class Wallet {
     const isExternal = false;
     return this._getFirstUnusedAddress(isExternal);
   }
+  /**
+   *
+   * @param assetName if present, only return UTXOs for that asset, otherwise for all assets
+   * @returns UTXOs for assets
+   */
+  async getAssetUTXOs(assetName?: string) {
+    //If no asset name, set to wildcard, meaning all assets
+    const _assetName = !assetName ? "*" : assetName;
+    const chainInfo = false;
+    const params = [
+      { addresses: this.getAddresses(), chainInfo, assetName: _assetName },
+    ];
+
+    return this.rpc(methods.getaddressutxos, params);
+  }
   async getUTXOs() {
     return this.rpc(methods.getaddressutxos, [
       { addresses: this.getAddresses() },

@@ -110,3 +110,4 @@ typings/
 !/src/test.js
 !dist/*
 !/src/sweep.test.js
+!/src/utxos.test.js
