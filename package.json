@@ -1,6 +1,6 @@
 {
   "name": "@ravenrebels/ravencoin-jswallet",
-  "version": "0.7.21",
+  "version": "0.7.22",
   "description": "Ravencoin wallet library for JavaScript",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
