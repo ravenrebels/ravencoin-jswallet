@@ -124,7 +124,7 @@ export class Wallet {
      */
     getAssetUTXOs(assetName?: string): Promise<any>;
     getUTXOs(): Promise<any>;
-    getPrivateKeyByAddress(address: string): string;
+    getPrivateKeyByAddress(address: string): any;
     send(options: ISend): Promise<ISendResult>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;

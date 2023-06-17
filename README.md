@@ -36,6 +36,17 @@ RavencoinWallet.createInstance({
    .then(console.log);
 ```
 
+### Configure to use with your local node
+In this example we run a local node in testnet mode, and RPC port is set to 8888
+```  const wallet = await RavencoinWallet.createInstance({
+    mnemonic,
+    network: "rvn-test",
+    rpc_password: "mypassword",
+    rpc_username: "myuser",
+    rpc_url: "http://localhost:8888",
+  });
+```
+
 ### Send RVN and ASSETS
 
 ```

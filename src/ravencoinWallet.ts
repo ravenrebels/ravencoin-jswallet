@@ -205,7 +205,9 @@ export class Wallet {
     const deltas = this.rpc(methods.getaddressdeltas, [
       { addresses, assetName },
     ]);
-    return deltas;
+    //@ts-ignore
+    const addressDeltas: IAddressDelta[] = deltas as IAddressDelta[];
+    return addressDeltas;
   }
   async getMempool(): Promise<IAddressDelta[]> {
     const method = methods.getaddressmempool;
