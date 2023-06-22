@@ -574,26 +574,65 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
             ]);
             if (asdf === false) return this.changeAddress;
         }
-        const addresses = this.getAddresses();
-        //even addresses are external, odd address are internal/changes
-        for(let counter = 0; counter < addresses.length; counter++){
-            //Internal addresses should be even numbers
-            if (external && counter % 2 !== 0) continue;
-            //Internal addresses should be odd numbers
-            if (external === false && counter % 2 === 0) continue;
-            const address = addresses[counter];
-            //If an address has tenth of thousands of transactions, getHistory will throw an exception
-            const hasHistory = await this.hasHistory([
-                address
-            ]);
-            if (hasHistory === false) {
-                if (external === true) this.receiveAddress = address;
-                return address;
+        //First make a list of relevant addresses, either external (even) or change (odd)
+        const addresses = [];
+        this.getAddresses().map(function(address, index) {
+            if (external === true && index % 2 === 0) addresses.push(address);
+            else if (external === false && index % 2 !== 0) addresses.push(address);
+        });
+        //Use BINARY SEARCH
+        // Binary search implementation to find the first item with `history` set to false
+        const binarySearch = async (_addresses)=>{
+            let low = 0;
+            let high = _addresses.length - 1;
+            let result = "";
+            while(low <= high){
+                const mid = Math.floor((low + high) / 2);
+                const addy = _addresses[mid];
+                const hasHistory = await this.hasHistory([
+                    addy
+                ]);
+                if (hasHistory === false) {
+                    result = addy;
+                    high = mid - 1; // Continue searching towards the left
+                } else low = mid + 1; // Continue searching towards the right
             }
-        }
-        //IF we have not found one, return the first address
+            return result;
+        };
+        const result = await binarySearch(addresses);
+        if (!result) //IF we have not found one, return the first address
         return addresses[0];
+        if (external === true) this.receiveAddress = result;
+        else this.changeAddress = result;
+        return result;
+    /*
+    //even addresses are external, odd address are internal/changes
+    for (let counter = 0; counter < addresses.length; counter++) {
+      //Internal addresses should be even numbers
+      if (external && counter % 2 !== 0) {
+        continue;
+      }
+      //Internal addresses should be odd numbers
+      if (external === false && counter % 2 === 0) {
+        continue;
+      }
+      const address = addresses[counter];
+
+      //If an address has tenth of thousands of transactions, getHistory will throw an exception
+
+      const hasHistory = await this.hasHistory([address]);
+
+      if (hasHistory === false) {
+        if (external === true) {
+          this.receiveAddress = address;
+        }
+        if (external === false) {
+          this.changeAddress = address;
+        }
+        return address;
+      }
     }
+*/ }
     async getHistory() {
         const assetName = ""; //Must be empty string, NOT "*"
         const addresses = this.getAddresses();

@@ -174,7 +174,55 @@ export class Wallet {
       }
     }
 
-    const addresses = this.getAddresses();
+    //First make a list of relevant addresses, either external (even) or change (odd)
+    const addresses: string[] = [];
+
+    this.getAddresses().map(function (address: string, index: number) {
+      if (external === true && index % 2 === 0) {
+        addresses.push(address);
+      } else if (external === false && index % 2 !== 0) {
+        addresses.push(address);
+      }
+    });
+
+    //Use BINARY SEARCH
+
+    // Binary search implementation to find the first item with `history` set to false
+    const binarySearch = async (_addresses: string[]) => {
+      let low = 0;
+      let high = _addresses.length - 1;
+      let result = "";
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const addy = _addresses[mid];
+
+        const hasHistory = await this.hasHistory([addy]);
+        if (hasHistory === false) {
+          result = addy;
+          high = mid - 1; // Continue searching towards the left
+        } else {
+          low = mid + 1; // Continue searching towards the right
+        }
+      }
+
+      return result;
+    };
+
+    const result = await binarySearch(addresses);
+
+    if (!result) {
+      //IF we have not found one, return the first address
+      return addresses[0];
+    }
+    if (external === true) {
+      this.receiveAddress = result;
+    } else {
+      this.changeAddress = result;
+    }
+
+    return result;
+    /*
     //even addresses are external, odd address are internal/changes
     for (let counter = 0; counter < addresses.length; counter++) {
       //Internal addresses should be even numbers
@@ -195,12 +243,13 @@ export class Wallet {
         if (external === true) {
           this.receiveAddress = address;
         }
+        if (external === false) {
+          this.changeAddress = address;
+        }
         return address;
       }
     }
-
-    //IF we have not found one, return the first address
-    return addresses[0];
+*/
   }
 
   async getHistory(): Promise<IAddressDelta[]> {
