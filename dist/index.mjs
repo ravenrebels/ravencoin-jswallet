@@ -561,7 +561,10 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         const addresses = this.getAddresses();
         //even addresses are external, odd address are internal/changes
         for(let counter = 0; counter < addresses.length; counter++){
+            //Internal addresses should be even numbers
             if (external && counter % 2 !== 0) continue;
+            //Internal addresses should be odd numbers
+            if (external === false && counter % 2 === 0) continue;
             const address = addresses[counter];
             //If an address has tenth of thousands of transactions, getHistory will throw an exception
             const hasHistory = await this.hasHistory([
@@ -584,7 +587,9 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
                 assetName: assetName
             }
         ]);
-        return deltas;
+        //@ts-ignore
+        const addressDeltas = deltas;
+        return addressDeltas;
     }
     async getMempool() {
         const method = (0, $93qLg$methods).getaddressmempool;

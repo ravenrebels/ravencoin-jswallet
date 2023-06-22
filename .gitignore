@@ -111,3 +111,4 @@ typings/
 !dist/*
 !/src/sweep.test.js
 !/src/utxos.test.js
+!/src/receive.test.js

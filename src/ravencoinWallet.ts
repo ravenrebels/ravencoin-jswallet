@@ -176,9 +176,13 @@ export class Wallet {
 
     const addresses = this.getAddresses();
     //even addresses are external, odd address are internal/changes
-
     for (let counter = 0; counter < addresses.length; counter++) {
+      //Internal addresses should be even numbers
       if (external && counter % 2 !== 0) {
+        continue;
+      }
+      //Internal addresses should be odd numbers
+      if (external === false && counter % 2 === 0) {
         continue;
       }
       const address = addresses[counter];
