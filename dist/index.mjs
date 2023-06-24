@@ -191,11 +191,19 @@ function $8a6a99603cc26764$var$sumOfUTXOs(UTXOs) {
     const raw = await $de17ee1c983f5fa9$export$3c514ecc803e4adc(rpc, inputs, outputs);
     //Get the length of the string bytes not the string
     //This is NOT the exact size since we will add an output for the change address to the transaction
-    //Perhaps we should calculate size plus 10%?
-    const size = $8a6a99603cc26764$require$Buffer.from(raw).length / ONE_KILOBYTE;
+    //We add 20% to the size, to cover extra input for fee
+    const size = $8a6a99603cc26764$require$Buffer.from(raw).length / ONE_KILOBYTE * 1.2;
     let fee = 0.02;
-    //TODO should ask the "blockchain" **estimatesmartfee**
-    return fee * Math.max(1, size);
+    //Ask the "blockchain" **estimatesmartfee**
+    try {
+        const confirmationTarget = 100;
+        const asdf = await rpc("estimatesmartfee", [
+            confirmationTarget
+        ]);
+        if (!asdf.errors) fee = asdf.feerate;
+    } catch (e) {}
+    const result = fee * Math.max(1, size);
+    return result;
 }
 function $8a6a99603cc26764$var$getDefaultSendResult() {
     const sendResult = {

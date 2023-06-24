@@ -52,12 +52,20 @@ async function getFee(
 
   //Get the length of the string bytes not the string
   //This is NOT the exact size since we will add an output for the change address to the transaction
-  //Perhaps we should calculate size plus 10%?
-  const size = Buffer.from(raw).length / ONE_KILOBYTE;
+  //We add 20% to the size, to cover extra input for fee
+  const size = (Buffer.from(raw).length / ONE_KILOBYTE) * 1.2;
   let fee = 0.02;
-  //TODO should ask the "blockchain" **estimatesmartfee**
+  //Ask the "blockchain" **estimatesmartfee**
+  try {
+    const confirmationTarget = 100;
+    const asdf = await rpc("estimatesmartfee", [confirmationTarget]);
+    if (!asdf.errors) {
+      fee = asdf.feerate;
+    }
+  } catch (e) {}
 
-  return fee * Math.max(1, size);
+  const result = fee * Math.max(1, size);
+  return result;
 }
 
 function getDefaultSendResult() {
