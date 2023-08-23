@@ -398,6 +398,7 @@ function $827163bad133a0dc$export$9ffd76c05265a057(mempool, UTXO) {
 
 
 
+(0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinsigntransaction))).sign; //"Idiocracy" but prevents bundle tools such as PARCEL to strip this dependency out on build.
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
 //OH easter egg ;)
 const $fdd8716063277f2b$var$WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";

@@ -1,6 +1,8 @@
 import RavencoinKey, { Network } from "@ravenrebels/ravencoin-key";
 import Signer from "@ravenrebels/ravencoin-sign-transaction";
 
+!!Signer.sign; //"Idiocracy" but prevents bundle tools such as PARCEL to strip this dependency out on build.
+
 import { Wallet } from "../ravencoinWallet";
 import { IInput, SweepResult } from "../Types";
 import { getTwoDecimalTrunc } from "./Transactor";
@@ -39,8 +41,7 @@ export async function sweep(
   //Create a raw transaction with ALL UTXOs
 
   if (UTXOs.length === 0) {
-    result.errorDescription =
-      "Address " + privateKey.address + " has no funds";
+    result.errorDescription = "Address " + privateKey.address + " has no funds";
     return result;
   }
   const balanceObject = {};
@@ -48,7 +49,7 @@ export async function sweep(
   UTXOs.map((utxo) => {
     if (!balanceObject[utxo.assetName]) {
       balanceObject[utxo.assetName] = 0;
-    } 
+    }
     balanceObject[utxo.assetName] += utxo.satoshis;
   });
 
