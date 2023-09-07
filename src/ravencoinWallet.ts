@@ -113,23 +113,34 @@ export class Wallet {
       }
     }
 
+    //Generating the hd key is slow, so we re-use the object
+    const hdKey = RavencoinKey.getHDKey(this.network, this._mnemonic);
+
+    const coinType = RavencoinKey.getCoinType(this.network);
     let isLast20ExternalAddressesUnused = false;
     while (isLast20ExternalAddressesUnused === false) {
+      //We add new addresses to tempAddresses so we can check history for the last 20
       const tempAddresses = [] as string[];
 
       for (let i = 0; i < 20; i++) {
-        const o = RavencoinKey.getAddressPair(
+        const external = RavencoinKey.getAddressByPath(
           this.network,
-          this._mnemonic,
-          ACCOUNT,
-          this.addressPosition
+          hdKey,
+          `m/44'/${coinType}'/${ACCOUNT}'/0/${this.addressPosition}`
         );
-        this.addressObjects.push(o.external);
-        this.addressObjects.push(o.internal);
+
+        const internal = RavencoinKey.getAddressByPath(
+          this.network,
+          hdKey,
+          `m/44'/${coinType}'/${ACCOUNT}'/1/${this.addressPosition}`
+        );
+
+        this.addressObjects.push(external);
+        this.addressObjects.push(internal);
         this.addressPosition++;
 
-        tempAddresses.push(o.external.address + "");
-        tempAddresses.push(o.internal.address + "");
+        tempAddresses.push(external.address + "");
+        tempAddresses.push(internal.address + "");
       }
 
       if (this.offlineMode === true) {

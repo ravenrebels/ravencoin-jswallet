@@ -523,16 +523,24 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
             this.addressObjects.push(o.internal);
             this.addressPosition++;
         }
+        const time = new Date();
+        //Generating the hd key is slow, so we re-use the object
+        const hdKey = (0, $93qLg$ravenrebelsravencoinkey).getHDKey(this.network, this._mnemonic);
+        const now = new Date();
+        console.log(now.getTime() - time.getTime());
+        const coinType = (0, $93qLg$ravenrebelsravencoinkey).getCoinType(this.network);
         let isLast20ExternalAddressesUnused = false;
         while(isLast20ExternalAddressesUnused === false){
+            //We add new addresses to tempAddresses so we can check history for the last 20
             const tempAddresses = [];
             for(let i = 0; i < 20; i++){
-                const o = (0, $93qLg$ravenrebelsravencoinkey).getAddressPair(this.network, this._mnemonic, ACCOUNT, this.addressPosition);
-                this.addressObjects.push(o.external);
-                this.addressObjects.push(o.internal);
+                const external = (0, $93qLg$ravenrebelsravencoinkey).getAddressByPath(this.network, hdKey, `m/44'/${coinType}'/${ACCOUNT}'/0/${this.addressPosition}`);
+                const internal = (0, $93qLg$ravenrebelsravencoinkey).getAddressByPath(this.network, hdKey, `m/44'/${coinType}'/${ACCOUNT}'/1/${this.addressPosition}`);
+                this.addressObjects.push(external);
+                this.addressObjects.push(internal);
                 this.addressPosition++;
-                tempAddresses.push(o.external.address + "");
-                tempAddresses.push(o.internal.address + "");
+                tempAddresses.push(external.address + "");
+                tempAddresses.push(internal.address + "");
             }
             if (this.offlineMode === true) //BREAK generation of addresses and do NOT check history on the network
             isLast20ExternalAddressesUnused = true;
