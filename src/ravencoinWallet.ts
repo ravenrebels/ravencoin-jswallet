@@ -91,14 +91,15 @@ export class Wallet {
     }
 
     this.rpc = getRPC(username, password, url);
-    //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
-    //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
-    //That is one history lookup intead of 20
     this._mnemonic = options.mnemonic;
 
+    //Generating the hd key is slow, so we re-use the object
+    const hdKey = RavencoinKey.getHDKey(this.network, this._mnemonic);
+    const coinType = RavencoinKey.getCoinType(this.network);
     const ACCOUNT = 0;
 
-    //Should we create an extra amount of addresses at startup?
+    //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
+    /*
     if (options.minAmountOfAddresses) {
       for (let i = 0; i < options.minAmountOfAddresses; i++) {
         const o = RavencoinKey.getAddressPair(
@@ -113,12 +114,13 @@ export class Wallet {
       }
     }
 
-    //Generating the hd key is slow, so we re-use the object
-    const hdKey = RavencoinKey.getHDKey(this.network, this._mnemonic);
+    */
+    const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses)
+      ? options.minAmountOfAddresses
+      : 0;
 
-    const coinType = RavencoinKey.getCoinType(this.network);
-    let isLast20ExternalAddressesUnused = false;
-    while (isLast20ExternalAddressesUnused === false) {
+    let doneDerivingAddresses = false;
+    while (doneDerivingAddresses === false) {
       //We add new addresses to tempAddresses so we can check history for the last 20
       const tempAddresses = [] as string[];
 
@@ -143,12 +145,19 @@ export class Wallet {
         tempAddresses.push(internal.address + "");
       }
 
-      if (this.offlineMode === true) {
+      if (
+        minAmountOfAddresses &&
+        minAmountOfAddresses >= this.addressPosition
+      ) {
+        //In case we intend to create extra addresses on startup
+
+        doneDerivingAddresses = false;
+      } else if (this.offlineMode === true) {
         //BREAK generation of addresses and do NOT check history on the network
-        isLast20ExternalAddressesUnused = true;
+        doneDerivingAddresses = true;
       } else {
         //If no history, break
-        isLast20ExternalAddressesUnused =
+        doneDerivingAddresses =
           false === (await this.hasHistory(tempAddresses));
       }
     }

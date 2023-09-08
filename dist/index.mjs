@@ -511,26 +511,30 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         }
         if (options.network === "rvn-test" && !options.rpc_url) url = $c3676b79c37149df$var$URL_TESTNET;
         this.rpc = (0, $93qLg$getRPC)(username, password, url);
-        //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
-        //TODO improve performance by creating blocks of 20 addresses and check history for all 20 at once
-        //That is one history lookup intead of 20
         this._mnemonic = options.mnemonic;
-        const ACCOUNT = 0;
-        //Should we create an extra amount of addresses at startup?
-        if (options.minAmountOfAddresses) for(let i = 0; i < options.minAmountOfAddresses; i++){
-            const o = (0, $93qLg$ravenrebelsravencoinkey).getAddressPair(this.network, this._mnemonic, ACCOUNT, this.addressPosition);
-            this.addressObjects.push(o.external);
-            this.addressObjects.push(o.internal);
-            this.addressPosition++;
-        }
-        const time = new Date();
         //Generating the hd key is slow, so we re-use the object
         const hdKey = (0, $93qLg$ravenrebelsravencoinkey).getHDKey(this.network, this._mnemonic);
-        const now = new Date();
-        console.log(now.getTime() - time.getTime());
         const coinType = (0, $93qLg$ravenrebelsravencoinkey).getCoinType(this.network);
-        let isLast20ExternalAddressesUnused = false;
-        while(isLast20ExternalAddressesUnused === false){
+        const ACCOUNT = 0;
+        //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
+        /*
+    if (options.minAmountOfAddresses) {
+      for (let i = 0; i < options.minAmountOfAddresses; i++) {
+        const o = RavencoinKey.getAddressPair(
+          this.network,
+          this._mnemonic,
+          ACCOUNT,
+          this.addressPosition
+        );
+        this.addressObjects.push(o.external);
+        this.addressObjects.push(o.internal);
+        this.addressPosition++;
+      }
+    }
+
+    */ const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses) ? options.minAmountOfAddresses : 0;
+        let doneDerivingAddresses = false;
+        while(doneDerivingAddresses === false){
             //We add new addresses to tempAddresses so we can check history for the last 20
             const tempAddresses = [];
             for(let i = 0; i < 20; i++){
@@ -542,10 +546,12 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
                 tempAddresses.push(external.address + "");
                 tempAddresses.push(internal.address + "");
             }
-            if (this.offlineMode === true) //BREAK generation of addresses and do NOT check history on the network
-            isLast20ExternalAddressesUnused = true;
+            if (minAmountOfAddresses && minAmountOfAddresses >= this.addressPosition) //In case we intend to create extra addresses on startup
+            doneDerivingAddresses = false;
+            else if (this.offlineMode === true) //BREAK generation of addresses and do NOT check history on the network
+            doneDerivingAddresses = true;
             else //If no history, break
-            isLast20ExternalAddressesUnused = false === await this.hasHistory(tempAddresses);
+            doneDerivingAddresses = false === await this.hasHistory(tempAddresses);
         }
     }
     async hasHistory(addresses) {
