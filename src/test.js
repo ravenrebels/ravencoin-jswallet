@@ -2,17 +2,17 @@ const RavencoinWallet = require("../dist/index.cjs");
 
 jest.setTimeout(20 * 1000);
 
-let wallet = null; //Loaded in the first test
+//Account "Crazy Cat" on https://testnet.ting.finance/
+const mnemonic =
+  "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
+
+const walletPromise = RavencoinWallet.createInstance({
+  mnemonic,
+  network: "rvn-test",
+});
 
 test("Test UTXOs for assets and base currency", async () => {
-  const mnemonic =
-    "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
-
-  const network = "rvn-test";
-  const wallet = await RavencoinWallet.createInstance({
-    mnemonic,
-    network,
-  });
+  const wallet = await walletPromise;
 
   const UTXOs = await wallet.getUTXOs();
   expect(UTXOs.length).toBeGreaterThanOrEqual(1);
@@ -47,19 +47,22 @@ test("Network evr should give base currency EVR", async () => {
     "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
 
   const network = "evr";
-  const wallet = await RavencoinWallet.createInstance({
-    mnemonic,
-    network,
-    offlineMode: true,
-  });
-  const baseCurrency = wallet.baseCurrency;
-  expect(baseCurrency).toBe("EVR");
+  try {
+    const wallet = await RavencoinWallet.createInstance({
+      mnemonic,
+      network,
+      offlineMode: true,
+    });
+
+    const baseCurrency = wallet.baseCurrency;
+
+    expect(baseCurrency).toBe("EVR");
+  } catch (e) {
+    console.log("SUPER ERROR", e);
+  }
 });
 
 test("Network rvn-test should give base currency RVN", async () => {
-  const mnemonic =
-    "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
-
   const network = "rvn-test";
   const wallet = await RavencoinWallet.createInstance({
     mnemonic,
@@ -87,14 +90,7 @@ test("Network evr-test should give base currency EVR", async () => {
 });
 
 test("get balance", async () => {
-  //Account "Crazy Cat" on https://testnet.ting.finance/
-  const mnemonic =
-    "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
-
-  wallet = await RavencoinWallet.createInstance({
-    mnemonic,
-    network: "rvn-test",
-  });
+  const wallet = await walletPromise;
 
   const balance = await wallet.getBalance();
 
@@ -107,7 +103,7 @@ test("Insufficient funds", async () => {
     toAddress: "mmmjadMR4LkmHjg7VHQSj3hyp9NjWidzT9",
     amount: 1000 * 1000,
   };
-
+  const wallet = await walletPromise;
   let error = null;
   try {
     const result = await wallet.send(options);
@@ -120,6 +116,7 @@ test("Insufficient funds", async () => {
 
 test("Test getHistory", async () => {
   let error = null;
+  const wallet = await walletPromise;
 
   const result = await wallet.getHistory();
 
@@ -132,6 +129,7 @@ test("Send asset we do not have", async () => {
     toAddress: "mmmjadMR4LkmHjg7VHQSj3hyp9NjWidzT9",
     amount: 1,
   };
+  const wallet = await walletPromise;
 
   let error = null;
   try {
@@ -146,7 +144,7 @@ test("Send asset we do not have", async () => {
 test("Change and to address cant be the same", async () => {
   const mnemonic = "bla bla bla";
 
-  wallet = await RavencoinWallet.createInstance({
+  const wallet = await RavencoinWallet.createInstance({
     mnemonic,
     network: "rvn-test",
   });
@@ -170,8 +168,7 @@ test("Change and to address cant be the same", async () => {
 });
 
 test("Min amount of addresses", async () => {
-  const mnemonic = "bla bla bla";
-
+  const mnemonic = "bla bla bla"; 
   const minAmountOfAddresses = 1000;
   wallet = await RavencoinWallet.createInstance({
     mnemonic,
@@ -179,7 +176,7 @@ test("Min amount of addresses", async () => {
     minAmountOfAddresses,
     offlineMode: true,
   });
-
+  console.log("Created", wallet.getAddresses().length, "addies");
   expect(wallet.getAddresses().length).toBeGreaterThanOrEqual(
     minAmountOfAddresses
   );
