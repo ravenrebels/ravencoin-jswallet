@@ -55,14 +55,11 @@ export class Transaction {
 
     //Filter out UTXOs that are NOT in mempool
     const allUTXOs = _allUTXOsTemp.filter((utxo) => {
-      const obj = walletMempool.find((mempoolEntry) => {
-        if (mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id) {
-          return true;
-        }
-        return false;
-      });
-
-      return !obj;
+      const objInMempool = walletMempool.find(
+        (mempoolEntry) =>
+          mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id
+      ); 
+      return !objInMempool;
     });
 
     //Sort utxos lowest first

@@ -342,11 +342,11 @@ export class Wallet {
     if (!amount) {
       throw Error("Wallet.send amount is mandatory");
     }
-const changeAddress = await this.getChangeAddress();
+    const changeAddress = await this.getChangeAddress();
 
-if(changeAddress === toAddress){
-  throw new Error("Change address cannot be the same as toAddress");
-}
+    if (changeAddress === toAddress) {
+      throw new Error("Change address cannot be the same as toAddress");
+    }
     const transaction = new Transaction({
       assetName,
       amount,
@@ -369,6 +369,19 @@ if(changeAddress === toAddress){
       privateKeys
     );
 
+    //Check if signed transaction will be accepted
+    try {
+      const arrayOfTransactions = [signed];
+
+      const asdf = await this.rpc("testmempoolaccept", [arrayOfTransactions]);
+
+      if (asdf[0].allowed !== 1) {
+        console.log("Transaction not accepted", asdf);
+        throw new Error(asdf[0]["reject-reason"]);
+      }
+    } catch (e) {
+      console.log("Check mempool err", e);
+    }
     const id = await this.rpc("sendrawtransaction", [signed]);
     const sendResult: ISendResult = {
       debug: {

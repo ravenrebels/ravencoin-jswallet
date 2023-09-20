@@ -86,11 +86,8 @@ class $0757bc65e326b272$export$febc5573c75cefb0 {
         const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
         //Filter out UTXOs that are NOT in mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
-            const obj = walletMempool.find((mempoolEntry)=>{
-                if (mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id) return true;
-                return false;
-            });
-            return !obj;
+            const objInMempool = walletMempool.find((mempoolEntry)=>mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id);
+            return !objInMempool;
         });
         //Sort utxos lowest first
         allUTXOs.sort($0757bc65e326b272$var$sortBySatoshis);
@@ -605,6 +602,21 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
             outputs
         ]);
         const signed = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinsigntransaction))).sign(this.network, raw, transaction.getUTXOs(), privateKeys);
+        //Check if signed transaction will be accepted
+        try {
+            const arrayOfTransactions = [
+                signed
+            ];
+            const asdf = await this.rpc("testmempoolaccept", [
+                arrayOfTransactions
+            ]);
+            if (asdf[0].allowed !== 1) {
+                console.log("Transaction not accepted", asdf);
+                throw new Error(asdf[0]["reject-reason"]);
+            }
+        } catch (e) {
+            console.log("Check mempool err", e);
+        }
         const id = await this.rpc("sendrawtransaction", [
             signed
         ]);
