@@ -1,19 +1,19 @@
 import { getRPC, methods } from "@ravenrebels/ravencoin-rpc";
 import RavencoinKey from "@ravenrebels/ravencoin-key";
+import Signer from "@ravenrebels/ravencoin-sign-transaction";
 import {
   ChainType,
   IAddressDelta,
   IAddressMetaData,
   ISend,
-  ISendInternalProps,
   ISendResult,
+  IUTXO,
   SweepResult,
 } from "./Types";
 import { ONE_FULL_COIN } from "./contants";
 
-import * as Transactor from "./blockchain/Transactor";
-
 import { sweep } from "./blockchain/sweep";
+import { Transaction } from "./blockchain/Transaction";
 
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
@@ -302,7 +302,7 @@ export class Wallet {
    * @param assetName if present, only return UTXOs for that asset, otherwise for all assets
    * @returns UTXOs for assets
    */
-  async getAssetUTXOs(assetName?: string) {
+  async getAssetUTXOs(assetName?: string): Promise<IUTXO[]> {
     //If no asset name, set to wildcard, meaning all assets
     const _assetName = !assetName ? "*" : assetName;
     const chainInfo = false;
@@ -334,24 +334,6 @@ export class Wallet {
     if (!assetName) {
       assetName = this.baseCurrency;
     }
-    const changeAddress = await this.getChangeAddress();
-
-    //Find the first change address after change address (emergency take the first).
-    const addresses = this.getAddresses();
-    let index = addresses.indexOf(changeAddress);
-    if (index > addresses.length - 2) {
-      index = 1;
-    }
-    if (index === -1) {
-      index = 1;
-    }
-    const changeAddressAssets = addresses[index + 2];
-
-    if (changeAddressAssets === changeAddress) {
-      throw Error(
-        "Internal Error, changeAddress and changeAddressAssets cannot be the same"
-      );
-    }
 
     //Validation
     if (!toAddress) {
@@ -360,31 +342,51 @@ export class Wallet {
     if (!amount) {
       throw Error("Wallet.send amount is mandatory");
     }
+const changeAddress = await this.getChangeAddress();
 
-    if (changeAddress === toAddress) {
-      throw Error(
-        "Wallet.send change address cannot be the same as toAddress " +
-          changeAddress
-      );
-    }
-    if (changeAddressAssets === toAddress) {
-      throw Error(
-        "Wallet.send change address for assets cannot be the same as toAddress " +
-          changeAddressAssets
-      );
-    }
-    const props: ISendInternalProps = {
-      fromAddressObjects: this.addressObjects,
-      amount,
+if(changeAddress === toAddress){
+  throw new Error("Change address cannot be the same as toAddress");
+}
+    const transaction = new Transaction({
       assetName,
-      baseCurrency: this.baseCurrency,
-      changeAddress,
-      changeAddressAssets,
-      network: this.network,
-      rpc: this.rpc,
+      amount,
       toAddress,
+      wallet: this,
+    });
+
+    await transaction.loadData();
+
+    const inputs = transaction.getInputs();
+    const outputs = await transaction.getOutputs();
+
+    const privateKeys = transaction.getPrivateKeys();
+
+    const raw = await this.rpc("createrawtransaction", [inputs, outputs]);
+    const signed = Signer.sign(
+      this.network,
+      raw,
+      transaction.getUTXOs(),
+      privateKeys
+    );
+
+    const id = await this.rpc("sendrawtransaction", [signed]);
+    const sendResult: ISendResult = {
+      debug: {
+        amount,
+        assetName,
+        fee: transaction.getFee(),
+        inputs,
+        outputs,
+        privateKeys,
+        rawUnsignedTransaction: raw,
+        rvnChangeAmount: transaction.getBaseCurrencyChange(),
+        rvnAmount: transaction.getBaseCurrencyAmount(),
+        signedTransaction: signed,
+        UTXOs: transaction.getUTXOs(),
+      },
+      transactionId: id,
     };
-    return Transactor.send(props);
+    return sendResult;
   }
 
   async getAssets() {

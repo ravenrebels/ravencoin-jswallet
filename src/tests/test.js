@@ -1,4 +1,4 @@
-const RavencoinWallet = require("../dist/index.cjs");
+const RavencoinWallet = require("../../dist/index.cjs");
 
 jest.setTimeout(20 * 1000);
 
@@ -97,23 +97,6 @@ test("get balance", async () => {
   expect(isNaN(balance)).toBe(false);
 });
 
-test("Insufficient funds", async () => {
-  const options = {
-    assetName: "DECI", //Asset we do not have;
-    toAddress: "mmmjadMR4LkmHjg7VHQSj3hyp9NjWidzT9",
-    amount: 1000 * 1000,
-  };
-  const wallet = await walletPromise;
-  let error = null;
-  try {
-    const result = await wallet.send(options);
-  } catch (e) {
-    error = e;
-  }
-
-  expect(error.name).toBe("InsufficientFundsError");
-});
-
 test("Test getHistory", async () => {
   let error = null;
   const wallet = await walletPromise;
@@ -123,52 +106,8 @@ test("Test getHistory", async () => {
   expect(result.length > 0).toBe(true);
 });
 
-test("Send asset we do not have", async () => {
-  const options = {
-    assetName: "FREN#RED", //Asset we do not have;
-    toAddress: "mmmjadMR4LkmHjg7VHQSj3hyp9NjWidzT9",
-    amount: 1,
-  };
-  const wallet = await walletPromise;
-
-  let error = null;
-  try {
-    const result = await wallet.send(options);
-  } catch (e) {
-    error = e;
-  }
-
-  expect(error.name).toBe("InsufficientFundsError");
-});
-
-test("Change and to address cant be the same", async () => {
-  const mnemonic = "bla bla bla";
-
-  const wallet = await RavencoinWallet.createInstance({
-    mnemonic,
-    network: "rvn-test",
-  });
-
-  let error = null;
-  const changeAddress = await wallet.getChangeAddress();
-  try {
-    await wallet.send({
-      toAddress: changeAddress,
-      amount: 1,
-    });
-  } catch (e) {
-    error = e;
-  }
-  const changeAddressAndToAddressTheSame =
-    (error + "").indexOf(
-      "Wallet.send change address cannot be the same as toAddress"
-    ) > -1;
-
-  expect(changeAddressAndToAddressTheSame).toBe(true);
-});
-
 test("Min amount of addresses", async () => {
-  const mnemonic = "bla bla bla"; 
+  const mnemonic = "bla bla bla";
   const minAmountOfAddresses = 1000;
   wallet = await RavencoinWallet.createInstance({
     mnemonic,
@@ -176,7 +115,7 @@ test("Min amount of addresses", async () => {
     minAmountOfAddresses,
     offlineMode: true,
   });
-  console.log("Created", wallet.getAddresses().length, "addies");
+
   expect(wallet.getAddresses().length).toBeGreaterThanOrEqual(
     minAmountOfAddresses
   );

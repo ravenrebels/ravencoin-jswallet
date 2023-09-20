@@ -12,6 +12,7 @@ interface IAddressDelta {
     index: number;
     satoshis: number;
     txid: string;
+    prevtxid?: string;
 }
 interface SweepResult {
     errorDescription?: string;
@@ -31,7 +32,6 @@ interface ISendResult {
     debug: {
         amount: number;
         assetName: string;
-        assetUTXOs: Array<IUTXO>;
         error?: any;
         fee: number;
         inputs: Array<IVout_when_creating_transactions>;
@@ -40,9 +40,8 @@ interface ISendResult {
         rawUnsignedTransaction?: string;
         rvnAmount: number;
         rvnChangeAmount: number;
-        rvnUTXOs: Array<IUTXO>;
         signedTransaction?: string;
-        unspentRVNAmount: any;
+        UTXOs: IUTXO[];
     };
 }
 interface IVout_when_creating_transactions {
@@ -53,11 +52,12 @@ interface IVout_when_creating_transactions {
 interface IUTXO {
     address: string;
     assetName: string;
-    txid: string;
+    height: number;
+    id: string;
     outputIndex: number;
     script: string;
     satoshis: number;
-    height: number;
+    txid: string;
     value: number;
 }
 interface IAddressMetaData {
@@ -122,7 +122,7 @@ export class Wallet {
      * @param assetName if present, only return UTXOs for that asset, otherwise for all assets
      * @returns UTXOs for assets
      */
-    getAssetUTXOs(assetName?: string): Promise<any>;
+    getAssetUTXOs(assetName?: string): Promise<IUTXO[]>;
     getUTXOs(): Promise<any>;
     getPrivateKeyByAddress(address: string): string;
     send(options: ISend): Promise<ISendResult>;

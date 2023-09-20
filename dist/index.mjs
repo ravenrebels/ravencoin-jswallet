@@ -1,7 +1,7 @@
 import {getRPC as $93qLg$getRPC, methods as $93qLg$methods} from "@ravenrebels/ravencoin-rpc";
 import $93qLg$ravenrebelsravencoinkey from "@ravenrebels/ravencoin-key";
-import {Buffer as $93qLg$Buffer} from "buffer";
-import $93qLg$ravenrebelsravencoinsigntransaction, {sign as $93qLg$sign} from "@ravenrebels/ravencoin-sign-transaction";
+import $93qLg$ravenrebelsravencoinsigntransaction from "@ravenrebels/ravencoin-sign-transaction";
+
 
 
 
@@ -9,377 +9,240 @@ const $9de421449659004c$export$ffff6aea08fd9487 = 1e8;
 
 
 
-const $de17ee1c983f5fa9$var$ONE_HUNDRED_MILLION = 1e8;
-function $de17ee1c983f5fa9$export$24d1144bbf44c6c6(rpc, addresses) {
-    return rpc("getaddressdeltas", [
-        {
-            addresses: addresses,
-            assetName: ""
-        }
-    ]);
-}
-function $de17ee1c983f5fa9$export$4e309754b4830e29(rpc, signedTransaction) {
-    const p = rpc("sendrawtransaction", [
-        signedTransaction
-    ]);
-    p.catch((e)=>{
-        console.log("send raw transaction");
-        console.dir(e);
-    });
-    return p;
-}
-function $de17ee1c983f5fa9$export$4e98a95db76a53e1(rpc, rawTransactionHex, privateKeys) {
-    const s = rpc("signrawtransaction", [
-        rawTransactionHex,
-        null,
-        privateKeys
-    ]);
-    return s;
-}
-function $de17ee1c983f5fa9$export$fcbdf06914f0237a(rpc, raw) {
-    return rpc("decoderawtransaction", [
-        raw
-    ]);
-}
-function $de17ee1c983f5fa9$export$b7bc66c041203976(rpc, id) {
-    return rpc("getrawtransaction", [
-        id,
-        true
-    ]);
-}
-function $de17ee1c983f5fa9$export$3c514ecc803e4adc(rpc, inputs, outputs) {
-    return rpc("createrawtransaction", [
-        inputs,
-        outputs
-    ]);
-}
-async function $de17ee1c983f5fa9$export$f78173835dcde49f(rpc, address) {
-    return rpc("validateaddress", [
-        address
-    ]);
-}
-function $de17ee1c983f5fa9$export$df96cd8d56be0ab1(rpc, addresses) {
-    const includeAssets = true;
-    const promise = rpc("getaddressbalance", [
-        {
-            addresses: addresses
-        },
-        includeAssets
-    ]);
-    return promise;
-}
-function $de17ee1c983f5fa9$export$1021589f9720f1bb(list) {
-    //Remember, sort mutates the underlaying array
-    //Sort by satoshis, lowest first to prevent dust.
-    return list.sort(function(a, b) {
-        if (a.satoshis > b.satoshis) return 1;
-        if (a.satoshis < b.satoshis) return -1;
-        return 0;
-    });
-}
-async function $de17ee1c983f5fa9$export$2c023684d71dad7(rpc, addresses) {
-    const list = await rpc("getaddressutxos", [
-        {
-            addresses: addresses
-        }
-    ]);
-    $de17ee1c983f5fa9$export$1021589f9720f1bb(list);
-    return list;
-}
-function $de17ee1c983f5fa9$export$61ff118ad91d2b8c(rpc, addresses, assetName) {
-    const assets = rpc("getaddressutxos", [
-        {
-            addresses: addresses,
-            assetName: assetName
-        }
-    ]);
-    return assets;
-}
-function $de17ee1c983f5fa9$export$11b542b4427a1a57(rpc, addresses) {
-    /*
-  Seems like getaddressutxos either return RVN UTXOs or asset UTXOs
-  Never both.
-  So we make two requests and we join the answer
-  */ const raven = rpc("getaddressutxos", [
-        {
-            addresses: addresses
-        }
-    ]);
-    const assets = rpc("getaddressutxos", [
-        {
-            addresses: addresses,
-            assetName: "*"
-        }
-    ]);
-    return Promise.all([
-        raven,
-        assets
-    ]).then((values)=>{
-        const all = values[0].concat(values[1]);
-        return all;
-    });
-}
-async function $de17ee1c983f5fa9$export$6bbaa6939a98b630(rpc) {
-    const ids = await rpc("getrawmempool", []);
-    const result = [];
-    for (const id of ids){
-        const transaction = await $de17ee1c983f5fa9$export$b7bc66c041203976(rpc, id);
-        result.push(transaction);
-    }
-    return result;
-}
-function $de17ee1c983f5fa9$export$6a4ffba0c6186ae7(UTXOs) {
-    const inputs = UTXOs.map(function(bla) {
-        //OK we have to convert from "unspent" format to "vout"
-        const obj = {
-            txid: bla.txid,
-            vout: bla.outputIndex,
-            address: bla.address
-        };
-        return obj;
-    });
-    return inputs;
-}
-
-
 
 class $df4abebf0c223404$export$2191b9da168c6cf0 extends Error {
     constructor(message){
-        super(message); // (1)
-        this.name = "ValidationError"; // (2)
+        super(message);
+        this.name = "ValidationError";
     }
 }
 class $df4abebf0c223404$export$66c44d927ffead98 extends Error {
     constructor(message){
-        super(message); // (1)
-        this.name = "InvalidAddressError"; // (2)
+        super(message);
+        this.name = "InvalidAddressError";
     }
 }
 class $df4abebf0c223404$export$b276096bbba16879 extends Error {
     constructor(message){
-        super(message); // (1)
-        this.name = "InsufficientFundsError"; // (2)
+        super(message);
+        this.name = "InsufficientFundsError";
     }
 }
 
 
-
-var $8a6a99603cc26764$require$Buffer = $93qLg$Buffer;
-async function $8a6a99603cc26764$var$isValidAddress(rpc, address) {
-    const obj = await $de17ee1c983f5fa9$export$f78173835dcde49f(rpc, address);
-    return obj.isvalid === true;
+class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
+    constructor({ wallet: wallet , toAddress: toAddress , amount: amount , assetName: assetName  }){
+        this.amount = 0;
+        this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
+        ;
+        this.toAddress = toAddress;
+        this.amount = amount;
+        this.assetName = !assetName ? wallet.baseCurrency : assetName;
+        this.wallet = wallet;
+    }
+    getSizeInKB() {
+        const length = this.getUTXOs().length;
+        //Lets assume every input is 300 bytes.
+        return length * 300 / 1000;
+    }
+    async loadData() {
+        //Load blockchain information async, and wait for it
+        const mempoolPromise = this.wallet.getMempool();
+        const assetUTXOsPromise = this.wallet.getAssetUTXOs();
+        const baseCurencyUTXOsPromise = this.wallet.getUTXOs();
+        const feeRatePromise = this.getFeeRate();
+        const walletMempool = await mempoolPromise;
+        const assetUTXOs = await assetUTXOsPromise;
+        const baseCurrencyUTXOs = await baseCurencyUTXOsPromise;
+        this.feerate = await feeRatePromise;
+        const mempoolUTXOs = $c3dba3dbad356cd6$var$getSpendableMempool(walletMempool);
+        //Decorate mempool UTXOs with script attribute
+        for (let u of mempoolUTXOs){
+            if (u.script) continue;
+            //Mempool items might not have the script attbribute, we need it
+            const utxo = await this.wallet.rpc("gettxout", [
+                u.txid,
+                u.index,
+                true
+            ]);
+            if (utxo) u.script = utxo.scriptPubKey.hex;
+        }
+        const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
+        //Filter out UTXOs that are NOT in mempool
+        const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
+            const obj = walletMempool.find((mempoolEntry)=>{
+                if (mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id) return true;
+                return false;
+            });
+            return !obj;
+        });
+        //Sort utxos lowest first
+        allUTXOs.sort($c3dba3dbad356cd6$var$sortBySatoshis);
+        this._allUTXOs = allUTXOs;
+    }
+    getUTXOs() {
+        if (this.isAssetTransfer() === true) {
+            const assetAmount = this.amount;
+            const baseCurrencyAmount = this.getBaseCurrencyAmount();
+            const baseCurrencyUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, baseCurrencyAmount);
+            const assetUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, assetAmount);
+            return assetUTXOs.concat(baseCurrencyUTXOs);
+        } else return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+    }
+    predictUTXOs() {
+        if (this.isAssetTransfer()) return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.amount);
+        return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.amount);
+    }
+    getBaseCurrencyAmount() {
+        const fee = this.getFee();
+        if (this.isAssetTransfer() === true) return fee;
+        else return this.amount + fee;
+    }
+    getBaseCurrencyChange() {
+        const enoughUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+        let total = 0;
+        for (let utxo of enoughUTXOs){
+            if (utxo.assetName !== this.wallet.baseCurrency) continue;
+            total = total + utxo.satoshis / 1e8;
+        }
+        const result = total - this.getBaseCurrencyAmount();
+        return $c3dba3dbad356cd6$export$1778fb2d99201af(result);
+    }
+    getAssetChange() {
+        const enoughUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.amount);
+        let total = 0;
+        for (let utxo of enoughUTXOs){
+            if (utxo.assetName !== this.assetName) continue;
+            total = total + utxo.satoshis / 1e8;
+        }
+        return total - this.amount;
+    }
+    isAssetTransfer() {
+        return this.assetName !== this.wallet.baseCurrency;
+    }
+    async getOutputs() {
+        const outputs = {};
+        if (this.isAssetTransfer() === true) {
+            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
+            //Validate: change address cant be toAddress
+            if (changeAddressBaseCurrency === this.toAddress) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as toAddress");
+            outputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
+            const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
+            const changeAddressAsset = this.wallet.getAddresses()[index + 2];
+            //Validate change address can never be the same as toAddress
+            if (changeAddressAsset === this.toAddress) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as toAddress");
+            if (this.getAssetChange() > 0) outputs[changeAddressAsset] = {
+                transfer: {
+                    [this.assetName]: this.getAssetChange()
+                }
+            };
+            outputs[this.toAddress] = {
+                transfer: {
+                    [this.assetName]: this.amount
+                }
+            };
+        } else {
+            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
+            outputs[this.toAddress] = this.amount;
+            outputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
+        }
+        return outputs;
+    }
+    getInputs() {
+        return this.getUTXOs().map((obj)=>{
+            return {
+                address: obj.address,
+                txid: obj.txid,
+                vout: obj.outputIndex
+            };
+        });
+    }
+    getPrivateKeys() {
+        const addressObjects = this.wallet.getAddressObjects();
+        const privateKeys = {};
+        for (let u of this.getUTXOs()){
+            //Find the address object (we want the WIF) for the address related to the UTXO
+            const addressObject = addressObjects.find((obj)=>obj.address === u.address);
+            if (addressObject) privateKeys[u.address] = addressObject.WIF;
+        }
+        return privateKeys;
+    }
+    getFee() {
+        const utxos = this.predictUTXOs();
+        const assumedSizePerUTXO = 300;
+        const bytes = (utxos.length + 1) * assumedSizePerUTXO;
+        const kb = bytes / 1024;
+        const result = kb * this.feerate;
+        return result;
+    }
+    async getFeeRate() {
+        const defaultFee = 0.02;
+        try {
+            const confirmationTarget = 20;
+            const asdf = await this.wallet.rpc("estimatesmartfee", [
+                confirmationTarget
+            ]);
+            if (!asdf.errors) return asdf.feerate;
+            else return defaultFee;
+        } catch (e) {
+            //Might occure errors on testnet when calculating fees
+            return defaultFee;
+        }
+    }
 }
-function $8a6a99603cc26764$var$sumOfUTXOs(UTXOs) {
-    let unspentRavencoinAmount = 0;
-    UTXOs.map(function(item) {
-        const newValue = item.satoshis / 1e8;
-        unspentRavencoinAmount = unspentRavencoinAmount + newValue;
-    });
-    return unspentRavencoinAmount;
+function $c3dba3dbad356cd6$export$1778fb2d99201af(number) {
+    return parseFloat(number.toFixed(2));
 }
-/*
-
-    "Chicken and egg" situation.
-    We need to calculate how much we shall pay in fees based on the size of the transaction.
-    When adding inputs/outputs for the fee, we increase the fee.
-
-    Lets start by first assuming that we will pay 1 RVN in fee (that is sky high).
-    Than we check the size of the transaction and then we just adjust the change output so the fee normalizes
-*/ async function $8a6a99603cc26764$var$getFee(rpc, inputs, outputs) {
-    const ONE_KILOBYTE = 1024;
-    //Create a raw transaction to get an aproximation for transaction size.
-    const raw = await $de17ee1c983f5fa9$export$3c514ecc803e4adc(rpc, inputs, outputs);
-    //Get the length of the string bytes not the string
-    //This is NOT the exact size since we will add an output for the change address to the transaction
-    //We add 20% to the size, to cover extra input for fee
-    const size = $8a6a99603cc26764$require$Buffer.from(raw).length / ONE_KILOBYTE * 1.2;
-    let fee = 0.02;
-    //Ask the "blockchain" **estimatesmartfee**
-    try {
-        const confirmationTarget = 100;
-        const asdf = await rpc("estimatesmartfee", [
-            confirmationTarget
-        ]);
-        if (!asdf.errors) fee = asdf.feerate;
-    } catch (e) {}
-    const result = fee * Math.max(1, size);
+function $c3dba3dbad356cd6$var$sortBySatoshis(u1, u2) {
+    if (u1.satoshis > u2.satoshis) return 1;
+    if (u1.satoshis === u2.satoshis) return 0;
+    return -1;
+}
+function $c3dba3dbad356cd6$var$getEnoughUTXOs(utxos, asset, amount) {
+    const result = [];
+    let sum = 0;
+    for (let u of utxos){
+        if (sum > amount) break;
+        if (u.assetName !== asset) continue;
+        //Ignore UTXOs with zero satoshis, seems to occure when assets are minted
+        if (u.satoshis === 0) continue;
+        const value = u.satoshis / 1e8;
+        result.push(u);
+        sum = sum + value;
+    }
+    if (sum < amount) {
+        const error = new (0, $df4abebf0c223404$export$b276096bbba16879)("You do not have " + amount + " " + asset);
+        throw error;
+    }
     return result;
 }
-function $8a6a99603cc26764$var$getDefaultSendResult() {
-    const sendResult = {
-        transactionId: "undefined",
-        debug: {
-            assetName: "",
-            assetUTXOs: [],
-            amount: 0,
-            fee: 0,
-            inputs: [],
-            outputs: null,
-            rvnChangeAmount: 0,
-            rvnUTXOs: [],
-            unspentRVNAmount: "",
-            rvnAmount: 0
-        }
-    };
-    return sendResult;
-}
-async function $8a6a99603cc26764$export$89db4734f6c919c4(options) {
-    const { amount: amount , assetName: assetName , baseCurrency: baseCurrency , changeAddress: changeAddress , changeAddressAssets: changeAddressAssets , fromAddressObjects: fromAddressObjects , network: network , toAddress: toAddress , rpc: rpc  } = options;
-    const sendResult = $8a6a99603cc26764$var$getDefaultSendResult();
-    sendResult.debug.amount = amount;
-    const MAX_FEE = 4;
-    const isAssetTransfer = assetName !== baseCurrency;
-    //VALIDATION
-    if (await $8a6a99603cc26764$var$isValidAddress(rpc, toAddress) === false) throw new (0, $df4abebf0c223404$export$66c44d927ffead98)("Invalid address " + toAddress);
-    if (amount < 0) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Cant send less than zero");
-    const addresses = fromAddressObjects.map((a)=>a.address);
-    //Do we have enough of the asset?
-    if (isAssetTransfer === true) {
-        if (!changeAddressAssets) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("No changeAddressAssets");
-        const b = await $de17ee1c983f5fa9$export$df96cd8d56be0ab1(rpc, addresses);
-        const a = b.find((asset)=>asset.assetName === assetName);
-        if (!a) throw new (0, $df4abebf0c223404$export$b276096bbba16879)("You do not have any " + assetName);
-        const balance = a.balance / (0, $9de421449659004c$export$ffff6aea08fd9487);
-        if (balance < amount) throw new (0, $df4abebf0c223404$export$b276096bbba16879)("You do not have " + amount + " " + assetName);
-    }
-    let allBaseCurrencyUTXOs = await $de17ee1c983f5fa9$export$2c023684d71dad7(rpc, addresses);
-    //Remove UTXOs that are currently in mempool
-    const mempool = await $de17ee1c983f5fa9$export$6bbaa6939a98b630(rpc);
-    allBaseCurrencyUTXOs = allBaseCurrencyUTXOs.filter((UTXO)=>$8a6a99603cc26764$export$9ffd76c05265a057(mempool, UTXO) === false);
-    const enoughBaseCurrencyUTXOs = $8a6a99603cc26764$export$aef5e6c96bd29914(allBaseCurrencyUTXOs, isAssetTransfer ? 1 : amount + MAX_FEE);
-    //Sum up the whole unspent amount
-    let unspentBaseCurrencyAmount = $8a6a99603cc26764$var$sumOfUTXOs(enoughBaseCurrencyUTXOs);
-    if (unspentBaseCurrencyAmount <= 0) throw new (0, $df4abebf0c223404$export$b276096bbba16879)("Not enough RVN to transfer asset, perhaps your wallet has pending transactions");
-    sendResult.debug.unspentRVNAmount = unspentBaseCurrencyAmount.toLocaleString();
-    if (isAssetTransfer === false) {
-        if (amount > unspentBaseCurrencyAmount) throw new (0, $df4abebf0c223404$export$b276096bbba16879)("Insufficient funds, cant send " + amount.toLocaleString() + " only have " + unspentBaseCurrencyAmount.toLocaleString());
-    }
-    const baseCurrencyAmountToSpend = isAssetTransfer ? 0 : amount;
-    sendResult.debug.rvnUTXOs = enoughBaseCurrencyUTXOs;
-    const inputs = $de17ee1c983f5fa9$export$6a4ffba0c6186ae7(enoughBaseCurrencyUTXOs);
-    const outputs = {};
-    //Add asset inputs
-    sendResult.debug.assetUTXOs = [];
-    if (isAssetTransfer === true) {
-        if (!changeAddressAssets) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("changeAddressAssets is mandatory when transfering assets");
-        const assetUTXOs = await $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, changeAddressAssets);
-        sendResult.debug.assetUTXOs = assetUTXOs;
-    } else if (isAssetTransfer === false) outputs[toAddress] = baseCurrencyAmountToSpend;
-    const fee = await $8a6a99603cc26764$var$getFee(rpc, inputs, outputs);
-    sendResult.debug.assetName = assetName;
-    sendResult.debug.fee = fee;
-    sendResult.debug.rvnAmount = 0;
-    const baseCurrencyChangeAmount = unspentBaseCurrencyAmount - baseCurrencyAmountToSpend - fee;
-    sendResult.debug.rvnChangeAmount = baseCurrencyChangeAmount;
-    //Obviously we only add change address if there is any change
-    if ($8a6a99603cc26764$export$82aafe8193f6c0ba(baseCurrencyChangeAmount) > 0) outputs[changeAddress] = $8a6a99603cc26764$export$82aafe8193f6c0ba(baseCurrencyChangeAmount);
-    //Now we have enough UTXos, lets create a raw transactions
-    sendResult.debug.inputs = inputs;
-    sendResult.debug.outputs = outputs;
-    const raw = await $de17ee1c983f5fa9$export$3c514ecc803e4adc(rpc, inputs, outputs);
-    sendResult.debug.rawUnsignedTransaction = raw;
-    //OK lets find the private keys (WIF) for input addresses
-    const privateKeys = {};
-    inputs.map(function(input) {
-        const addy = input.address;
-        const addressObject = fromAddressObjects.find((a)=>a.address === addy);
-        if (addressObject) privateKeys[addy] = addressObject.WIF;
-    });
-    sendResult.debug.privateKeys = privateKeys;
-    let UTXOs = [];
-    if (enoughBaseCurrencyUTXOs) UTXOs = UTXOs.concat(enoughBaseCurrencyUTXOs);
-    if (sendResult.debug.assetUTXOs) UTXOs = UTXOs.concat(sendResult.debug.assetUTXOs);
-    try {
-        const signedTransaction = (0, $93qLg$sign)(network, raw, UTXOs, privateKeys);
-        sendResult.debug.signedTransaction = signedTransaction;
-        const txid = await $de17ee1c983f5fa9$export$4e309754b4830e29(rpc, signedTransaction);
-        sendResult.transactionId = txid;
-    } catch (e) {
-        sendResult.debug.error = e;
-    }
-    return sendResult;
-}
-async function $8a6a99603cc26764$var$addAssetInputsAndOutputs(rpc, addresses, assetName, amount, inputs, outputs, toAddress, changeAddressAssets) {
-    let assetUTXOs = await $de17ee1c983f5fa9$export$61ff118ad91d2b8c(rpc, addresses, assetName);
-    const mempool = await $de17ee1c983f5fa9$export$6bbaa6939a98b630(rpc);
-    assetUTXOs = assetUTXOs.filter((UTXO)=>$8a6a99603cc26764$export$9ffd76c05265a057(mempool, UTXO) === false);
-    const _UTXOs = $8a6a99603cc26764$export$aef5e6c96bd29914(assetUTXOs, amount);
-    const tempInputs = $de17ee1c983f5fa9$export$6a4ffba0c6186ae7(_UTXOs);
-    tempInputs.map((item)=>inputs.push(item));
-    outputs[toAddress] = {
-        transfer: {
-            [assetName]: amount
-        }
-    };
-    const assetSum = $8a6a99603cc26764$var$sumOfUTXOs(_UTXOs);
-    const needsChange = assetSum - amount > 0;
-    if (needsChange) outputs[changeAddressAssets] = {
-        transfer: {
-            [assetName]: assetSum - amount
-        }
-    };
-    return _UTXOs; //Return the UTXOs used for asset transfer
-}
-function $8a6a99603cc26764$export$82aafe8193f6c0ba(num) {
-    //Found answer here https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary
-    //In JavaScript the number 77866.98 minus 111 minus 0.2 equals 77755.95999999999
-    //We want it to be 77755.96
-    return Math.trunc(num * 100) / 100;
-}
-function $8a6a99603cc26764$export$aef5e6c96bd29914(utxos, amount) {
+function $c3dba3dbad356cd6$var$getSpendableMempool(mempool) {
     /*
-  Scenario ONE
-  Bob has 300 UTXO with 1 RVN each.
-  Bob has one UTXO with 400 RVN.
-
-  Bob intends to send 300 RVN
-  In this case the best thing to do is to use the single 400 UTXO
-
-  SCENARIO TWO
-
-  Alice have tons of small UTXOs like 0.03 RVN, 0.2 RVN, she wants to send 5 RVN.
-  In this case it makes sense to clean up the "dust", so you dont end up with a lot of small change.
-
-
-  */ //For small transactions,start with small transactions first.
-    let tempAmount = 0;
-    const returnValue = [];
-    utxos.map(function(utxo) {
-        if (utxo.satoshis !== 0 && tempAmount < amount) {
-            const value = utxo.satoshis / (0, $9de421449659004c$export$ffff6aea08fd9487);
-            tempAmount = tempAmount + value;
-            returnValue.push(utxo);
-        }
-    });
-    //Did we use a MASSIVE amount of UTXOs to safisfy this transaction?
-    //In this case check if we do have one single UTXO that can satisfy our needs
-    if (returnValue.length > 10) {
-        const largerUTXO = utxos.find((utxo)=>utxo.satoshis / (0, $9de421449659004c$export$ffff6aea08fd9487) > amount);
-        if (largerUTXO) //Send this one UTXO that covers it all
-        return [
-            largerUTXO
-        ];
-    }
-    return returnValue;
+interface IUTXO {
+   address: string;
+   assetName: string;
+   txid: string;
+   outputIndex: number;
+   script: string;
+   satoshis: number;
+   height: number;
+   value: number;
 }
-function $8a6a99603cc26764$export$9ffd76c05265a057(mempool, UTXO) {
-    function format(transactionId, index) {
-        return transactionId + "_" + index;
+*/ const mySet = new Set();
+    for (let item of mempool){
+        if (!item.prevtxid) continue;
+        const value = item.prevtxid + "_" + item.prevout;
+        mySet.add(value);
     }
-    const listOfUTXOsInMempool = [];
-    mempool.map((transaction)=>{
-        transaction.vin.map((vin)=>{
-            const id = format(vin.txid, vin.vout);
-            listOfUTXOsInMempool.push(id);
-        });
+    const spendable = mempool.filter((item)=>{
+        if (item.satoshis < 0) return false;
+        const value = item.txid + "_" + item.index;
+        return mySet.has(value) === false;
     });
-    const index = listOfUTXOsInMempool.indexOf(format(UTXO.txid, UTXO.outputIndex));
-    const isInMempool = index > -1;
-    return isInMempool;
+    //UTXO object need to have an outputIndex property, not index
+    spendable.map((s)=>s.outputIndex = s.index);
+    return spendable;
 }
-
-
-
 
 
 (0, $93qLg$ravenrebelsravencoinsigntransaction).sign; //"Idiocracy" but prevents bundle tools such as PARCEL to strip this dependency out on build.
@@ -426,7 +289,7 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
     keys.map((assetName, index)=>{
         const address = wallet.getAddresses()[index];
         const amount = balanceObject[assetName] / 1e8;
-        if (assetName === wallet.baseCurrency) outputs[address] = (0, $8a6a99603cc26764$export$82aafe8193f6c0ba)(amount - fixedFee);
+        if (assetName === wallet.baseCurrency) outputs[address] = (0, $c3dba3dbad356cd6$export$1778fb2d99201af)(amount - fixedFee);
         else outputs[address] = {
             transfer: {
                 [assetName]: amount
@@ -462,6 +325,7 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
     ]);
     return result;
 }
+
 
 
 const $c3676b79c37149df$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
@@ -705,31 +569,46 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         const { amount: amount , toAddress: toAddress  } = options;
         let { assetName: assetName  } = options;
         if (!assetName) assetName = this.baseCurrency;
-        const changeAddress = await this.getChangeAddress();
-        //Find the first change address after change address (emergency take the first).
-        const addresses = this.getAddresses();
-        let index = addresses.indexOf(changeAddress);
-        if (index > addresses.length - 2) index = 1;
-        if (index === -1) index = 1;
-        const changeAddressAssets = addresses[index + 2];
-        if (changeAddressAssets === changeAddress) throw Error("Internal Error, changeAddress and changeAddressAssets cannot be the same");
         //Validation
         if (!toAddress) throw Error("Wallet.send toAddress is mandatory");
         if (!amount) throw Error("Wallet.send amount is mandatory");
-        if (changeAddress === toAddress) throw Error("Wallet.send change address cannot be the same as toAddress " + changeAddress);
-        if (changeAddressAssets === toAddress) throw Error("Wallet.send change address for assets cannot be the same as toAddress " + changeAddressAssets);
-        const props = {
-            fromAddressObjects: this.addressObjects,
-            amount: amount,
+        const changeAddress = await this.getChangeAddress();
+        if (changeAddress === toAddress) throw new Error("Change address cannot be the same as toAddress");
+        const transaction = new (0, $c3dba3dbad356cd6$export$febc5573c75cefb0)({
             assetName: assetName,
-            baseCurrency: this.baseCurrency,
-            changeAddress: changeAddress,
-            changeAddressAssets: changeAddressAssets,
-            network: this.network,
-            rpc: this.rpc,
-            toAddress: toAddress
+            amount: amount,
+            toAddress: toAddress,
+            wallet: this
+        });
+        await transaction.loadData();
+        const inputs = transaction.getInputs();
+        const outputs = await transaction.getOutputs();
+        const privateKeys = transaction.getPrivateKeys();
+        const raw = await this.rpc("createrawtransaction", [
+            inputs,
+            outputs
+        ]);
+        const signed = (0, $93qLg$ravenrebelsravencoinsigntransaction).sign(this.network, raw, transaction.getUTXOs(), privateKeys);
+        const id = await this.rpc("sendrawtransaction", [
+            signed
+        ]);
+        const sendResult = {
+            debug: {
+                amount: amount,
+                assetName: assetName,
+                fee: transaction.getFee(),
+                inputs: inputs,
+                outputs: outputs,
+                privateKeys: privateKeys,
+                rawUnsignedTransaction: raw,
+                rvnChangeAmount: transaction.getBaseCurrencyChange(),
+                rvnAmount: transaction.getBaseCurrencyAmount(),
+                signedTransaction: signed,
+                UTXOs: transaction.getUTXOs()
+            },
+            transactionId: id
         };
-        return $8a6a99603cc26764$export$89db4734f6c919c4(props);
+        return sendResult;
     }
     async getAssets() {
         const includeAssets = true;

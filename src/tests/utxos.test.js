@@ -1,5 +1,5 @@
-const RavencoinWallet = require("../dist/index.cjs");
-
+const RavencoinWallet = require("../../dist/index.cjs");
+jest.setTimeout(20 * 1000);
 test("Test UTXOs for assets and base currency", async () => {
   const mnemonic =
     "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";

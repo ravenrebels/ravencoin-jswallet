@@ -5,7 +5,7 @@ import Signer from "@ravenrebels/ravencoin-sign-transaction";
 
 import { Wallet } from "../ravencoinWallet";
 import { IInput, SweepResult } from "../Types";
-import { getTwoDecimalTrunc } from "./Transactor";
+import { shortenNumber } from "./Transaction";
 
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
 //OH easter egg ;)
@@ -65,7 +65,7 @@ export async function sweep(
     const amount = balanceObject[assetName] / 1e8;
 
     if (assetName === wallet.baseCurrency) {
-      outputs[address] = getTwoDecimalTrunc(amount - fixedFee);
+      outputs[address] = shortenNumber(amount - fixedFee);
     } else {
       outputs[address] = {
         transfer: {

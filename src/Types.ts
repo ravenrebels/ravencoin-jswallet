@@ -21,6 +21,8 @@ export interface IAddressDelta {
   index: number;
   satoshis: number;
   txid: string;
+
+  prevtxid?: string;
 }
 
 export interface SweepResult {
@@ -41,8 +43,7 @@ export interface ISendResult {
   transactionId: string;
   debug: {
     amount: number;
-    assetName: string;
-    assetUTXOs: Array<IUTXO>;
+    assetName: string; 
     error?: any;
     fee: number;
     inputs: Array<IVout_when_creating_transactions>;
@@ -50,10 +51,9 @@ export interface ISendResult {
     privateKeys?: TPrivateKey;
     rawUnsignedTransaction?: string;
     rvnAmount: number;
-    rvnChangeAmount: number;
-    rvnUTXOs: Array<IUTXO>;
-    signedTransaction?: string;
-    unspentRVNAmount: any;
+    rvnChangeAmount: number; 
+    signedTransaction?: string; 
+    UTXOs: IUTXO[];
   };
 }
 export interface Asset {
@@ -161,11 +161,12 @@ export interface IValidateAddressResponse {
 export interface IUTXO {
   address: string;
   assetName: string;
-  txid: string;
+  height: number;
+  id: string;
   outputIndex: number;
   script: string;
   satoshis: number;
-  height: number;
+  txid: string;
   value: number;
 }
 export interface IAssetMetaData {

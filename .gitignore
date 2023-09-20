@@ -107,8 +107,6 @@ typings/
 .tern-port
 
 .parcel-cache
-!/src/test.js
+!/src/tests/*
 !dist/*
-!/src/sweep.test.js
-!/src/utxos.test.js
-!/src/receive.test.js
+ 
