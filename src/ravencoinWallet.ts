@@ -369,37 +369,31 @@ export class Wallet {
       privateKeys
     );
 
-    //Check if signed transaction will be accepted
+    //ACTUAL SENDING TRANSACTION
     try {
-      const arrayOfTransactions = [signed];
-
-      const asdf = await this.rpc("testmempoolaccept", [arrayOfTransactions]);
-
-      if (asdf[0].allowed !== 1) {
-        console.log("Transaction not accepted", asdf);
-        throw new Error(asdf[0]["reject-reason"]);
-      }
-    } catch (e) {
-      console.log("Check mempool err", e);
+      const id = await this.rpc("sendrawtransaction", [signed]);
+      const sendResult: ISendResult = {
+        debug: {
+          amount,
+          assetName,
+          fee: transaction.getFee(),
+          inputs,
+          outputs,
+          privateKeys,
+          rawUnsignedTransaction: raw,
+          rvnChangeAmount: transaction.getBaseCurrencyChange(),
+          rvnAmount: transaction.getBaseCurrencyAmount(),
+          signedTransaction: signed,
+          UTXOs: transaction.getUTXOs(),
+        },
+        transactionId: id,
+      };
+      return sendResult;
+    } catch (e) { 
+      throw new Error(
+        "Error while sending, perhaps you have pending transaction? Please try again."
+      );
     }
-    const id = await this.rpc("sendrawtransaction", [signed]);
-    const sendResult: ISendResult = {
-      debug: {
-        amount,
-        assetName,
-        fee: transaction.getFee(),
-        inputs,
-        outputs,
-        privateKeys,
-        rawUnsignedTransaction: raw,
-        rvnChangeAmount: transaction.getBaseCurrencyChange(),
-        rvnAmount: transaction.getBaseCurrencyAmount(),
-        signedTransaction: signed,
-        UTXOs: transaction.getUTXOs(),
-      },
-      transactionId: id,
-    };
-    return sendResult;
   }
 
   async getAssets() {

@@ -586,41 +586,31 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
             outputs
         ]);
         const signed = (0, $93qLg$ravenrebelsravencoinsigntransaction).sign(this.network, raw, transaction.getUTXOs(), privateKeys);
-        //Check if signed transaction will be accepted
+        //ACTUAL SENDING TRANSACTION
         try {
-            const arrayOfTransactions = [
+            const id = await this.rpc("sendrawtransaction", [
                 signed
-            ];
-            const asdf = await this.rpc("testmempoolaccept", [
-                arrayOfTransactions
             ]);
-            if (asdf[0].allowed !== 1) {
-                console.log("Transaction not accepted", asdf);
-                throw new Error(asdf[0]["reject-reason"]);
-            }
+            const sendResult = {
+                debug: {
+                    amount: amount,
+                    assetName: assetName,
+                    fee: transaction.getFee(),
+                    inputs: inputs,
+                    outputs: outputs,
+                    privateKeys: privateKeys,
+                    rawUnsignedTransaction: raw,
+                    rvnChangeAmount: transaction.getBaseCurrencyChange(),
+                    rvnAmount: transaction.getBaseCurrencyAmount(),
+                    signedTransaction: signed,
+                    UTXOs: transaction.getUTXOs()
+                },
+                transactionId: id
+            };
+            return sendResult;
         } catch (e) {
-            console.log("Check mempool err", e);
+            throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
         }
-        const id = await this.rpc("sendrawtransaction", [
-            signed
-        ]);
-        const sendResult = {
-            debug: {
-                amount: amount,
-                assetName: assetName,
-                fee: transaction.getFee(),
-                inputs: inputs,
-                outputs: outputs,
-                privateKeys: privateKeys,
-                rawUnsignedTransaction: raw,
-                rvnChangeAmount: transaction.getBaseCurrencyChange(),
-                rvnAmount: transaction.getBaseCurrencyAmount(),
-                signedTransaction: signed,
-                UTXOs: transaction.getUTXOs()
-            },
-            transactionId: id
-        };
-        return sendResult;
     }
     async getAssets() {
         const includeAssets = true;
