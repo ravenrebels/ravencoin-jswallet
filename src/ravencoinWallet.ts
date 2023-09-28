@@ -328,6 +328,35 @@ export class Wallet {
   }
 
   async send(options: ISend): Promise<ISendResult> {
+    //ACTUAL SENDING TRANSACTION
+
+    //Important, do not swallow the exceptions/errors of createTransaction, let them fly
+    const sendResult: ISendResult = await this.createTransaction(options);
+
+    try {
+      const id = await this.rpc("sendrawtransaction", [
+        sendResult.debug.signedTransaction,
+      ]);
+      sendResult.transactionId = id;
+
+      return sendResult;
+    } catch (e) {
+      throw new Error(
+        "Error while sending, perhaps you have pending transaction? Please try again."
+      );
+    }
+  }
+  async sendRawTransaction(raw: string) {
+    this.rpc("sendrawtransaction", [raw]);
+  }
+  /**
+   * Does all the heavy lifting regarding creating a transaction
+   * but it does not broadcast the actual transaction.
+   * Perhaps the user wants to accept the transaction fee?
+   * @param options
+   * @returns An transaction that has not been broadcasted
+   */
+  async createTransaction(options: ISend): Promise<ISendResult> {
     const { amount, toAddress } = options;
     let { assetName } = options;
 
@@ -371,8 +400,9 @@ export class Wallet {
 
     //ACTUAL SENDING TRANSACTION
     try {
-      const id = await this.rpc("sendrawtransaction", [signed]);
+      //   const id = await this.rpc("sendrawtransaction", [signed]);
       const sendResult: ISendResult = {
+        transactionId: null,
         debug: {
           amount,
           assetName,
@@ -386,10 +416,9 @@ export class Wallet {
           signedTransaction: signed,
           UTXOs: transaction.getUTXOs(),
         },
-        transactionId: id,
       };
       return sendResult;
-    } catch (e) { 
+    } catch (e) {
       throw new Error(
         "Error while sending, perhaps you have pending transaction? Please try again."
       );

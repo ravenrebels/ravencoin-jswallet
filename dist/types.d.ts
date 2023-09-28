@@ -28,7 +28,7 @@ type TPrivateKey = {
     [key: string]: string;
 };
 interface ISendResult {
-    transactionId: string;
+    transactionId: string | null;
     debug: {
         amount: number;
         assetName: string;
@@ -124,8 +124,17 @@ export class Wallet {
      */
     getAssetUTXOs(assetName?: string): Promise<IUTXO[]>;
     getUTXOs(): Promise<any>;
-    getPrivateKeyByAddress(address: string): string;
+    getPrivateKeyByAddress(address: string): any;
     send(options: ISend): Promise<ISendResult>;
+    sendRawTransaction(raw: string): Promise<void>;
+    /**
+     * Does all the heavy lifting regarding creating a transaction
+     * but it does not broadcast the actual transaction.
+     * Perhaps the user wants to accept the transaction fee?
+     * @param options
+     * @returns An transaction that has not been broadcasted
+     */
+    createTransaction(options: ISend): Promise<ISendResult>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
 }

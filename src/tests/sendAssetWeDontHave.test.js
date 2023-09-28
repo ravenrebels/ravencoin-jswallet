@@ -9,25 +9,26 @@ const mnemonic =
 const walletPromise = RavencoinWallet.createInstance({
   mnemonic,
   network: "rvn-test",
-  offlineMode: true
+  offlineMode: true,
 });
 
-
 test("Send asset we do not have", async () => {
-    const options = {
-      assetName: "FREN#RED", //Asset we do not have;
-      toAddress: "mmmjadMR4LkmHjg7VHQSj3hyp9NjWidzT9",
-      amount: 1,
-    };
-    const wallet = await walletPromise;
-  
-    let error = null;
-    try {
-      const result = await wallet.send(options);
-    } catch (e) {
-      error = e;
-    }
-  
-    expect(error.name).toBe("InsufficientFundsError");
-  });
-  
+  const options = {
+    assetName: "FREN#RED", //Asset we do not have;
+    toAddress: "mmmjadMR4LkmHjg7VHQSj3hyp9NjWidzT9",
+    amount: 1,
+  };
+  const wallet = await walletPromise;
+
+  let error = null;
+  try {
+    //const asdf = await wallet.createTransaction(options);
+
+    const result = await wallet.send(options);
+  } catch (e) {
+    console.log("" + e);
+    error = e;
+  }
+
+  expect(error.name).toBe("InsufficientFundsError");
+});

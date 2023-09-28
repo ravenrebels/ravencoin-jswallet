@@ -40,7 +40,7 @@ export type TPrivateKey = {
 };
 
 export interface ISendResult {
-  transactionId: string;
+  transactionId: string | null;
   debug: {
     amount: number;
     assetName: string; 

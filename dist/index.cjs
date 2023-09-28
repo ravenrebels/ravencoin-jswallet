@@ -47,7 +47,7 @@ class $e16394a5869d8429$export$b276096bbba16879 extends Error {
 
 
 class $0757bc65e326b272$export$febc5573c75cefb0 {
-    constructor({ wallet: wallet , toAddress: toAddress , amount: amount , assetName: assetName  }){
+    constructor({ wallet: wallet, toAddress: toAddress, amount: amount, assetName: assetName }){
         this.amount = 0;
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
         ;
@@ -579,8 +579,33 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         return f.WIF;
     }
     async send(options) {
-        const { amount: amount , toAddress: toAddress  } = options;
-        let { assetName: assetName  } = options;
+        //ACTUAL SENDING TRANSACTION
+        //Important, do not swallow the exceptions/errors of createTransaction, let them fly
+        const sendResult = await this.createTransaction(options);
+        try {
+            const id = await this.rpc("sendrawtransaction", [
+                sendResult.debug.signedTransaction
+            ]);
+            sendResult.transactionId = id;
+            return sendResult;
+        } catch (e) {
+            throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
+        }
+    }
+    async sendRawTransaction(raw) {
+        this.rpc("sendrawtransaction", [
+            raw
+        ]);
+    }
+    /**
+   * Does all the heavy lifting regarding creating a transaction
+   * but it does not broadcast the actual transaction.
+   * Perhaps the user wants to accept the transaction fee?
+   * @param options
+   * @returns An transaction that has not been broadcasted
+   */ async createTransaction(options) {
+        const { amount: amount, toAddress: toAddress } = options;
+        let { assetName: assetName } = options;
         if (!assetName) assetName = this.baseCurrency;
         //Validation
         if (!toAddress) throw Error("Wallet.send toAddress is mandatory");
@@ -604,10 +629,9 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         const signed = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinsigntransaction))).sign(this.network, raw, transaction.getUTXOs(), privateKeys);
         //ACTUAL SENDING TRANSACTION
         try {
-            const id = await this.rpc("sendrawtransaction", [
-                signed
-            ]);
+            //   const id = await this.rpc("sendrawtransaction", [signed]);
             const sendResult = {
+                transactionId: null,
                 debug: {
                     amount: amount,
                     assetName: assetName,
@@ -620,8 +644,7 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
                     rvnAmount: transaction.getBaseCurrencyAmount(),
                     signedTransaction: signed,
                     UTXOs: transaction.getUTXOs()
-                },
-                transactionId: id
+                }
             };
             return sendResult;
         } catch (e) {
