@@ -47,7 +47,7 @@ class $e16394a5869d8429$export$b276096bbba16879 extends Error {
 
 
 class $0757bc65e326b272$export$febc5573c75cefb0 {
-    constructor({ wallet: wallet, toAddress: toAddress, amount: amount, assetName: assetName }){
+    constructor({ wallet: wallet , toAddress: toAddress , amount: amount , assetName: assetName  }){
         this.amount = 0;
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
         ;
@@ -593,7 +593,7 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         }
     }
     async sendRawTransaction(raw) {
-        this.rpc("sendrawtransaction", [
+        return this.rpc("sendrawtransaction", [
             raw
         ]);
     }
@@ -604,8 +604,8 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
    * @param options
    * @returns An transaction that has not been broadcasted
    */ async createTransaction(options) {
-        const { amount: amount, toAddress: toAddress } = options;
-        let { assetName: assetName } = options;
+        const { amount: amount , toAddress: toAddress  } = options;
+        let { assetName: assetName  } = options;
         if (!assetName) assetName = this.baseCurrency;
         //Validation
         if (!toAddress) throw Error("Wallet.send toAddress is mandatory");

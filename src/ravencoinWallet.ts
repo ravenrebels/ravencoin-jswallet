@@ -346,8 +346,8 @@ export class Wallet {
       );
     }
   }
-  async sendRawTransaction(raw: string) {
-    this.rpc("sendrawtransaction", [raw]);
+  async sendRawTransaction(raw: string): Promise<string> {
+    return this.rpc("sendrawtransaction", [raw]);
   }
   /**
    * Does all the heavy lifting regarding creating a transaction

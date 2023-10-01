@@ -124,9 +124,9 @@ export class Wallet {
      */
     getAssetUTXOs(assetName?: string): Promise<IUTXO[]>;
     getUTXOs(): Promise<any>;
-    getPrivateKeyByAddress(address: string): any;
+    getPrivateKeyByAddress(address: string): string;
     send(options: ISend): Promise<ISendResult>;
-    sendRawTransaction(raw: string): Promise<void>;
+    sendRawTransaction(raw: string): Promise<string>;
     /**
      * Does all the heavy lifting regarding creating a transaction
      * but it does not broadcast the actual transaction.
