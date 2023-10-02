@@ -69,9 +69,7 @@ export class SendManyTransaction {
     //Filter out UTXOs that are NOT in mempool
     const allUTXOs = _allUTXOsTemp.filter((utxo) => {
       const objInMempool = this.walletMempool.find((mempoolEntry) => {
-        if (mempoolEntry.txid === utxo.txid) {
-          return true;
-        }
+     
         return mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.txid;
       });
 

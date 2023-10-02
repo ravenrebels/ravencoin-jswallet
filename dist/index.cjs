@@ -90,7 +90,6 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         //Filter out UTXOs that are NOT in mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
             const objInMempool = this.walletMempool.find((mempoolEntry)=>{
-                if (mempoolEntry.txid === utxo.txid) return true;
                 return mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.txid;
             });
             return !objInMempool;
