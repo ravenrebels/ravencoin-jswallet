@@ -128,7 +128,7 @@ console.log("Sending", transactionId);
 
 ```
 //index.mjs very important that file extension is .mjs
-import RavencoinWallet from "./dist/index.mjs";
+import RavencoinWallet from "@ravenrebels/ravencoin-jswallet";
 
 //This wallet belongs to account "Crazy Cat" on https://testnet.ting.finance/signin/
 const options = {
