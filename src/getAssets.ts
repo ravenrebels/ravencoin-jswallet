@@ -8,7 +8,7 @@ export async function getAssets(wallet:Wallet, addresses: string[]) {
 
   //Remove baseCurrency
   const result = balance.filter((obj) => {
-    return obj.assetName !== this.baseCurrency;
+    return obj.assetName !== wallet.baseCurrency;
   });
   return result;
 }

@@ -444,7 +444,7 @@ async function $e47617f9093ded67$export$ab187dba3e955af9(wallet, addresses) {
     const balance = await wallet.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
     //Remove baseCurrency
     const result = balance.filter((obj)=>{
-        return obj.assetName !== this.baseCurrency;
+        return obj.assetName !== wallet.baseCurrency;
     });
     return result;
 }

@@ -228,7 +228,7 @@ export interface IUTXO {
   satoshis: number;
   height: number;
 }
-export interface ISendOptions {
+export interface ITransactionOptions {
   amount: number;
   assetName: string;
   toAddress: string;

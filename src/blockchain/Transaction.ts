@@ -1,14 +1,11 @@
-import { InsufficientFundsError, ValidationError } from "../Errors";
-import { Wallet } from "../ravencoinWallet";
-import { ISendManyOptions, ISendOptions } from "../Types";
+import { ISendManyTransactionOptions, ITransactionOptions } from "../Types";
 import { SendManyTransaction } from "./SendManyTransaction";
-
 
 export class Transaction {
   private sendManyTransaction: SendManyTransaction;
 
-  constructor({ wallet, toAddress, amount, assetName }: ISendOptions) {
-    const options: ISendManyOptions = {
+  constructor({ wallet, toAddress, amount, assetName }: ITransactionOptions) {
+    const options: ISendManyTransactionOptions = {
       assetName,
       wallet,
       outputs: {

@@ -26,7 +26,6 @@ test("Send asset we do not have", async () => {
 
     const result = await wallet.send(options);
   } catch (e) {
-    console.log("" + e);
     error = e;
   }
 
