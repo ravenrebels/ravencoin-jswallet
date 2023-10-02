@@ -19,7 +19,6 @@ interface ISendManyOptions {
     outputs: {
         [key: string]: number;
     };
-    wallet: Wallet;
 }
 interface SweepResult {
     errorDescription?: string;

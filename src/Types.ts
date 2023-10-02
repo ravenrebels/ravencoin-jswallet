@@ -26,8 +26,13 @@ export interface IAddressDelta {
 
   prevtxid?: string;
 }
-
 export interface ISendManyOptions {
+  assetName?: string;
+  outputs: { [key: string]: number };
+ 
+}
+
+export interface ISendManyTransactionOptions {
   assetName?: string;
   outputs: { [key: string]: number };
   wallet: Wallet;

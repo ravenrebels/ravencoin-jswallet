@@ -1,6 +1,6 @@
 import { InsufficientFundsError, ValidationError } from "../Errors";
 import { Wallet } from "../ravencoinWallet";
-import { ISendManyOptions, IUTXO } from "../Types";
+import { ISendManyOptions, ISendManyTransactionOptions, IUTXO } from "../Types";
 
 export class SendManyTransaction {
   _allUTXOs: IUTXO[]; //all UTXOs that we know of
@@ -11,7 +11,7 @@ export class SendManyTransaction {
 
   private wallet: Wallet;
   private outputs: any;
-  constructor({ wallet, outputs, assetName }: ISendManyOptions) {
+  constructor({ wallet, outputs, assetName }: ISendManyTransactionOptions) {
     this.assetName = !assetName ? wallet.baseCurrency : assetName;
     this.wallet = wallet;
     this.outputs = outputs;
