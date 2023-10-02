@@ -6,6 +6,7 @@ import {
   IAddressDelta,
   IAddressMetaData,
   ISend,
+  ISendManyOptions,
   ISendResult,
   IUTXO,
   SweepResult,
@@ -14,6 +15,7 @@ import { ONE_FULL_COIN } from "./contants";
 
 import { sweep } from "./blockchain/sweep";
 import { Transaction } from "./blockchain/Transaction";
+import { SendManyTransaction } from "./blockchain/SendManyTransaction";
 
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
@@ -348,6 +350,17 @@ export class Wallet {
   }
   async sendRawTransaction(raw: string): Promise<string> {
     return this.rpc("sendrawtransaction", [raw]);
+  }
+
+  async sendMany({ outputs, assetName }: ISendManyOptions) {
+    const options = {
+      wallet: this,
+      outputs,
+      assetName,
+    };
+    const sendManyTransaction = new SendManyTransaction(options);
+
+    return sendManyTransaction;
   }
   /**
    * Does all the heavy lifting regarding creating a transaction

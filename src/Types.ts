@@ -25,6 +25,11 @@ export interface IAddressDelta {
   prevtxid?: string;
 }
 
+export interface ISendManyOptions {
+  assetName?: string;
+  outputs: { [key: string]: number };
+}
+
 export interface SweepResult {
   errorDescription?: string;
   fromAddress?: string;
@@ -43,7 +48,7 @@ export interface ISendResult {
   transactionId: string | null;
   debug: {
     amount: number;
-    assetName: string; 
+    assetName: string;
     error?: any;
     fee: number;
     inputs: Array<IVout_when_creating_transactions>;
@@ -51,8 +56,8 @@ export interface ISendResult {
     privateKeys?: TPrivateKey;
     rawUnsignedTransaction?: string;
     rvnAmount: number;
-    rvnChangeAmount: number; 
-    signedTransaction?: string; 
+    rvnChangeAmount: number;
+    signedTransaction?: string;
     UTXOs: IUTXO[];
   };
 }

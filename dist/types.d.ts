@@ -14,6 +14,12 @@ interface IAddressDelta {
     txid: string;
     prevtxid?: string;
 }
+interface ISendManyOptions {
+    assetName?: string;
+    outputs: {
+        [key: string]: number;
+    };
+}
 interface SweepResult {
     errorDescription?: string;
     fromAddress?: string;
@@ -86,6 +92,33 @@ interface IUTXO {
     satoshis: number;
     height: number;
 }
+declare class SendManyTransaction {
+    _allUTXOs: IUTXO[];
+    feerate: number;
+    constructor({ wallet, outputs, assetName }: {
+        wallet: any;
+        outputs: any;
+        assetName: any;
+    });
+    getSizeInKB(): number;
+    loadData(): Promise<void>;
+    getAmount(): number;
+    getUTXOs(): IUTXO[];
+    predictUTXOs(): IUTXO[];
+    getBaseCurrencyAmount(): number;
+    getBaseCurrencyChange(): number;
+    getAssetChange(): number;
+    isAssetTransfer(): boolean;
+    getOutputs(): Promise<{}>;
+    getInputs(): {
+        address: string;
+        txid: string;
+        vout: number;
+    }[];
+    getPrivateKeys(): {};
+    getFee(): number;
+    getFeeRate(): Promise<any>;
+}
 export class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
@@ -127,6 +160,7 @@ export class Wallet {
     getPrivateKeyByAddress(address: string): string;
     send(options: ISend): Promise<ISendResult>;
     sendRawTransaction(raw: string): Promise<string>;
+    sendMany({ outputs, assetName }: ISendManyOptions): Promise<SendManyTransaction>;
     /**
      * Does all the heavy lifting regarding creating a transaction
      * but it does not broadcast the actual transaction.

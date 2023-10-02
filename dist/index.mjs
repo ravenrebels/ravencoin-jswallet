@@ -325,6 +325,231 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
 
 
 
+
+class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
+    constructor({ wallet: wallet , outputs: outputs , assetName: assetName  }){
+        this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
+        ;
+        this.assetName = !assetName ? wallet.baseCurrency : assetName;
+        this.wallet = wallet;
+        this.outputs = outputs;
+    }
+    getSizeInKB() {
+        const length = this.getUTXOs().length;
+        //Lets assume every input is 300 bytes.
+        return length * 300 / 1000;
+    }
+    async loadData() {
+        //Load blockchain information async, and wait for it
+        const mempoolPromise = this.wallet.getMempool();
+        const assetUTXOsPromise = this.wallet.getAssetUTXOs();
+        const baseCurencyUTXOsPromise = this.wallet.getUTXOs();
+        const feeRatePromise = this.getFeeRate();
+        const walletMempool = await mempoolPromise;
+        const assetUTXOs = await assetUTXOsPromise;
+        const baseCurrencyUTXOs = await baseCurencyUTXOsPromise;
+        this.feerate = await feeRatePromise;
+        const mempoolUTXOs = $c7db79d953d79f02$var$getSpendableMempool(walletMempool);
+        //Decorate mempool UTXOs with script attribute
+        for (let u of mempoolUTXOs){
+            if (u.script) continue;
+            //Mempool items might not have the script attbribute, we need it
+            const utxo = await this.wallet.rpc("gettxout", [
+                u.txid,
+                u.index,
+                true
+            ]);
+            if (utxo) u.script = utxo.scriptPubKey.hex;
+        }
+        const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
+        //Filter out UTXOs that are NOT in mempool
+        const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
+            const objInMempool = walletMempool.find((mempoolEntry)=>mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id);
+            return !objInMempool;
+        });
+        //Sort utxos lowest first
+        allUTXOs.sort($c7db79d953d79f02$var$sortBySatoshis);
+        this._allUTXOs = allUTXOs;
+    }
+    getAmount() {
+        let total = 0;
+        const values = Object.values(this.outputs);
+        values.map((value)=>total += value);
+        return total;
+    }
+    getUTXOs() {
+        if (this.isAssetTransfer() === true) {
+            const assetAmount = this.getAmount();
+            const baseCurrencyAmount = this.getBaseCurrencyAmount();
+            const baseCurrencyUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, baseCurrencyAmount);
+            const assetUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, assetAmount);
+            return assetUTXOs.concat(baseCurrencyUTXOs);
+        } else return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+    }
+    predictUTXOs() {
+        if (this.isAssetTransfer()) return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
+        return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getAmount());
+    }
+    getBaseCurrencyAmount() {
+        const fee = this.getFee();
+        if (this.isAssetTransfer() === true) return fee;
+        else return this.getAmount() + fee;
+    }
+    getBaseCurrencyChange() {
+        const enoughUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+        let total = 0;
+        for (let utxo of enoughUTXOs){
+            if (utxo.assetName !== this.wallet.baseCurrency) continue;
+            total = total + utxo.satoshis / 1e8;
+        }
+        const result = total - this.getBaseCurrencyAmount();
+        return $c7db79d953d79f02$export$1778fb2d99201af(result);
+    }
+    getAssetChange() {
+        const enoughUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
+        let total = 0;
+        for (let utxo of enoughUTXOs){
+            if (utxo.assetName !== this.assetName) continue;
+            total = total + utxo.satoshis / 1e8;
+        }
+        return total - this.getAmount();
+    }
+    isAssetTransfer() {
+        return this.assetName !== this.wallet.baseCurrency;
+    }
+    async getOutputs() {
+        //we take the declared outputs and add change outputs
+        const totalOutputs = {};
+        if (this.isAssetTransfer() === true) {
+            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
+            //Validate: change address cant be toAddress
+            const toAddresses = Object.keys(this.outputs);
+            if (toAddresses.includes(changeAddressBaseCurrency) === true) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as to address");
+            totalOutputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
+            const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
+            const changeAddressAsset = this.wallet.getAddresses()[index + 2];
+            //Validate change address can never be the same as toAddress
+            if (toAddresses.includes(changeAddressAsset) === true) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as to address");
+            if (this.getAssetChange() > 0) totalOutputs[changeAddressAsset] = {
+                transfer: {
+                    [this.assetName]: this.getAssetChange()
+                }
+            };
+            for (let addy of Object.keys(this.outputs)){
+                const amount = this.outputs[addy];
+                totalOutputs[addy] = {
+                    transfer: {
+                        [this.assetName]: amount
+                    }
+                };
+            }
+        } else {
+            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
+            for (let addy of Object.keys(this.outputs)){
+                const amount = this.outputs[addy];
+                totalOutputs[addy] = amount;
+            }
+            totalOutputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
+        }
+        return totalOutputs;
+    }
+    getInputs() {
+        return this.getUTXOs().map((obj)=>{
+            return {
+                address: obj.address,
+                txid: obj.txid,
+                vout: obj.outputIndex
+            };
+        });
+    }
+    getPrivateKeys() {
+        const addressObjects = this.wallet.getAddressObjects();
+        const privateKeys = {};
+        for (let u of this.getUTXOs()){
+            //Find the address object (we want the WIF) for the address related to the UTXO
+            const addressObject = addressObjects.find((obj)=>obj.address === u.address);
+            if (addressObject) privateKeys[u.address] = addressObject.WIF;
+        }
+        return privateKeys;
+    }
+    getFee() {
+        const utxos = this.predictUTXOs();
+        const assumedSizePerUTXO = 300;
+        const bytes = (utxos.length + 1) * assumedSizePerUTXO;
+        const kb = bytes / 1024;
+        const result = kb * this.feerate;
+        return result;
+    }
+    async getFeeRate() {
+        const defaultFee = 0.02;
+        try {
+            const confirmationTarget = 20;
+            const asdf = await this.wallet.rpc("estimatesmartfee", [
+                confirmationTarget
+            ]);
+            if (!asdf.errors) return asdf.feerate;
+            else return defaultFee;
+        } catch (e) {
+            //Might occure errors on testnet when calculating fees
+            return defaultFee;
+        }
+    }
+}
+function $c7db79d953d79f02$export$1778fb2d99201af(number) {
+    return parseFloat(number.toFixed(2));
+}
+function $c7db79d953d79f02$var$sortBySatoshis(u1, u2) {
+    if (u1.satoshis > u2.satoshis) return 1;
+    if (u1.satoshis === u2.satoshis) return 0;
+    return -1;
+}
+function $c7db79d953d79f02$var$getEnoughUTXOs(utxos, asset, amount) {
+    const result = [];
+    let sum = 0;
+    for (let u of utxos){
+        if (sum > amount) break;
+        if (u.assetName !== asset) continue;
+        //Ignore UTXOs with zero satoshis, seems to occure when assets are minted
+        if (u.satoshis === 0) continue;
+        const value = u.satoshis / 1e8;
+        result.push(u);
+        sum = sum + value;
+    }
+    if (sum < amount) {
+        const error = new (0, $df4abebf0c223404$export$b276096bbba16879)("You do not have " + amount + " " + asset);
+        throw error;
+    }
+    return result;
+}
+function $c7db79d953d79f02$var$getSpendableMempool(mempool) {
+    /*
+interface IUTXO {
+   address: string;
+   assetName: string;
+   txid: string;
+   outputIndex: number;
+   script: string;
+   satoshis: number;
+   height: number;
+   value: number;
+}
+*/ const mySet = new Set();
+    for (let item of mempool){
+        if (!item.prevtxid) continue;
+        const value = item.prevtxid + "_" + item.prevout;
+        mySet.add(value);
+    }
+    const spendable = mempool.filter((item)=>{
+        if (item.satoshis < 0) return false;
+        const value = item.txid + "_" + item.index;
+        return mySet.has(value) === false;
+    });
+    //UTXO object need to have an outputIndex property, not index
+    spendable.map((s)=>s.outputIndex = s.index);
+    return spendable;
+}
+
+
 const $c3676b79c37149df$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const $c3676b79c37149df$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 class $c3676b79c37149df$export$bcca3ea514774656 {
@@ -580,6 +805,15 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         return this.rpc("sendrawtransaction", [
             raw
         ]);
+    }
+    async sendMany({ outputs: outputs , assetName: assetName  }) {
+        const options = {
+            wallet: this,
+            outputs: outputs,
+            assetName: assetName
+        };
+        const sendManyTransaction = new (0, $c7db79d953d79f02$export$a0aa368c31ae6e6c)(options);
+        return sendManyTransaction;
     }
     /**
    * Does all the heavy lifting regarding creating a transaction
