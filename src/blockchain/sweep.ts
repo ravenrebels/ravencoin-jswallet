@@ -5,7 +5,7 @@ import Signer from "@ravenrebels/ravencoin-sign-transaction";
 
 import { Wallet } from "../ravencoinWallet";
 import { IInput, SweepResult } from "../Types";
-import { shortenNumber } from "./Transaction";
+import { shortenNumber } from "./SendManyTransaction";
 
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
 //OH easter egg ;)

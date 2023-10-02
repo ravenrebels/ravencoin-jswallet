@@ -30,302 +30,6 @@ class $df4abebf0c223404$export$b276096bbba16879 extends Error {
 }
 
 
-class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
-    constructor({ wallet: wallet , toAddress: toAddress , amount: amount , assetName: assetName  }){
-        this.amount = 0;
-        this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
-        ;
-        this.toAddress = toAddress;
-        this.amount = amount;
-        this.assetName = !assetName ? wallet.baseCurrency : assetName;
-        this.wallet = wallet;
-    }
-    getSizeInKB() {
-        const length = this.getUTXOs().length;
-        //Lets assume every input is 300 bytes.
-        return length * 300 / 1000;
-    }
-    async loadData() {
-        //Load blockchain information async, and wait for it
-        const mempoolPromise = this.wallet.getMempool();
-        const assetUTXOsPromise = this.wallet.getAssetUTXOs();
-        const baseCurencyUTXOsPromise = this.wallet.getUTXOs();
-        const feeRatePromise = this.getFeeRate();
-        const walletMempool = await mempoolPromise;
-        const assetUTXOs = await assetUTXOsPromise;
-        const baseCurrencyUTXOs = await baseCurencyUTXOsPromise;
-        this.feerate = await feeRatePromise;
-        const mempoolUTXOs = $c3dba3dbad356cd6$var$getSpendableMempool(walletMempool);
-        //Decorate mempool UTXOs with script attribute
-        for (let u of mempoolUTXOs){
-            if (u.script) continue;
-            //Mempool items might not have the script attbribute, we need it
-            const utxo = await this.wallet.rpc("gettxout", [
-                u.txid,
-                u.index,
-                true
-            ]);
-            if (utxo) u.script = utxo.scriptPubKey.hex;
-        }
-        const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
-        //Filter out UTXOs that are NOT in mempool
-        const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
-            const objInMempool = walletMempool.find((mempoolEntry)=>mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id);
-            return !objInMempool;
-        });
-        //Sort utxos lowest first
-        allUTXOs.sort($c3dba3dbad356cd6$var$sortBySatoshis);
-        this._allUTXOs = allUTXOs;
-    }
-    getUTXOs() {
-        if (this.isAssetTransfer() === true) {
-            const assetAmount = this.amount;
-            const baseCurrencyAmount = this.getBaseCurrencyAmount();
-            const baseCurrencyUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, baseCurrencyAmount);
-            const assetUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, assetAmount);
-            return assetUTXOs.concat(baseCurrencyUTXOs);
-        } else return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
-    }
-    predictUTXOs() {
-        if (this.isAssetTransfer()) return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.amount);
-        return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.amount);
-    }
-    getBaseCurrencyAmount() {
-        const fee = this.getFee();
-        if (this.isAssetTransfer() === true) return fee;
-        else return this.amount + fee;
-    }
-    getBaseCurrencyChange() {
-        const enoughUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
-        let total = 0;
-        for (let utxo of enoughUTXOs){
-            if (utxo.assetName !== this.wallet.baseCurrency) continue;
-            total = total + utxo.satoshis / 1e8;
-        }
-        const result = total - this.getBaseCurrencyAmount();
-        return $c3dba3dbad356cd6$export$1778fb2d99201af(result);
-    }
-    getAssetChange() {
-        const enoughUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.amount);
-        let total = 0;
-        for (let utxo of enoughUTXOs){
-            if (utxo.assetName !== this.assetName) continue;
-            total = total + utxo.satoshis / 1e8;
-        }
-        return total - this.amount;
-    }
-    isAssetTransfer() {
-        return this.assetName !== this.wallet.baseCurrency;
-    }
-    async getOutputs() {
-        const outputs = {};
-        if (this.isAssetTransfer() === true) {
-            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
-            //Validate: change address cant be toAddress
-            if (changeAddressBaseCurrency === this.toAddress) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as toAddress");
-            outputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
-            const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
-            const changeAddressAsset = this.wallet.getAddresses()[index + 2];
-            //Validate change address can never be the same as toAddress
-            if (changeAddressAsset === this.toAddress) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as toAddress");
-            if (this.getAssetChange() > 0) outputs[changeAddressAsset] = {
-                transfer: {
-                    [this.assetName]: this.getAssetChange()
-                }
-            };
-            outputs[this.toAddress] = {
-                transfer: {
-                    [this.assetName]: this.amount
-                }
-            };
-        } else {
-            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
-            outputs[this.toAddress] = this.amount;
-            outputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
-        }
-        return outputs;
-    }
-    getInputs() {
-        return this.getUTXOs().map((obj)=>{
-            return {
-                address: obj.address,
-                txid: obj.txid,
-                vout: obj.outputIndex
-            };
-        });
-    }
-    getPrivateKeys() {
-        const addressObjects = this.wallet.getAddressObjects();
-        const privateKeys = {};
-        for (let u of this.getUTXOs()){
-            //Find the address object (we want the WIF) for the address related to the UTXO
-            const addressObject = addressObjects.find((obj)=>obj.address === u.address);
-            if (addressObject) privateKeys[u.address] = addressObject.WIF;
-        }
-        return privateKeys;
-    }
-    getFee() {
-        const utxos = this.predictUTXOs();
-        const assumedSizePerUTXO = 300;
-        const bytes = (utxos.length + 1) * assumedSizePerUTXO;
-        const kb = bytes / 1024;
-        const result = kb * this.feerate;
-        return result;
-    }
-    async getFeeRate() {
-        const defaultFee = 0.02;
-        try {
-            const confirmationTarget = 20;
-            const asdf = await this.wallet.rpc("estimatesmartfee", [
-                confirmationTarget
-            ]);
-            if (!asdf.errors) return asdf.feerate;
-            else return defaultFee;
-        } catch (e) {
-            //Might occure errors on testnet when calculating fees
-            return defaultFee;
-        }
-    }
-}
-function $c3dba3dbad356cd6$export$1778fb2d99201af(number) {
-    return parseFloat(number.toFixed(2));
-}
-function $c3dba3dbad356cd6$var$sortBySatoshis(u1, u2) {
-    if (u1.satoshis > u2.satoshis) return 1;
-    if (u1.satoshis === u2.satoshis) return 0;
-    return -1;
-}
-function $c3dba3dbad356cd6$var$getEnoughUTXOs(utxos, asset, amount) {
-    const result = [];
-    let sum = 0;
-    for (let u of utxos){
-        if (sum > amount) break;
-        if (u.assetName !== asset) continue;
-        //Ignore UTXOs with zero satoshis, seems to occure when assets are minted
-        if (u.satoshis === 0) continue;
-        const value = u.satoshis / 1e8;
-        result.push(u);
-        sum = sum + value;
-    }
-    if (sum < amount) {
-        const error = new (0, $df4abebf0c223404$export$b276096bbba16879)("You do not have " + amount + " " + asset);
-        throw error;
-    }
-    return result;
-}
-function $c3dba3dbad356cd6$var$getSpendableMempool(mempool) {
-    /*
-interface IUTXO {
-   address: string;
-   assetName: string;
-   txid: string;
-   outputIndex: number;
-   script: string;
-   satoshis: number;
-   height: number;
-   value: number;
-}
-*/ const mySet = new Set();
-    for (let item of mempool){
-        if (!item.prevtxid) continue;
-        const value = item.prevtxid + "_" + item.prevout;
-        mySet.add(value);
-    }
-    const spendable = mempool.filter((item)=>{
-        if (item.satoshis < 0) return false;
-        const value = item.txid + "_" + item.index;
-        return mySet.has(value) === false;
-    });
-    //UTXO object need to have an outputIndex property, not index
-    spendable.map((s)=>s.outputIndex = s.index);
-    return spendable;
-}
-
-
-(0, $93qLg$ravenrebelsravencoinsigntransaction).sign; //"Idiocracy" but prevents bundle tools such as PARCEL to strip this dependency out on build.
-//sight rate burger maid melody slogan attitude gas account sick awful hammer
-//OH easter egg ;)
-const $67c46d86d9d50c48$var$WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
-async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode) {
-    const privateKey = (0, $93qLg$ravenrebelsravencoinkey).getAddressByWIF(wallet.network, WIF);
-    const result = {};
-    const rpc = wallet.rpc;
-    const obj = {
-        addresses: [
-            privateKey.address
-        ]
-    };
-    const baseCurrencyUTXOs = await rpc("getaddressutxos", [
-        obj
-    ]);
-    const obj2 = {
-        addresses: [
-            privateKey.address
-        ],
-        assetName: "*"
-    };
-    const assetUTXOs = await rpc("getaddressutxos", [
-        obj2
-    ]);
-    const UTXOs = assetUTXOs.concat(baseCurrencyUTXOs);
-    result.UTXOs = UTXOs;
-    //Create a raw transaction with ALL UTXOs
-    if (UTXOs.length === 0) {
-        result.errorDescription = "Address " + privateKey.address + " has no funds";
-        return result;
-    }
-    const balanceObject = {};
-    UTXOs.map((utxo)=>{
-        if (!balanceObject[utxo.assetName]) balanceObject[utxo.assetName] = 0;
-        balanceObject[utxo.assetName] += utxo.satoshis;
-    });
-    const keys = Object.keys(balanceObject);
-    //Start simple, get the first addresses from the wallet
-    const outputs = {};
-    const fixedFee = 0.02; // should do for now
-    keys.map((assetName, index)=>{
-        const address = wallet.getAddresses()[index];
-        const amount = balanceObject[assetName] / 1e8;
-        if (assetName === wallet.baseCurrency) outputs[address] = (0, $c3dba3dbad356cd6$export$1778fb2d99201af)(amount - fixedFee);
-        else outputs[address] = {
-            transfer: {
-                [assetName]: amount
-            }
-        };
-    });
-    result.outputs = outputs;
-    //Convert from UTXO format to INPUT fomat
-    const inputs = UTXOs.map((utxo, index)=>{
-        /*   {
-         "txid":"id",                      (string, required) The transaction id
-         "vout":n,                         (number, required) The output number
-         "sequence":n                      (number, optional) The sequence number
-       } 
-       */ const input = {
-            txid: utxo.txid,
-            vout: utxo.outputIndex
-        };
-        return input;
-    });
-    //Create raw transaction
-    const rawHex = await rpc("createrawtransaction", [
-        inputs,
-        outputs
-    ]);
-    const privateKeys = {
-        [privateKey.address]: WIF
-    };
-    const signedHex = (0, $93qLg$ravenrebelsravencoinsigntransaction).sign(wallet.network, rawHex, UTXOs, privateKeys);
-    result.rawTransaction = signedHex;
-    if (onlineMode === true) result.transactionId = await rpc("sendrawtransaction", [
-        signedHex
-    ]);
-    return result;
-}
-
-
-
-
 class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
     constructor({ wallet: wallet , outputs: outputs , assetName: assetName  }){
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
@@ -475,7 +179,8 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
     getFee() {
         const utxos = this.predictUTXOs();
         const assumedSizePerUTXO = 300;
-        const bytes = (utxos.length + 1) * assumedSizePerUTXO;
+        const assumedSizePerOutput = 100;
+        const bytes = (utxos.length + 1) * assumedSizePerUTXO + Object.keys(this.outputs).length * assumedSizePerOutput;
         const kb = bytes / 1024;
         const result = kb * this.feerate;
         return result;
@@ -548,6 +253,143 @@ interface IUTXO {
     spendable.map((s)=>s.outputIndex = s.index);
     return spendable;
 }
+
+
+(0, $93qLg$ravenrebelsravencoinsigntransaction).sign; //"Idiocracy" but prevents bundle tools such as PARCEL to strip this dependency out on build.
+//sight rate burger maid melody slogan attitude gas account sick awful hammer
+//OH easter egg ;)
+const $67c46d86d9d50c48$var$WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
+async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode) {
+    const privateKey = (0, $93qLg$ravenrebelsravencoinkey).getAddressByWIF(wallet.network, WIF);
+    const result = {};
+    const rpc = wallet.rpc;
+    const obj = {
+        addresses: [
+            privateKey.address
+        ]
+    };
+    const baseCurrencyUTXOs = await rpc("getaddressutxos", [
+        obj
+    ]);
+    const obj2 = {
+        addresses: [
+            privateKey.address
+        ],
+        assetName: "*"
+    };
+    const assetUTXOs = await rpc("getaddressutxos", [
+        obj2
+    ]);
+    const UTXOs = assetUTXOs.concat(baseCurrencyUTXOs);
+    result.UTXOs = UTXOs;
+    //Create a raw transaction with ALL UTXOs
+    if (UTXOs.length === 0) {
+        result.errorDescription = "Address " + privateKey.address + " has no funds";
+        return result;
+    }
+    const balanceObject = {};
+    UTXOs.map((utxo)=>{
+        if (!balanceObject[utxo.assetName]) balanceObject[utxo.assetName] = 0;
+        balanceObject[utxo.assetName] += utxo.satoshis;
+    });
+    const keys = Object.keys(balanceObject);
+    //Start simple, get the first addresses from the wallet
+    const outputs = {};
+    const fixedFee = 0.02; // should do for now
+    keys.map((assetName, index)=>{
+        const address = wallet.getAddresses()[index];
+        const amount = balanceObject[assetName] / 1e8;
+        if (assetName === wallet.baseCurrency) outputs[address] = (0, $c7db79d953d79f02$export$1778fb2d99201af)(amount - fixedFee);
+        else outputs[address] = {
+            transfer: {
+                [assetName]: amount
+            }
+        };
+    });
+    result.outputs = outputs;
+    //Convert from UTXO format to INPUT fomat
+    const inputs = UTXOs.map((utxo, index)=>{
+        /*   {
+         "txid":"id",                      (string, required) The transaction id
+         "vout":n,                         (number, required) The output number
+         "sequence":n                      (number, optional) The sequence number
+       } 
+       */ const input = {
+            txid: utxo.txid,
+            vout: utxo.outputIndex
+        };
+        return input;
+    });
+    //Create raw transaction
+    const rawHex = await rpc("createrawtransaction", [
+        inputs,
+        outputs
+    ]);
+    const privateKeys = {
+        [privateKey.address]: WIF
+    };
+    const signedHex = (0, $93qLg$ravenrebelsravencoinsigntransaction).sign(wallet.network, rawHex, UTXOs, privateKeys);
+    result.rawTransaction = signedHex;
+    if (onlineMode === true) result.transactionId = await rpc("sendrawtransaction", [
+        signedHex
+    ]);
+    return result;
+}
+
+
+
+class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
+    constructor({ wallet: wallet , toAddress: toAddress , amount: amount , assetName: assetName  }){
+        const options = {
+            assetName: assetName,
+            wallet: wallet,
+            outputs: {
+                [toAddress]: amount
+            }
+        };
+        this.sendManyTransaction = new (0, $c7db79d953d79f02$export$a0aa368c31ae6e6c)(options);
+    }
+    getSizeInKB() {
+        return this.sendManyTransaction.getSizeInKB();
+    }
+    async loadData() {
+        return this.sendManyTransaction.loadData();
+    }
+    getUTXOs() {
+        return this.sendManyTransaction.getUTXOs();
+    }
+    predictUTXOs() {
+        return this.sendManyTransaction.predictUTXOs();
+    }
+    getBaseCurrencyAmount() {
+        return this.sendManyTransaction.getBaseCurrencyAmount();
+    }
+    getBaseCurrencyChange() {
+        return this.sendManyTransaction.getBaseCurrencyChange();
+    }
+    getAssetChange() {
+        return this.sendManyTransaction.getAssetChange();
+    }
+    isAssetTransfer() {
+        return this.sendManyTransaction.isAssetTransfer();
+    }
+    async getOutputs() {
+        return this.sendManyTransaction.getOutputs();
+    }
+    getInputs() {
+        return this.sendManyTransaction.getInputs();
+    }
+    getPrivateKeys() {
+        return this.sendManyTransaction.getPrivateKeys();
+    }
+    getFee() {
+        return this.sendManyTransaction.getFee();
+    }
+    async getFeeRate() {
+        return this.sendManyTransaction.getFeeRate();
+    }
+}
+
 
 
 const $c3676b79c37149df$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";

@@ -9,30 +9,32 @@ const wallet = await RavencoinWallet.createInstance({
 });
 
 //Mnemonic wheat vessel know welcome course happy system mutual hand bottom song escape
-const outputs = {
+const outputsOLD = {
   mxD9SHCyUCvMxEWnCnTfhQuBnDq4wbR4As: 2,
   mvst2Bdxa4XzNEXnKA4JJpJ8r7y8dqyLvN: 1,
-  mzJ5fFwkiCApy2m432VuojLFTdStYhgavq: 0.4,
+  mzJ5fFwkiCApy2m432VuojLFTdStYhgavq: 1,
 };
+const crazyCat = await RavencoinWallet.createInstance({
+  mnemonic:
+    "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace",
+  network: "rvn-test",
+});
 
+const outputs = {};
+for (let i = 0; i < 100; i++) {
+  const addy = crazyCat.getAddresses()[i];
+  outputs[addy] = 1;
+}
 const sendManyTransaction = await wallet.sendMany({
   outputs,
-  assetName: "QKN",
+  // assetName: "QKN",
 });
 await sendManyTransaction.loadData();
 const inputs = sendManyTransaction.getInputs();
 const outs = await sendManyTransaction.getOutputs();
+console.log("fee", sendManyTransaction.getFee());
 
 const raw = await wallet.rpc("createrawtransaction", [inputs, outs]);
-const decoded = await wallet.rpc("decoderawtransaction", [raw]);
-
-const utxos = sendManyTransaction.getUTXOs();
-for (let u of utxos) {
-  u.amount = u.satoshis / 1e8;
-}
-
-console.log(JSON.stringify(decoded));
-process.exit(1);
 
 const signed = Signer.sign(
   "rvn-test",
@@ -40,6 +42,6 @@ const signed = Signer.sign(
   sendManyTransaction.getUTXOs(),
   sendManyTransaction.getPrivateKeys()
 );
-console.log(signed);
 
-wallet.rpc("sendrawtransaction", [signed]).catch(console.log);
+wallet.rpc("sendrawtransaction", [signed]).then(console.log).catch(console.log);
+await wallet.getReceiveAddress().then(console.log);

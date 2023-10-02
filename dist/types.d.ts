@@ -19,6 +19,7 @@ interface ISendManyOptions {
     outputs: {
         [key: string]: number;
     };
+    wallet: Wallet;
 }
 interface SweepResult {
     errorDescription?: string;
@@ -95,11 +96,7 @@ interface IUTXO {
 declare class SendManyTransaction {
     _allUTXOs: IUTXO[];
     feerate: number;
-    constructor({ wallet, outputs, assetName }: {
-        wallet: any;
-        outputs: any;
-        assetName: any;
-    });
+    constructor({ wallet, outputs, assetName }: ISendManyOptions);
     getSizeInKB(): number;
     loadData(): Promise<void>;
     getAmount(): number;

@@ -1,3 +1,5 @@
+import { Wallet } from "./ravencoinWallet";
+
 export interface ISettings {
   assets?: Array<string>;
   baseCurrency: "RVN"; //TODO is this really needed? do we not get that info from the network attribute?
@@ -28,6 +30,7 @@ export interface IAddressDelta {
 export interface ISendManyOptions {
   assetName?: string;
   outputs: { [key: string]: number };
+  wallet: Wallet;
 }
 
 export interface SweepResult {
@@ -219,4 +222,10 @@ export interface IUTXO {
   script: string;
   satoshis: number;
   height: number;
+}
+export interface ISendOptions {
+  amount: number;
+  assetName: string;
+  toAddress: string;
+  wallet: Wallet;
 }
