@@ -5,9 +5,6 @@ import $93qLg$ravenrebelsravencoinsigntransaction from "@ravenrebels/ravencoin-s
 
 
 
-const $9de421449659004c$export$ffff6aea08fd9487 = 1e8;
-
-
 
 
 class $df4abebf0c223404$export$2191b9da168c6cf0 extends Error {
@@ -30,20 +27,21 @@ class $df4abebf0c223404$export$b276096bbba16879 extends Error {
 }
 
 
-class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
-    constructor({ wallet: wallet , toAddress: toAddress , amount: amount , assetName: assetName  }){
-        this.amount = 0;
+class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
+    constructor({ wallet: wallet, outputs: outputs, assetName: assetName }){
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
         ;
-        this.toAddress = toAddress;
-        this.amount = amount;
         this.assetName = !assetName ? wallet.baseCurrency : assetName;
         this.wallet = wallet;
+        this.outputs = outputs;
     }
     getSizeInKB() {
-        const length = this.getUTXOs().length;
-        //Lets assume every input is 300 bytes.
-        return length * 300 / 1000;
+        const utxos = this.predictUTXOs();
+        const assumedSizePerUTXO = 300;
+        const assumedSizePerOutput = 100;
+        const bytes = (utxos.length + 1) * assumedSizePerUTXO + Object.keys(this.outputs).length * assumedSizePerOutput;
+        const kb = bytes / 1024;
+        return kb;
     }
     async loadData() {
         //Load blockchain information async, and wait for it
@@ -55,7 +53,7 @@ class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
         const assetUTXOs = await assetUTXOsPromise;
         const baseCurrencyUTXOs = await baseCurencyUTXOsPromise;
         this.feerate = await feeRatePromise;
-        const mempoolUTXOs = $c3dba3dbad356cd6$var$getSpendableMempool(walletMempool);
+        const mempoolUTXOs = $c7db79d953d79f02$var$getSpendableMempool(walletMempool);
         //Decorate mempool UTXOs with script attribute
         for (let u of mempoolUTXOs){
             if (u.script) continue;
@@ -74,76 +72,90 @@ class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
             return !objInMempool;
         });
         //Sort utxos lowest first
-        allUTXOs.sort($c3dba3dbad356cd6$var$sortBySatoshis);
+        allUTXOs.sort($c7db79d953d79f02$var$sortBySatoshis);
         this._allUTXOs = allUTXOs;
+    }
+    getAmount() {
+        let total = 0;
+        const values = Object.values(this.outputs);
+        values.map((value)=>total += value);
+        return total;
     }
     getUTXOs() {
         if (this.isAssetTransfer() === true) {
-            const assetAmount = this.amount;
+            const assetAmount = this.getAmount();
             const baseCurrencyAmount = this.getBaseCurrencyAmount();
-            const baseCurrencyUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, baseCurrencyAmount);
-            const assetUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, assetAmount);
+            const baseCurrencyUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, baseCurrencyAmount);
+            const assetUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, assetAmount);
             return assetUTXOs.concat(baseCurrencyUTXOs);
-        } else return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+        } else return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
     }
     predictUTXOs() {
-        if (this.isAssetTransfer()) return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.amount);
-        return $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.amount);
+        if (this.isAssetTransfer()) return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
+        return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getAmount());
     }
     getBaseCurrencyAmount() {
         const fee = this.getFee();
         if (this.isAssetTransfer() === true) return fee;
-        else return this.amount + fee;
+        else return this.getAmount() + fee;
     }
     getBaseCurrencyChange() {
-        const enoughUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+        const enoughUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
         let total = 0;
         for (let utxo of enoughUTXOs){
             if (utxo.assetName !== this.wallet.baseCurrency) continue;
             total = total + utxo.satoshis / 1e8;
         }
         const result = total - this.getBaseCurrencyAmount();
-        return $c3dba3dbad356cd6$export$1778fb2d99201af(result);
+        return $c7db79d953d79f02$export$1778fb2d99201af(result);
     }
     getAssetChange() {
-        const enoughUTXOs = $c3dba3dbad356cd6$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.amount);
+        const enoughUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
         let total = 0;
         for (let utxo of enoughUTXOs){
             if (utxo.assetName !== this.assetName) continue;
             total = total + utxo.satoshis / 1e8;
         }
-        return total - this.amount;
+        return total - this.getAmount();
     }
     isAssetTransfer() {
         return this.assetName !== this.wallet.baseCurrency;
     }
     async getOutputs() {
-        const outputs = {};
+        //we take the declared outputs and add change outputs
+        const totalOutputs = {};
         if (this.isAssetTransfer() === true) {
             const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
             //Validate: change address cant be toAddress
-            if (changeAddressBaseCurrency === this.toAddress) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as toAddress");
-            outputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
+            const toAddresses = Object.keys(this.outputs);
+            if (toAddresses.includes(changeAddressBaseCurrency) === true) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as to address");
+            totalOutputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
             const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
             const changeAddressAsset = this.wallet.getAddresses()[index + 2];
             //Validate change address can never be the same as toAddress
-            if (changeAddressAsset === this.toAddress) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as toAddress");
-            if (this.getAssetChange() > 0) outputs[changeAddressAsset] = {
+            if (toAddresses.includes(changeAddressAsset) === true) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as to address");
+            if (this.getAssetChange() > 0) totalOutputs[changeAddressAsset] = {
                 transfer: {
                     [this.assetName]: this.getAssetChange()
                 }
             };
-            outputs[this.toAddress] = {
-                transfer: {
-                    [this.assetName]: this.amount
-                }
-            };
+            for (let addy of Object.keys(this.outputs)){
+                const amount = this.outputs[addy];
+                totalOutputs[addy] = {
+                    transfer: {
+                        [this.assetName]: amount
+                    }
+                };
+            }
         } else {
             const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
-            outputs[this.toAddress] = this.amount;
-            outputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
+            for (let addy of Object.keys(this.outputs)){
+                const amount = this.outputs[addy];
+                totalOutputs[addy] = amount;
+            }
+            totalOutputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
         }
-        return outputs;
+        return totalOutputs;
     }
     getInputs() {
         return this.getUTXOs().map((obj)=>{
@@ -165,10 +177,7 @@ class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
         return privateKeys;
     }
     getFee() {
-        const utxos = this.predictUTXOs();
-        const assumedSizePerUTXO = 300;
-        const bytes = (utxos.length + 1) * assumedSizePerUTXO;
-        const kb = bytes / 1024;
+        const kb = this.getSizeInKB();
         const result = kb * this.feerate;
         return result;
     }
@@ -187,15 +196,15 @@ class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
         }
     }
 }
-function $c3dba3dbad356cd6$export$1778fb2d99201af(number) {
+function $c7db79d953d79f02$export$1778fb2d99201af(number) {
     return parseFloat(number.toFixed(2));
 }
-function $c3dba3dbad356cd6$var$sortBySatoshis(u1, u2) {
+function $c7db79d953d79f02$var$sortBySatoshis(u1, u2) {
     if (u1.satoshis > u2.satoshis) return 1;
     if (u1.satoshis === u2.satoshis) return 0;
     return -1;
 }
-function $c3dba3dbad356cd6$var$getEnoughUTXOs(utxos, asset, amount) {
+function $c7db79d953d79f02$var$getEnoughUTXOs(utxos, asset, amount) {
     const result = [];
     let sum = 0;
     for (let u of utxos){
@@ -208,12 +217,12 @@ function $c3dba3dbad356cd6$var$getEnoughUTXOs(utxos, asset, amount) {
         sum = sum + value;
     }
     if (sum < amount) {
-        const error = new (0, $df4abebf0c223404$export$b276096bbba16879)("You do not have " + amount + " " + asset);
+        const error = new (0, $df4abebf0c223404$export$b276096bbba16879)("You do not have " + amount + " " + asset + " you only have " + sum);
         throw error;
     }
     return result;
 }
-function $c3dba3dbad356cd6$var$getSpendableMempool(mempool) {
+function $c7db79d953d79f02$var$getSpendableMempool(mempool) {
     /*
 interface IUTXO {
    address: string;
@@ -286,7 +295,7 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
     keys.map((assetName, index)=>{
         const address = wallet.getAddresses()[index];
         const amount = balanceObject[assetName] / 1e8;
-        if (assetName === wallet.baseCurrency) outputs[address] = (0, $c3dba3dbad356cd6$export$1778fb2d99201af)(amount - fixedFee);
+        if (assetName === wallet.baseCurrency) outputs[address] = (0, $c7db79d953d79f02$export$1778fb2d99201af)(amount - fixedFee);
         else outputs[address] = {
             transfer: {
                 [assetName]: amount
@@ -323,6 +332,107 @@ async function $67c46d86d9d50c48$export$322a62cff28f560a(WIF, wallet, onlineMode
     return result;
 }
 
+
+
+class $c3dba3dbad356cd6$export$febc5573c75cefb0 {
+    constructor({ wallet: wallet, toAddress: toAddress, amount: amount, assetName: assetName }){
+        const options = {
+            assetName: assetName,
+            wallet: wallet,
+            outputs: {
+                [toAddress]: amount
+            }
+        };
+        this.sendManyTransaction = new (0, $c7db79d953d79f02$export$a0aa368c31ae6e6c)(options);
+    }
+    getSizeInKB() {
+        return this.sendManyTransaction.getSizeInKB();
+    }
+    async loadData() {
+        return this.sendManyTransaction.loadData();
+    }
+    getUTXOs() {
+        return this.sendManyTransaction.getUTXOs();
+    }
+    predictUTXOs() {
+        return this.sendManyTransaction.predictUTXOs();
+    }
+    getBaseCurrencyAmount() {
+        return this.sendManyTransaction.getBaseCurrencyAmount();
+    }
+    getBaseCurrencyChange() {
+        return this.sendManyTransaction.getBaseCurrencyChange();
+    }
+    getAssetChange() {
+        return this.sendManyTransaction.getAssetChange();
+    }
+    isAssetTransfer() {
+        return this.sendManyTransaction.isAssetTransfer();
+    }
+    async getOutputs() {
+        return this.sendManyTransaction.getOutputs();
+    }
+    getInputs() {
+        return this.sendManyTransaction.getInputs();
+    }
+    getPrivateKeys() {
+        return this.sendManyTransaction.getPrivateKeys();
+    }
+    getFee() {
+        return this.sendManyTransaction.getFee();
+    }
+    async getFeeRate() {
+        return this.sendManyTransaction.getFeeRate();
+    }
+}
+
+
+
+function $b986b05eb12d057a$export$af0c167f1aa2328f(network) {
+    const map = {
+        evr: "EVR",
+        "evr-test": "EVR",
+        rvn: "RVN",
+        "rvn-test": "RVN"
+    };
+    return map[network];
+}
+
+
+
+const $9de421449659004c$export$ffff6aea08fd9487 = 1e8;
+
+
+async function $2767f256fef0b24e$export$df96cd8d56be0ab1(wallet, addresses) {
+    const includeAssets = false;
+    const params = [
+        {
+            addresses: addresses
+        },
+        includeAssets
+    ];
+    const balance = await wallet.rpc((0, $93qLg$methods).getaddressbalance, params);
+    return balance.balance / (0, $9de421449659004c$export$ffff6aea08fd9487);
+}
+
+
+
+
+async function $0b10d1d1bbb55c3e$export$ab187dba3e955af9(wallet, addresses) {
+    const includeAssets = true;
+    const params = [
+        {
+            addresses: addresses
+        },
+        includeAssets
+    ];
+    const balance = await wallet.rpc((0, $93qLg$methods).getaddressbalance, params);
+    //Remove baseCurrency
+    const result = balance.filter((obj)=>{
+        return obj.assetName !== wallet.baseCurrency;
+    });
+    return result;
+}
 
 
 const $c3676b79c37149df$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
@@ -368,7 +478,7 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         username = options.rpc_username || url;
         if (options.network) {
             this.network = options.network;
-            this.setBaseCurrency($c3676b79c37149df$export$af0c167f1aa2328f(options.network));
+            this.setBaseCurrency((0, $b986b05eb12d057a$export$af0c167f1aa2328f)(options.network));
         }
         if (options.network === "rvn-test" && !options.rpc_url) url = $c3676b79c37149df$var$URL_TESTNET;
         this.rpc = (0, $93qLg$getRPC)(username, password, url);
@@ -377,23 +487,7 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         const hdKey = (0, $93qLg$ravenrebelsravencoinkey).getHDKey(this.network, this._mnemonic);
         const coinType = (0, $93qLg$ravenrebelsravencoinkey).getCoinType(this.network);
         const ACCOUNT = 0;
-        //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
-        /*
-    if (options.minAmountOfAddresses) {
-      for (let i = 0; i < options.minAmountOfAddresses; i++) {
-        const o = RavencoinKey.getAddressPair(
-          this.network,
-          this._mnemonic,
-          ACCOUNT,
-          this.addressPosition
-        );
-        this.addressObjects.push(o.external);
-        this.addressObjects.push(o.internal);
-        this.addressPosition++;
-      }
-    }
-
-    */ const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses) ? options.minAmountOfAddresses : 0;
+        const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses) ? options.minAmountOfAddresses : 0;
         let doneDerivingAddresses = false;
         while(doneDerivingAddresses === false){
             //We add new addresses to tempAddresses so we can check history for the last 20
@@ -473,34 +567,7 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         if (external === true) this.receiveAddress = result;
         else this.changeAddress = result;
         return result;
-    /*
-    //even addresses are external, odd address are internal/changes
-    for (let counter = 0; counter < addresses.length; counter++) {
-      //Internal addresses should be even numbers
-      if (external && counter % 2 !== 0) {
-        continue;
-      }
-      //Internal addresses should be odd numbers
-      if (external === false && counter % 2 === 0) {
-        continue;
-      }
-      const address = addresses[counter];
-
-      //If an address has tenth of thousands of transactions, getHistory will throw an exception
-
-      const hasHistory = await this.hasHistory([address]);
-
-      if (hasHistory === false) {
-        if (external === true) {
-          this.receiveAddress = address;
-        }
-        if (external === false) {
-          this.changeAddress = address;
-        }
-        return address;
-      }
     }
-*/ }
     async getHistory() {
         const assetName = ""; //Must be empty string, NOT "*"
         const addresses = this.getAddresses();
@@ -562,6 +629,11 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         if (!f) return undefined;
         return f.WIF;
     }
+    async sendRawTransaction(raw) {
+        return this.rpc("sendrawtransaction", [
+            raw
+        ]);
+    }
     async send(options) {
         //ACTUAL SENDING TRANSACTION
         //Important, do not swallow the exceptions/errors of createTransaction, let them fly
@@ -576,20 +648,34 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
             throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
         }
     }
-    async sendRawTransaction(raw) {
-        return this.rpc("sendrawtransaction", [
-            raw
-        ]);
+    async sendMany({ outputs: outputs, assetName: assetName }) {
+        const options = {
+            wallet: this,
+            outputs: outputs,
+            assetName: assetName
+        };
+        const sendResult = await this.createSendManyTransaction(options);
+        //ACTUAL SENDING TRANSACTION
+        //Important, do not swallow the exceptions/errors of createSendManyTransaction, let them fly
+        try {
+            const id = await this.rpc("sendrawtransaction", [
+                sendResult.debug.signedTransaction
+            ]);
+            sendResult.transactionId = id;
+            return sendResult;
+        } catch (e) {
+            throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
+        }
     }
     /**
-   * Does all the heavy lifting regarding creating a transaction
+   * Does all the heavy lifting regarding creating a SendManyTransaction
    * but it does not broadcast the actual transaction.
    * Perhaps the user wants to accept the transaction fee?
    * @param options
    * @returns An transaction that has not been broadcasted
    */ async createTransaction(options) {
-        const { amount: amount , toAddress: toAddress  } = options;
-        let { assetName: assetName  } = options;
+        const { amount: amount, toAddress: toAddress } = options;
+        let { assetName: assetName } = options;
         if (!assetName) assetName = this.baseCurrency;
         //Validation
         if (!toAddress) throw Error("Wallet.send toAddress is mandatory");
@@ -635,31 +721,63 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
             throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
         }
     }
-    async getAssets() {
-        const includeAssets = true;
-        const params = [
-            {
-                addresses: this.getAddresses()
-            },
-            includeAssets
-        ];
-        const balance = await this.rpc((0, $93qLg$methods).getaddressbalance, params);
-        //Remove baseCurrency
-        const result = balance.filter((obj)=>{
-            return obj.assetName !== this.baseCurrency;
+    /**
+   * Does all the heavy lifting regarding creating a transaction
+   * but it does not broadcast the actual transaction.
+   * Perhaps the user wants to accept the transaction fee?
+   * @param options
+   * @returns An transaction that has not been broadcasted
+   */ async createSendManyTransaction(options) {
+        let { assetName: assetName } = options;
+        if (!assetName) assetName = this.baseCurrency;
+        //Validation
+        if (!options.outputs) throw Error("Wallet.createSendManyTransaction outputs is mandatory");
+        else if (Object.keys(options.outputs).length === 0) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("outputs is mandatory, shoud be an object with address as keys and amounts (numbers) as values");
+        const changeAddress = await this.getChangeAddress();
+        const toAddresses = Object.keys(options.outputs);
+        if (toAddresses.includes(changeAddress)) throw new Error("You cannot send to your current change address");
+        const transaction = new (0, $c7db79d953d79f02$export$a0aa368c31ae6e6c)({
+            assetName: assetName,
+            outputs: options.outputs,
+            wallet: this
         });
-        return result;
+        await transaction.loadData();
+        const inputs = transaction.getInputs();
+        const outputs = await transaction.getOutputs();
+        const privateKeys = transaction.getPrivateKeys();
+        const raw = await this.rpc("createrawtransaction", [
+            inputs,
+            outputs
+        ]);
+        const signed = (0, $93qLg$ravenrebelsravencoinsigntransaction).sign(this.network, raw, transaction.getUTXOs(), privateKeys);
+        try {
+            const sendResult = {
+                transactionId: null,
+                debug: {
+                    amount: transaction.getAmount(),
+                    assetName: assetName,
+                    fee: transaction.getFee(),
+                    inputs: inputs,
+                    outputs: outputs,
+                    privateKeys: privateKeys,
+                    rawUnsignedTransaction: raw,
+                    rvnChangeAmount: transaction.getBaseCurrencyChange(),
+                    rvnAmount: transaction.getBaseCurrencyAmount(),
+                    signedTransaction: signed,
+                    UTXOs: transaction.getUTXOs()
+                }
+            };
+            return sendResult;
+        } catch (e) {
+            throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
+        }
+    }
+    async getAssets() {
+        return (0, $0b10d1d1bbb55c3e$export$ab187dba3e955af9)(this, this.getAddresses());
     }
     async getBalance() {
-        const includeAssets = false;
-        const params = [
-            {
-                addresses: this.getAddresses()
-            },
-            includeAssets
-        ];
-        const balance = await this.rpc((0, $93qLg$methods).getaddressbalance, params);
-        return balance.balance / (0, $9de421449659004c$export$ffff6aea08fd9487);
+        const a = this.getAddresses();
+        return (0, $2767f256fef0b24e$export$df96cd8d56be0ab1)(this, a);
     }
     constructor(){
         this.rpc = (0, $93qLg$getRPC)("anonymous", "anonymous", $c3676b79c37149df$var$URL_MAINNET);
@@ -675,23 +793,15 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
     }
 }
 var $c3676b79c37149df$export$2e2bcd8739ae039 = {
-    createInstance: $c3676b79c37149df$export$99152e8d49ca4e7d
+    createInstance: $c3676b79c37149df$export$99152e8d49ca4e7d,
+    getBaseCurrencyByNetwork: $b986b05eb12d057a$export$af0c167f1aa2328f
 };
 async function $c3676b79c37149df$export$99152e8d49ca4e7d(options) {
     const wallet = new $c3676b79c37149df$export$bcca3ea514774656();
     await wallet.init(options);
     return wallet;
 }
-function $c3676b79c37149df$export$af0c167f1aa2328f(network) {
-    const map = {
-        evr: "EVR",
-        "evr-test": "EVR",
-        rvn: "RVN",
-        "rvn-test": "RVN"
-    };
-    return map[network];
-}
 
 
-export {$c3676b79c37149df$export$bcca3ea514774656 as Wallet, $c3676b79c37149df$export$af0c167f1aa2328f as getBaseCurrencyByNetwork, $c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
+export {$c3676b79c37149df$export$bcca3ea514774656 as Wallet, $c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
 //# sourceMappingURL=index.mjs.map

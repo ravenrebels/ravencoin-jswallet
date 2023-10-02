@@ -5,15 +5,21 @@ import {
   ChainType,
   IAddressDelta,
   IAddressMetaData,
+  IOptions,
   ISend,
+  ISendManyOptions,
   ISendResult,
   IUTXO,
   SweepResult,
 } from "./Types";
-import { ONE_FULL_COIN } from "./contants";
 
 import { sweep } from "./blockchain/sweep";
 import { Transaction } from "./blockchain/Transaction";
+import { SendManyTransaction } from "./blockchain/SendManyTransaction";
+import { getBaseCurrencyByNetwork } from "./getBaseCurrencyByNetwork";
+import { getBalance } from "./getBalance";
+import { ValidationError } from "./Errors";
+import { getAssets } from "./getAssets";
 
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
@@ -98,23 +104,6 @@ export class Wallet {
     const coinType = RavencoinKey.getCoinType(this.network);
     const ACCOUNT = 0;
 
-    //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
-    /*
-    if (options.minAmountOfAddresses) {
-      for (let i = 0; i < options.minAmountOfAddresses; i++) {
-        const o = RavencoinKey.getAddressPair(
-          this.network,
-          this._mnemonic,
-          ACCOUNT,
-          this.addressPosition
-        );
-        this.addressObjects.push(o.external);
-        this.addressObjects.push(o.internal);
-        this.addressPosition++;
-      }
-    }
-
-    */
     const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses)
       ? options.minAmountOfAddresses
       : 0;
@@ -150,7 +139,6 @@ export class Wallet {
         minAmountOfAddresses >= this.addressPosition
       ) {
         //In case we intend to create extra addresses on startup
-
         doneDerivingAddresses = false;
       } else if (this.offlineMode === true) {
         //BREAK generation of addresses and do NOT check history on the network
@@ -242,34 +230,6 @@ export class Wallet {
     }
 
     return result;
-    /*
-    //even addresses are external, odd address are internal/changes
-    for (let counter = 0; counter < addresses.length; counter++) {
-      //Internal addresses should be even numbers
-      if (external && counter % 2 !== 0) {
-        continue;
-      }
-      //Internal addresses should be odd numbers
-      if (external === false && counter % 2 === 0) {
-        continue;
-      }
-      const address = addresses[counter];
-
-      //If an address has tenth of thousands of transactions, getHistory will throw an exception
-
-      const hasHistory = await this.hasHistory([address]);
-
-      if (hasHistory === false) {
-        if (external === true) {
-          this.receiveAddress = address;
-        }
-        if (external === false) {
-          this.changeAddress = address;
-        }
-        return address;
-      }
-    }
-*/
   }
 
   async getHistory(): Promise<IAddressDelta[]> {
@@ -326,6 +286,9 @@ export class Wallet {
     }
     return f.WIF;
   }
+  async sendRawTransaction(raw: string): Promise<string> {
+    return this.rpc("sendrawtransaction", [raw]);
+  }
 
   async send(options: ISend): Promise<ISendResult> {
     //ACTUAL SENDING TRANSACTION
@@ -346,11 +309,35 @@ export class Wallet {
       );
     }
   }
-  async sendRawTransaction(raw: string): Promise<string> {
-    return this.rpc("sendrawtransaction", [raw]);
+
+  async sendMany({ outputs, assetName }: ISendManyOptions) {
+    const options = {
+      wallet: this,
+      outputs,
+      assetName,
+    };
+    const sendResult: ISendResult = await this.createSendManyTransaction(
+      options
+    );
+
+    //ACTUAL SENDING TRANSACTION
+    //Important, do not swallow the exceptions/errors of createSendManyTransaction, let them fly
+
+    try {
+      const id = await this.rpc("sendrawtransaction", [
+        sendResult.debug.signedTransaction,
+      ]);
+      sendResult.transactionId = id;
+
+      return sendResult;
+    } catch (e) {
+      throw new Error(
+        "Error while sending, perhaps you have pending transaction? Please try again."
+      );
+    }
   }
   /**
-   * Does all the heavy lifting regarding creating a transaction
+   * Does all the heavy lifting regarding creating a SendManyTransaction
    * but it does not broadcast the actual transaction.
    * Perhaps the user wants to accept the transaction fee?
    * @param options
@@ -425,51 +412,98 @@ export class Wallet {
     }
   }
 
-  async getAssets() {
-    const includeAssets = true;
-    const params = [{ addresses: this.getAddresses() }, includeAssets];
-    const balance = (await this.rpc(methods.getaddressbalance, params)) as any;
+  /**
+   * Does all the heavy lifting regarding creating a transaction
+   * but it does not broadcast the actual transaction.
+   * Perhaps the user wants to accept the transaction fee?
+   * @param options
+   * @returns An transaction that has not been broadcasted
+   */
+  async createSendManyTransaction(options: {
+    assetName?: string;
+    outputs: { [key: string]: number };
+  }): Promise<ISendResult> {
+    let { assetName } = options;
 
-    //Remove baseCurrency
-    const result = balance.filter((obj) => {
-      return obj.assetName !== this.baseCurrency;
+    if (!assetName) {
+      assetName = this.baseCurrency;
+    }
+
+    //Validation
+    if (!options.outputs) {
+      throw Error("Wallet.createSendManyTransaction outputs is mandatory");
+    } else if (Object.keys(options.outputs).length === 0) {
+      throw new ValidationError(
+        "outputs is mandatory, shoud be an object with address as keys and amounts (numbers) as values"
+      );
+    }
+    const changeAddress = await this.getChangeAddress();
+
+    const toAddresses = Object.keys(options.outputs);
+    if (toAddresses.includes(changeAddress)) {
+      throw new Error("You cannot send to your current change address");
+    }
+    const transaction = new SendManyTransaction({
+      assetName,
+      outputs: options.outputs,
+      wallet: this,
     });
-    return result;
+
+    await transaction.loadData();
+
+    const inputs = transaction.getInputs();
+    const outputs = await transaction.getOutputs();
+
+    const privateKeys = transaction.getPrivateKeys();
+
+    const raw = await this.rpc("createrawtransaction", [inputs, outputs]);
+    const signed = Signer.sign(
+      this.network,
+      raw,
+      transaction.getUTXOs(),
+      privateKeys
+    );
+
+    try {
+      const sendResult: ISendResult = {
+        transactionId: null,
+        debug: {
+          amount: transaction.getAmount(),
+          assetName,
+          fee: transaction.getFee(),
+          inputs,
+          outputs,
+          privateKeys,
+          rawUnsignedTransaction: raw,
+          rvnChangeAmount: transaction.getBaseCurrencyChange(),
+          rvnAmount: transaction.getBaseCurrencyAmount(),
+          signedTransaction: signed,
+          UTXOs: transaction.getUTXOs(),
+        },
+      };
+      return sendResult;
+    } catch (e) {
+      throw new Error(
+        "Error while sending, perhaps you have pending transaction? Please try again."
+      );
+    }
+  }
+
+  async getAssets() {
+    return getAssets(this, this.getAddresses());
   }
   async getBalance() {
-    const includeAssets = false;
-    const params = [{ addresses: this.getAddresses() }, includeAssets];
-    const balance = (await this.rpc(methods.getaddressbalance, params)) as any;
-
-    return balance.balance / ONE_FULL_COIN;
+    const a = this.getAddresses();
+    return getBalance(this, a);
   }
 }
 
 export default {
   createInstance,
+  getBaseCurrencyByNetwork
 };
 export async function createInstance(options: IOptions): Promise<Wallet> {
   const wallet = new Wallet();
   await wallet.init(options);
   return wallet;
-}
-
-export function getBaseCurrencyByNetwork(network: ChainType): string {
-  const map = {
-    evr: "EVR",
-    "evr-test": "EVR",
-    rvn: "RVN",
-    "rvn-test": "RVN",
-  };
-  return map[network];
-}
-export interface IOptions {
-  mnemonic: string;
-  minAmountOfAddresses?: number;
-  network?: ChainType;
-  rpc_username?: string;
-  rpc_password?: string;
-  rpc_url?: string;
-
-  offlineMode?: boolean;
 }

@@ -1,3 +1,5 @@
+import { Wallet } from "./ravencoinWallet";
+
 export interface ISettings {
   assets?: Array<string>;
   baseCurrency: "RVN"; //TODO is this really needed? do we not get that info from the network attribute?
@@ -24,6 +26,17 @@ export interface IAddressDelta {
 
   prevtxid?: string;
 }
+export interface ISendManyOptions {
+  assetName?: string;
+  outputs: { [key: string]: number };
+ 
+}
+
+export interface ISendManyTransactionOptions {
+  assetName?: string;
+  outputs: { [key: string]: number };
+  wallet: Wallet;
+}
 
 export interface SweepResult {
   errorDescription?: string;
@@ -43,7 +56,7 @@ export interface ISendResult {
   transactionId: string | null;
   debug: {
     amount: number;
-    assetName: string; 
+    assetName: string;
     error?: any;
     fee: number;
     inputs: Array<IVout_when_creating_transactions>;
@@ -51,8 +64,8 @@ export interface ISendResult {
     privateKeys?: TPrivateKey;
     rawUnsignedTransaction?: string;
     rvnAmount: number;
-    rvnChangeAmount: number; 
-    signedTransaction?: string; 
+    rvnChangeAmount: number;
+    signedTransaction?: string;
     UTXOs: IUTXO[];
   };
 }
@@ -214,4 +227,21 @@ export interface IUTXO {
   script: string;
   satoshis: number;
   height: number;
+}
+export interface ITransactionOptions {
+  amount: number;
+  assetName: string;
+  toAddress: string;
+  wallet: Wallet;
+}
+
+export interface IOptions {
+  mnemonic: string;
+  minAmountOfAddresses?: number;
+  network?: ChainType;
+  rpc_username?: string;
+  rpc_password?: string;
+  rpc_url?: string;
+
+  offlineMode?: boolean;
 }

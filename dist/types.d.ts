@@ -14,6 +14,12 @@ interface IAddressDelta {
     txid: string;
     prevtxid?: string;
 }
+interface ISendManyOptions {
+    assetName?: string;
+    outputs: {
+        [key: string]: number;
+    };
+}
 interface SweepResult {
     errorDescription?: string;
     fromAddress?: string;
@@ -86,6 +92,16 @@ interface IUTXO {
     satoshis: number;
     height: number;
 }
+interface IOptions {
+    mnemonic: string;
+    minAmountOfAddresses?: number;
+    network?: ChainType;
+    rpc_username?: string;
+    rpc_password?: string;
+    rpc_url?: string;
+    offlineMode?: boolean;
+}
+declare function getBaseCurrencyByNetwork(network: ChainType): string;
 export class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
     _mnemonic: string;
@@ -125,8 +141,17 @@ export class Wallet {
     getAssetUTXOs(assetName?: string): Promise<IUTXO[]>;
     getUTXOs(): Promise<any>;
     getPrivateKeyByAddress(address: string): string;
-    send(options: ISend): Promise<ISendResult>;
     sendRawTransaction(raw: string): Promise<string>;
+    send(options: ISend): Promise<ISendResult>;
+    sendMany({ outputs, assetName }: ISendManyOptions): Promise<ISendResult>;
+    /**
+     * Does all the heavy lifting regarding creating a SendManyTransaction
+     * but it does not broadcast the actual transaction.
+     * Perhaps the user wants to accept the transaction fee?
+     * @param options
+     * @returns An transaction that has not been broadcasted
+     */
+    createTransaction(options: ISend): Promise<ISendResult>;
     /**
      * Does all the heavy lifting regarding creating a transaction
      * but it does not broadcast the actual transaction.
@@ -134,24 +159,20 @@ export class Wallet {
      * @param options
      * @returns An transaction that has not been broadcasted
      */
-    createTransaction(options: ISend): Promise<ISendResult>;
+    createSendManyTransaction(options: {
+        assetName?: string;
+        outputs: {
+            [key: string]: number;
+        };
+    }): Promise<ISendResult>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
 }
 declare const _default: {
     createInstance: typeof createInstance;
+    getBaseCurrencyByNetwork: typeof getBaseCurrencyByNetwork;
 };
 export default _default;
 export function createInstance(options: IOptions): Promise<Wallet>;
-export function getBaseCurrencyByNetwork(network: ChainType): string;
-export interface IOptions {
-    mnemonic: string;
-    minAmountOfAddresses?: number;
-    network?: ChainType;
-    rpc_username?: string;
-    rpc_password?: string;
-    rpc_url?: string;
-    offlineMode?: boolean;
-}
 
 //# sourceMappingURL=types.d.ts.map
