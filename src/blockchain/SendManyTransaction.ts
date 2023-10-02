@@ -18,9 +18,18 @@ export class SendManyTransaction {
   }
 
   getSizeInKB() {
-    const length = this.getUTXOs().length;
-    //Lets assume every input is 300 bytes.
-    return (length * 300) / 1000;
+    const utxos = this.predictUTXOs();
+
+    const assumedSizePerUTXO = 300;
+    const assumedSizePerOutput = 100;
+
+    const bytes =
+      (utxos.length + 1) * assumedSizePerUTXO +
+      Object.keys(this.outputs).length * assumedSizePerOutput;
+
+    const kb = bytes / 1024;
+
+    return kb;
   }
   async loadData() {
     //Load blockchain information async, and wait for it
@@ -228,16 +237,7 @@ export class SendManyTransaction {
   }
 
   getFee() {
-    const utxos = this.predictUTXOs();
-
-    const assumedSizePerUTXO = 300;
-    const assumedSizePerOutput = 100;
-
-    const bytes =
-      (utxos.length + 1) * assumedSizePerUTXO +
-      Object.keys(this.outputs).length * assumedSizePerOutput;
-
-    const kb = bytes / 1024;
+    const kb = this.getSizeInKB();
 
     const result = kb * this.feerate;
 
@@ -302,7 +302,7 @@ function getEnoughUTXOs(
 
   if (sum < amount) {
     const error = new InsufficientFundsError(
-      "You do not have " + amount + " " + asset
+      "You do not have " + amount + " " + asset + " you only have " + sum
     );
 
     throw error;

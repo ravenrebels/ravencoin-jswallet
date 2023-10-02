@@ -55,9 +55,12 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         this.outputs = outputs;
     }
     getSizeInKB() {
-        const length = this.getUTXOs().length;
-        //Lets assume every input is 300 bytes.
-        return length * 300 / 1000;
+        const utxos = this.predictUTXOs();
+        const assumedSizePerUTXO = 300;
+        const assumedSizePerOutput = 100;
+        const bytes = (utxos.length + 1) * assumedSizePerUTXO + Object.keys(this.outputs).length * assumedSizePerOutput;
+        const kb = bytes / 1024;
+        return kb;
     }
     async loadData() {
         //Load blockchain information async, and wait for it
@@ -193,11 +196,7 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         return privateKeys;
     }
     getFee() {
-        const utxos = this.predictUTXOs();
-        const assumedSizePerUTXO = 300;
-        const assumedSizePerOutput = 100;
-        const bytes = (utxos.length + 1) * assumedSizePerUTXO + Object.keys(this.outputs).length * assumedSizePerOutput;
-        const kb = bytes / 1024;
+        const kb = this.getSizeInKB();
         const result = kb * this.feerate;
         return result;
     }
@@ -237,7 +236,7 @@ function $95d3c5cb954e3eff$var$getEnoughUTXOs(utxos, asset, amount) {
         sum = sum + value;
     }
     if (sum < amount) {
-        const error = new (0, $e16394a5869d8429$export$b276096bbba16879)("You do not have " + amount + " " + asset);
+        const error = new (0, $e16394a5869d8429$export$b276096bbba16879)("You do not have " + amount + " " + asset + " you only have " + sum);
         throw error;
     }
     return result;
