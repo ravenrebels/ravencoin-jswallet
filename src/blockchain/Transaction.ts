@@ -14,7 +14,9 @@ export class Transaction {
     };
     this.sendManyTransaction = new SendManyTransaction(options);
   }
-
+  getWalletMempool() {
+    return this.sendManyTransaction.getWalletMempool();
+  }
   getSizeInKB() {
     return this.sendManyTransaction.getSizeInKB();
   }

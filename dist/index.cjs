@@ -46,9 +46,13 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
     constructor({ wallet: wallet, outputs: outputs, assetName: assetName }){
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
         ;
+        this.walletMempool = [];
         this.assetName = !assetName ? wallet.baseCurrency : assetName;
         this.wallet = wallet;
         this.outputs = outputs;
+    }
+    getWalletMempool() {
+        return this.walletMempool;
     }
     getSizeInKB() {
         const utxos = this.predictUTXOs();
@@ -64,11 +68,11 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         const assetUTXOsPromise = this.wallet.getAssetUTXOs();
         const baseCurencyUTXOsPromise = this.wallet.getUTXOs();
         const feeRatePromise = this.getFeeRate();
-        const walletMempool = await mempoolPromise;
+        this.walletMempool = await mempoolPromise;
         const assetUTXOs = await assetUTXOsPromise;
         const baseCurrencyUTXOs = await baseCurencyUTXOsPromise;
         this.feerate = await feeRatePromise;
-        const mempoolUTXOs = $95d3c5cb954e3eff$var$getSpendableMempool(walletMempool);
+        const mempoolUTXOs = $95d3c5cb954e3eff$var$getSpendableMempool(this.walletMempool);
         //Decorate mempool UTXOs with script attribute
         for (let u of mempoolUTXOs){
             if (u.script) continue;
@@ -81,9 +85,14 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
             if (utxo) u.script = utxo.scriptPubKey.hex;
         }
         const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
+        //Remove UTXOs that are mined less than 100 blocks ago
+        const blockCount = await this.wallet.rpc("getblockcount", []);
         //Filter out UTXOs that are NOT in mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
-            const objInMempool = walletMempool.find((mempoolEntry)=>mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.id);
+            const objInMempool = this.walletMempool.find((mempoolEntry)=>{
+                if (mempoolEntry.txid === utxo.txid) return true;
+                return mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.txid;
+            });
             return !objInMempool;
         });
         //Sort utxos lowest first
@@ -359,6 +368,9 @@ class $0757bc65e326b272$export$febc5573c75cefb0 {
             }
         };
         this.sendManyTransaction = new (0, $95d3c5cb954e3eff$export$a0aa368c31ae6e6c)(options);
+    }
+    getWalletMempool() {
+        return this.sendManyTransaction.getWalletMempool();
     }
     getSizeInKB() {
         return this.sendManyTransaction.getSizeInKB();
@@ -728,7 +740,8 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
                     rvnChangeAmount: transaction.getBaseCurrencyChange(),
                     rvnAmount: transaction.getBaseCurrencyAmount(),
                     signedTransaction: signed,
-                    UTXOs: transaction.getUTXOs()
+                    UTXOs: transaction.getUTXOs(),
+                    walletMempool: transaction.getWalletMempool()
                 }
             };
             return sendResult;
@@ -779,7 +792,8 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
                     rvnChangeAmount: transaction.getBaseCurrencyChange(),
                     rvnAmount: transaction.getBaseCurrencyAmount(),
                     signedTransaction: signed,
-                    UTXOs: transaction.getUTXOs()
+                    UTXOs: transaction.getUTXOs(),
+                    walletMempool: transaction.getWalletMempool()
                 }
             };
             return sendResult;

@@ -29,7 +29,6 @@ export interface IAddressDelta {
 export interface ISendManyOptions {
   assetName?: string;
   outputs: { [key: string]: number };
- 
 }
 
 export interface ISendManyTransactionOptions {
@@ -67,6 +66,7 @@ export interface ISendResult {
     rvnChangeAmount: number;
     signedTransaction?: string;
     UTXOs: IUTXO[];
+    walletMempool: any;
   };
 }
 export interface Asset {
@@ -244,4 +244,15 @@ export interface IOptions {
   rpc_url?: string;
 
   offlineMode?: boolean;
+}
+
+export interface IMempoolEntry {
+  address: string;
+  assetName: string;
+  txid: string;
+  index: number;
+  satoshis: number;
+  timestamp: number;
+  prevtxid: string;
+  prevout: number;
 }

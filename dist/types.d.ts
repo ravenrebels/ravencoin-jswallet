@@ -48,6 +48,7 @@ interface ISendResult {
         rvnChangeAmount: number;
         signedTransaction?: string;
         UTXOs: IUTXO[];
+        walletMempool: any;
     };
 }
 interface IVout_when_creating_transactions {
@@ -101,6 +102,16 @@ interface IOptions {
     rpc_url?: string;
     offlineMode?: boolean;
 }
+interface IMempoolEntry {
+    address: string;
+    assetName: string;
+    txid: string;
+    index: number;
+    satoshis: number;
+    timestamp: number;
+    prevtxid: string;
+    prevout: number;
+}
 declare function getBaseCurrencyByNetwork(network: ChainType): string;
 export class Wallet {
     rpc: (method: string, params: any[]) => Promise<any>;
@@ -130,7 +141,7 @@ export class Wallet {
     hasHistory(addresses: Array<string>): Promise<boolean>;
     _getFirstUnusedAddress(external: boolean): Promise<string>;
     getHistory(): Promise<IAddressDelta[]>;
-    getMempool(): Promise<IAddressDelta[]>;
+    getMempool(): Promise<IMempoolEntry[]>;
     getReceiveAddress(): Promise<string>;
     getChangeAddress(): Promise<string>;
     /**

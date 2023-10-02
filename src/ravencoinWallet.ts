@@ -5,6 +5,7 @@ import {
   ChainType,
   IAddressDelta,
   IAddressMetaData,
+  IMempoolEntry,
   IOptions,
   ISend,
   ISendManyOptions,
@@ -242,11 +243,11 @@ export class Wallet {
     const addressDeltas: IAddressDelta[] = deltas as IAddressDelta[];
     return addressDeltas;
   }
-  async getMempool(): Promise<IAddressDelta[]> {
+  async getMempool(): Promise<IMempoolEntry[]> {
     const method = methods.getaddressmempool;
     const includeAssets = true;
     const params = [{ addresses: this.getAddresses() }, includeAssets];
-    return this.rpc(method, params) as Promise<IAddressDelta[]>;
+    return this.rpc(method, params) as Promise<IMempoolEntry[]>;
   }
   async getReceiveAddress() {
     const isExternal = true;
@@ -402,6 +403,7 @@ export class Wallet {
           rvnAmount: transaction.getBaseCurrencyAmount(),
           signedTransaction: signed,
           UTXOs: transaction.getUTXOs(),
+          walletMempool: transaction.getWalletMempool(),
         },
       };
       return sendResult;
@@ -479,6 +481,7 @@ export class Wallet {
           rvnAmount: transaction.getBaseCurrencyAmount(),
           signedTransaction: signed,
           UTXOs: transaction.getUTXOs(),
+          walletMempool: transaction.getWalletMempool(),
         },
       };
       return sendResult;
@@ -500,7 +503,7 @@ export class Wallet {
 
 export default {
   createInstance,
-  getBaseCurrencyByNetwork
+  getBaseCurrencyByNetwork,
 };
 export async function createInstance(options: IOptions): Promise<Wallet> {
   const wallet = new Wallet();
