@@ -1,36 +1,14 @@
 const RavencoinWallet = require("../../dist/index.cjs");
-
+const walletPromise = require("./getWalletPromise");
 jest.setTimeout(20 * 1000);
 
-//Account "Crazy Cat" on https://testnet.ting.finance/
+//This mnemonic should be empty and super fast
 const mnemonic =
-  "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
+"caught actress master salt kingdom february spot brief barrel apart rely common";
 
-const walletPromise = RavencoinWallet.createInstance({
-  mnemonic,
-  network: "rvn-test",
-});
-
-test("Test UTXOs for assets and base currency", async () => {
-  const wallet = await walletPromise;
-
-  const UTXOs = await wallet.getUTXOs();
-  expect(UTXOs.length).toBeGreaterThanOrEqual(1);
-  const assetUTXOs = await wallet.getAssetUTXOs();
-  expect(assetUTXOs.length).toBeGreaterThanOrEqual(1);
-});
-
-test("getBaseCurrencyByNetwork", async () => {
-  expect(RavencoinWallet.getBaseCurrencyByNetwork("evr")).toBe("EVR");
-  expect(RavencoinWallet.getBaseCurrencyByNetwork("evr-test")).toBe("EVR");
-
-  expect(RavencoinWallet.getBaseCurrencyByNetwork("rvn")).toBe("RVN");
-  expect(RavencoinWallet.getBaseCurrencyByNetwork("rvn-test")).toBe("RVN");
-});
 
 test("Network rvn should give base currency RVN", async () => {
-  const mnemonic =
-    "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
+
 
   const network = "rvn";
   const wallet = await RavencoinWallet.createInstance({

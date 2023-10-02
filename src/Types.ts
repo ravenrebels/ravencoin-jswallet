@@ -229,3 +229,14 @@ export interface ISendOptions {
   toAddress: string;
   wallet: Wallet;
 }
+
+export interface IOptions {
+  mnemonic: string;
+  minAmountOfAddresses?: number;
+  network?: ChainType;
+  rpc_username?: string;
+  rpc_password?: string;
+  rpc_url?: string;
+
+  offlineMode?: boolean;
+}

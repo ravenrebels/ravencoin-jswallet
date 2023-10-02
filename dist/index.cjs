@@ -15,13 +15,9 @@ function $parcel$export(e, n, v, s) {
 $parcel$defineInteropFlag(module.exports);
 
 $parcel$export(module.exports, "Wallet", () => $bf36305bcbc0cb23$export$bcca3ea514774656);
-$parcel$export(module.exports, "getBaseCurrencyByNetwork", () => $bf36305bcbc0cb23$export$af0c167f1aa2328f);
 $parcel$export(module.exports, "default", () => $bf36305bcbc0cb23$export$2e2bcd8739ae039);
 $parcel$export(module.exports, "createInstance", () => $bf36305bcbc0cb23$export$99152e8d49ca4e7d);
 
-
-
-const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
 
 
 
@@ -47,7 +43,7 @@ class $e16394a5869d8429$export$b276096bbba16879 extends Error {
 
 
 class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
-    constructor({ wallet: wallet , outputs: outputs , assetName: assetName  }){
+    constructor({ wallet: wallet, outputs: outputs, assetName: assetName }){
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
         ;
         this.assetName = !assetName ? wallet.baseCurrency : assetName;
@@ -354,7 +350,7 @@ async function $fdd8716063277f2b$export$322a62cff28f560a(WIF, wallet, onlineMode
 
 
 class $0757bc65e326b272$export$febc5573c75cefb0 {
-    constructor({ wallet: wallet , toAddress: toAddress , amount: amount , assetName: assetName  }){
+    constructor({ wallet: wallet, toAddress: toAddress, amount: amount, assetName: assetName }){
         const options = {
             assetName: assetName,
             wallet: wallet,
@@ -407,6 +403,53 @@ class $0757bc65e326b272$export$febc5573c75cefb0 {
 
 
 
+function $e42f6e77e719937d$export$af0c167f1aa2328f(network) {
+    const map = {
+        evr: "EVR",
+        "evr-test": "EVR",
+        rvn: "RVN",
+        "rvn-test": "RVN"
+    };
+    return map[network];
+}
+
+
+
+const $de29b860155088a6$export$ffff6aea08fd9487 = 1e8;
+
+
+async function $9b3ed6549b57daad$export$df96cd8d56be0ab1(wallet, addresses) {
+    const includeAssets = false;
+    const params = [
+        {
+            addresses: addresses
+        },
+        includeAssets
+    ];
+    const balance = await wallet.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
+    return balance.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
+}
+
+
+
+
+async function $e47617f9093ded67$export$ab187dba3e955af9(wallet, addresses) {
+    const includeAssets = true;
+    const params = [
+        {
+            addresses: addresses
+        },
+        includeAssets
+    ];
+    const balance = await wallet.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
+    //Remove baseCurrency
+    const result = balance.filter((obj)=>{
+        return obj.assetName !== this.baseCurrency;
+    });
+    return result;
+}
+
+
 const $bf36305bcbc0cb23$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const $bf36305bcbc0cb23$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 class $bf36305bcbc0cb23$export$bcca3ea514774656 {
@@ -450,7 +493,7 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         username = options.rpc_username || url;
         if (options.network) {
             this.network = options.network;
-            this.setBaseCurrency($bf36305bcbc0cb23$export$af0c167f1aa2328f(options.network));
+            this.setBaseCurrency((0, $e42f6e77e719937d$export$af0c167f1aa2328f)(options.network));
         }
         if (options.network === "rvn-test" && !options.rpc_url) url = $bf36305bcbc0cb23$var$URL_TESTNET;
         this.rpc = (0, $4aiOY$ravenrebelsravencoinrpc.getRPC)(username, password, url);
@@ -459,23 +502,7 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         const hdKey = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinkey))).getHDKey(this.network, this._mnemonic);
         const coinType = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinkey))).getCoinType(this.network);
         const ACCOUNT = 0;
-        //DERIVE ADDRESSES BIP44, external 20 unused (that is no history, not no balance)
-        /*
-    if (options.minAmountOfAddresses) {
-      for (let i = 0; i < options.minAmountOfAddresses; i++) {
-        const o = RavencoinKey.getAddressPair(
-          this.network,
-          this._mnemonic,
-          ACCOUNT,
-          this.addressPosition
-        );
-        this.addressObjects.push(o.external);
-        this.addressObjects.push(o.internal);
-        this.addressPosition++;
-      }
-    }
-
-    */ const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses) ? options.minAmountOfAddresses : 0;
+        const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses) ? options.minAmountOfAddresses : 0;
         let doneDerivingAddresses = false;
         while(doneDerivingAddresses === false){
             //We add new addresses to tempAddresses so we can check history for the last 20
@@ -555,34 +582,7 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         if (external === true) this.receiveAddress = result;
         else this.changeAddress = result;
         return result;
-    /*
-    //even addresses are external, odd address are internal/changes
-    for (let counter = 0; counter < addresses.length; counter++) {
-      //Internal addresses should be even numbers
-      if (external && counter % 2 !== 0) {
-        continue;
-      }
-      //Internal addresses should be odd numbers
-      if (external === false && counter % 2 === 0) {
-        continue;
-      }
-      const address = addresses[counter];
-
-      //If an address has tenth of thousands of transactions, getHistory will throw an exception
-
-      const hasHistory = await this.hasHistory([address]);
-
-      if (hasHistory === false) {
-        if (external === true) {
-          this.receiveAddress = address;
-        }
-        if (external === false) {
-          this.changeAddress = address;
-        }
-        return address;
-      }
     }
-*/ }
     async getHistory() {
         const assetName = ""; //Must be empty string, NOT "*"
         const addresses = this.getAddresses();
@@ -644,6 +644,11 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         if (!f) return undefined;
         return f.WIF;
     }
+    async sendRawTransaction(raw) {
+        return this.rpc("sendrawtransaction", [
+            raw
+        ]);
+    }
     async send(options) {
         //ACTUAL SENDING TRANSACTION
         //Important, do not swallow the exceptions/errors of createTransaction, let them fly
@@ -658,29 +663,34 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
             throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
         }
     }
-    async sendRawTransaction(raw) {
-        return this.rpc("sendrawtransaction", [
-            raw
-        ]);
-    }
-    async sendMany({ outputs: outputs , assetName: assetName  }) {
+    async sendMany({ outputs: outputs, assetName: assetName }) {
         const options = {
             wallet: this,
             outputs: outputs,
             assetName: assetName
         };
-        const sendManyTransaction = new (0, $95d3c5cb954e3eff$export$a0aa368c31ae6e6c)(options);
-        return sendManyTransaction;
+        const sendResult = await this.createSendManyTransaction(options);
+        //ACTUAL SENDING TRANSACTION
+        //Important, do not swallow the exceptions/errors of createSendManyTransaction, let them fly
+        try {
+            const id = await this.rpc("sendrawtransaction", [
+                sendResult.debug.signedTransaction
+            ]);
+            sendResult.transactionId = id;
+            return sendResult;
+        } catch (e) {
+            throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
+        }
     }
     /**
-   * Does all the heavy lifting regarding creating a transaction
+   * Does all the heavy lifting regarding creating a SendManyTransaction
    * but it does not broadcast the actual transaction.
    * Perhaps the user wants to accept the transaction fee?
    * @param options
    * @returns An transaction that has not been broadcasted
    */ async createTransaction(options) {
-        const { amount: amount , toAddress: toAddress  } = options;
-        let { assetName: assetName  } = options;
+        const { amount: amount, toAddress: toAddress } = options;
+        let { assetName: assetName } = options;
         if (!assetName) assetName = this.baseCurrency;
         //Validation
         if (!toAddress) throw Error("Wallet.send toAddress is mandatory");
@@ -726,31 +736,63 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
             throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
         }
     }
-    async getAssets() {
-        const includeAssets = true;
-        const params = [
-            {
-                addresses: this.getAddresses()
-            },
-            includeAssets
-        ];
-        const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
-        //Remove baseCurrency
-        const result = balance.filter((obj)=>{
-            return obj.assetName !== this.baseCurrency;
+    /**
+   * Does all the heavy lifting regarding creating a transaction
+   * but it does not broadcast the actual transaction.
+   * Perhaps the user wants to accept the transaction fee?
+   * @param options
+   * @returns An transaction that has not been broadcasted
+   */ async createSendManyTransaction(options) {
+        let { assetName: assetName } = options;
+        if (!assetName) assetName = this.baseCurrency;
+        //Validation
+        if (!options.outputs) throw Error("Wallet.createSendManyTransaction outputs is mandatory");
+        else if (Object.keys(options.outputs).length === 0) throw new (0, $e16394a5869d8429$export$2191b9da168c6cf0)("outputs is mandatory, shoud be an object with address as keys and amounts (numbers) as values");
+        const changeAddress = await this.getChangeAddress();
+        const toAddresses = Object.keys(options.outputs);
+        if (toAddresses.includes(changeAddress)) throw new Error("You cannot send to your current change address");
+        const transaction = new (0, $95d3c5cb954e3eff$export$a0aa368c31ae6e6c)({
+            assetName: assetName,
+            outputs: options.outputs,
+            wallet: this
         });
-        return result;
+        await transaction.loadData();
+        const inputs = transaction.getInputs();
+        const outputs = await transaction.getOutputs();
+        const privateKeys = transaction.getPrivateKeys();
+        const raw = await this.rpc("createrawtransaction", [
+            inputs,
+            outputs
+        ]);
+        const signed = (0, ($parcel$interopDefault($4aiOY$ravenrebelsravencoinsigntransaction))).sign(this.network, raw, transaction.getUTXOs(), privateKeys);
+        try {
+            const sendResult = {
+                transactionId: null,
+                debug: {
+                    amount: transaction.getAmount(),
+                    assetName: assetName,
+                    fee: transaction.getFee(),
+                    inputs: inputs,
+                    outputs: outputs,
+                    privateKeys: privateKeys,
+                    rawUnsignedTransaction: raw,
+                    rvnChangeAmount: transaction.getBaseCurrencyChange(),
+                    rvnAmount: transaction.getBaseCurrencyAmount(),
+                    signedTransaction: signed,
+                    UTXOs: transaction.getUTXOs()
+                }
+            };
+            return sendResult;
+        } catch (e) {
+            throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
+        }
+    }
+    async getAssets() {
+        return (0, $e47617f9093ded67$export$ab187dba3e955af9)(this, this.getAddresses());
     }
     async getBalance() {
-        const includeAssets = false;
-        const params = [
-            {
-                addresses: this.getAddresses()
-            },
-            includeAssets
-        ];
-        const balance = await this.rpc((0, $4aiOY$ravenrebelsravencoinrpc.methods).getaddressbalance, params);
-        return balance.balance / (0, $de29b860155088a6$export$ffff6aea08fd9487);
+        const a = this.getAddresses();
+        return (0, $9b3ed6549b57daad$export$df96cd8d56be0ab1)(this, a);
     }
     constructor(){
         this.rpc = (0, $4aiOY$ravenrebelsravencoinrpc.getRPC)("anonymous", "anonymous", $bf36305bcbc0cb23$var$URL_MAINNET);
@@ -766,21 +808,13 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
     }
 }
 var $bf36305bcbc0cb23$export$2e2bcd8739ae039 = {
-    createInstance: $bf36305bcbc0cb23$export$99152e8d49ca4e7d
+    createInstance: $bf36305bcbc0cb23$export$99152e8d49ca4e7d,
+    getBaseCurrencyByNetwork: $e42f6e77e719937d$export$af0c167f1aa2328f
 };
 async function $bf36305bcbc0cb23$export$99152e8d49ca4e7d(options) {
     const wallet = new $bf36305bcbc0cb23$export$bcca3ea514774656();
     await wallet.init(options);
     return wallet;
-}
-function $bf36305bcbc0cb23$export$af0c167f1aa2328f(network) {
-    const map = {
-        evr: "EVR",
-        "evr-test": "EVR",
-        rvn: "RVN",
-        "rvn-test": "RVN"
-    };
-    return map[network];
 }
 
 
