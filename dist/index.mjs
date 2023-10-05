@@ -57,18 +57,7 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         const assetUTXOs = await assetUTXOsPromise;
         const baseCurrencyUTXOs = await baseCurencyUTXOsPromise;
         this.feerate = await feeRatePromise;
-        const mempoolUTXOs = $c7db79d953d79f02$var$getSpendableMempool(this.walletMempool);
-        //Decorate mempool UTXOs with script attribute
-        for (let u of mempoolUTXOs){
-            if (u.script) continue;
-            //Mempool items might not have the script attbribute, we need it
-            const utxo = await this.wallet.rpc("gettxout", [
-                u.txid,
-                u.index,
-                true
-            ]);
-            if (utxo) u.script = utxo.scriptPubKey.hex;
-        }
+        const mempoolUTXOs = await this.wallet.getUTXOsInMempool(this.walletMempool);
         const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
         //Remove UTXOs that are mined less than 100 blocks ago
         const blockCount = await this.wallet.rpc("getblockcount", []);
@@ -229,33 +218,6 @@ function $c7db79d953d79f02$var$getEnoughUTXOs(utxos, asset, amount) {
         throw error;
     }
     return result;
-}
-function $c7db79d953d79f02$var$getSpendableMempool(mempool) {
-    /*
-interface IUTXO {
-   address: string;
-   assetName: string;
-   txid: string;
-   outputIndex: number;
-   script: string;
-   satoshis: number;
-   height: number;
-   value: number;
-}
-*/ const mySet = new Set();
-    for (let item of mempool){
-        if (!item.prevtxid) continue;
-        const value = item.prevtxid + "_" + item.prevout;
-        mySet.add(value);
-    }
-    const spendable = mempool.filter((item)=>{
-        if (item.satoshis < 0) return false;
-        const value = item.txid + "_" + item.index;
-        return mySet.has(value) === false;
-    });
-    //UTXO object need to have an outputIndex property, not index
-    spendable.map((s)=>s.outputIndex = s.index);
-    return spendable;
 }
 
 
@@ -457,7 +419,7 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
     }
     /**
    * Sweeping a private key means to send all the funds the address holds to your your wallet.
-   * The private key you sweep do not become a part of your wallet.
+   * The private key you sweep does not become a part of your wallet.
    *
    * NOTE: the address you sweep needs to cointain enough RVN to pay for the transaction
    *
@@ -791,6 +753,42 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
     async getBalance() {
         const a = this.getAddresses();
         return (0, $2767f256fef0b24e$export$df96cd8d56be0ab1)(this, a);
+    }
+    async convertMempoolEntryToUTXO(mempoolEntry) {
+        console.log("New convert mempool entry to UTXO");
+        //Mempool items might not have the script attbribute, we need it
+        const out = await this.rpc("gettxout", [
+            mempoolEntry.txid,
+            mempoolEntry.index,
+            true
+        ]);
+        const utxo = {
+            ...mempoolEntry,
+            script: out.scriptPubKey.hex,
+            outputIndex: mempoolEntry.index,
+            value: mempoolEntry.satoshis / 1e8
+        };
+        return utxo;
+    }
+    async getUTXOsInMempool(mempool) {
+        const mySet = new Set();
+        for (let item of mempool){
+            if (!item.prevtxid) continue;
+            const value = item.prevtxid + "_" + item.prevout;
+            mySet.add(value);
+        }
+        const spendable = mempool.filter((item)=>{
+            if (item.satoshis < 0) return false;
+            const value = item.txid + "_" + item.index;
+            return mySet.has(value) === false;
+        });
+        const utxos = [];
+        for (let s of spendable){
+            console.log("Calling convert mempool entry to UTXO for", s);
+            const u = await this.convertMempoolEntryToUTXO(s);
+            utxos.push(u);
+        }
+        return utxos;
     }
     constructor(){
         this.rpc = (0, $93qLg$getRPC)("anonymous", "anonymous", $c3676b79c37149df$var$URL_MAINNET);

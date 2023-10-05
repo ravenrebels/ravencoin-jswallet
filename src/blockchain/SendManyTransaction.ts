@@ -45,19 +45,9 @@ export class SendManyTransaction {
     const baseCurrencyUTXOs = await baseCurencyUTXOsPromise;
     this.feerate = await feeRatePromise;
 
-    const mempoolUTXOs = getSpendableMempool(this.walletMempool);
-
-    //Decorate mempool UTXOs with script attribute
-    for (let u of mempoolUTXOs) {
-      if (u.script) {
-        continue;
-      }
-      //Mempool items might not have the script attbribute, we need it
-      const utxo = await this.wallet.rpc("gettxout", [u.txid, u.index, true]);
-      if (utxo) {
-        u.script = utxo.scriptPubKey.hex;
-      }
-    }
+    const mempoolUTXOs = await this.wallet.getUTXOsInMempool(
+      this.walletMempool
+    );
 
     const _allUTXOsTemp = assetUTXOs
       .concat(baseCurrencyUTXOs)
@@ -69,7 +59,6 @@ export class SendManyTransaction {
     //Filter out UTXOs that are NOT in mempool
     const allUTXOs = _allUTXOsTemp.filter((utxo) => {
       const objInMempool = this.walletMempool.find((mempoolEntry) => {
-     
         return mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.txid;
       });
 
@@ -310,45 +299,7 @@ function getEnoughUTXOs(
     const error = new InsufficientFundsError(
       "You do not have " + amount + " " + asset + " you only have " + sum
     );
-
     throw error;
   }
   return result;
-}
-
-function getSpendableMempool(mempool) {
-  /*
-interface IUTXO {
-   address: string;
-   assetName: string;
-   txid: string;
-   outputIndex: number;
-   script: string;
-   satoshis: number;
-   height: number;
-   value: number;
-}
-*/
-
-  const mySet = new Set();
-
-  for (let item of mempool) {
-    if (!item.prevtxid) {
-      continue;
-    }
-    const value = item.prevtxid + "_" + item.prevout;
-    mySet.add(value);
-  }
-
-  const spendable = mempool.filter((item) => {
-    if (item.satoshis < 0) {
-      return false;
-    }
-    const value = item.txid + "_" + item.index;
-    return mySet.has(value) === false;
-  });
-
-  //UTXO object need to have an outputIndex property, not index
-  spendable.map((s) => (s.outputIndex = s.index));
-  return spendable;
 }

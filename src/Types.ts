@@ -174,8 +174,7 @@ export interface IValidateAddressResponse {
 export interface IUTXO {
   address: string;
   assetName: string;
-  height: number;
-  id: string;
+  height?: number;
   outputIndex: number;
   script: string;
   satoshis: number;
@@ -219,15 +218,7 @@ export interface IAddressMetaData {
   path: string;
   privateKey: string;
 }
-export interface IUTXO {
-  address: string;
-  assetName: string;
-  txid: string;
-  outputIndex: number;
-  script: string;
-  satoshis: number;
-  height: number;
-}
+
 export interface ITransactionOptions {
   amount: number;
   assetName: string;

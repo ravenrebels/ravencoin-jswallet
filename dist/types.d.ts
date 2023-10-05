@@ -59,8 +59,7 @@ interface IVout_when_creating_transactions {
 interface IUTXO {
     address: string;
     assetName: string;
-    height: number;
-    id: string;
+    height?: number;
     outputIndex: number;
     script: string;
     satoshis: number;
@@ -83,15 +82,6 @@ interface IAddressMetaData {
     WIF: string;
     path: string;
     privateKey: string;
-}
-interface IUTXO {
-    address: string;
-    assetName: string;
-    txid: string;
-    outputIndex: number;
-    script: string;
-    satoshis: number;
-    height: number;
 }
 interface IOptions {
     mnemonic: string;
@@ -127,7 +117,7 @@ export class Wallet {
     getBaseCurrency(): string;
     /**
      * Sweeping a private key means to send all the funds the address holds to your your wallet.
-     * The private key you sweep do not become a part of your wallet.
+     * The private key you sweep does not become a part of your wallet.
      *
      * NOTE: the address you sweep needs to cointain enough RVN to pay for the transaction
      *
@@ -178,6 +168,8 @@ export class Wallet {
     }): Promise<ISendResult>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
+    convertMempoolEntryToUTXO(mempoolEntry: IMempoolEntry): Promise<IUTXO>;
+    getUTXOsInMempool(mempool: IMempoolEntry[]): Promise<IUTXO[]>;
 }
 declare const _default: {
     createInstance: typeof createInstance;

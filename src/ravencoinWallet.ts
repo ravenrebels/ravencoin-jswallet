@@ -46,7 +46,7 @@ export class Wallet {
   }
   /**
    * Sweeping a private key means to send all the funds the address holds to your your wallet.
-   * The private key you sweep do not become a part of your wallet.
+   * The private key you sweep does not become a part of your wallet.
    *
    * NOTE: the address you sweep needs to cointain enough RVN to pay for the transaction
    *
@@ -498,6 +498,53 @@ export class Wallet {
   async getBalance() {
     const a = this.getAddresses();
     return getBalance(this, a);
+  }
+  async convertMempoolEntryToUTXO(mempoolEntry: IMempoolEntry): Promise<IUTXO> {
+    console.log("New convert mempool entry to UTXO");
+
+    //Mempool items might not have the script attbribute, we need it
+    const out = await this.rpc("gettxout", [
+      mempoolEntry.txid,
+      mempoolEntry.index,
+      true,
+    ]);
+
+    const utxo = {
+      ...mempoolEntry,
+      script: out.scriptPubKey.hex,
+      outputIndex: mempoolEntry.index,
+      value: mempoolEntry.satoshis / 1e8,
+    };
+    return utxo;
+  }
+
+  async getUTXOsInMempool(mempool: IMempoolEntry[]) {
+    const mySet = new Set();
+
+    for (let item of mempool) {
+      if (!item.prevtxid) {
+        continue;
+      }
+      const value = item.prevtxid + "_" + item.prevout;
+      mySet.add(value);
+    }
+
+    const spendable = mempool.filter((item) => {
+      if (item.satoshis < 0) {
+        return false;
+      }
+      const value = item.txid + "_" + item.index;
+      return mySet.has(value) === false;
+    });
+
+    const utxos: IUTXO[] = [];
+
+    for (let s of spendable) {
+      console.log("Calling convert mempool entry to UTXO for", s);
+      const u = await this.convertMempoolEntryToUTXO(s);
+      utxos.push(u);
+    }
+    return utxos;
   }
 }
 
