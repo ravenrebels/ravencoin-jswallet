@@ -770,7 +770,6 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         return (0, $9b3ed6549b57daad$export$df96cd8d56be0ab1)(this, a);
     }
     async convertMempoolEntryToUTXO(mempoolEntry) {
-        console.log("New convert mempool entry to UTXO");
         //Mempool items might not have the script attbribute, we need it
         const out = await this.rpc("gettxout", [
             mempoolEntry.txid,
@@ -786,8 +785,11 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         return utxo;
     }
     async getUTXOsInMempool(mempool) {
+        //If no mempool argument, fetch mempool
+        let _mempool = mempool;
+        if (!_mempool) _mempool = await this.getMempool();
         const mySet = new Set();
-        for (let item of mempool){
+        for (let item of _mempool){
             if (!item.prevtxid) continue;
             const value = item.prevtxid + "_" + item.prevout;
             mySet.add(value);
@@ -799,7 +801,6 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
         });
         const utxos = [];
         for (let s of spendable){
-            console.log("Calling convert mempool entry to UTXO for", s);
             const u = await this.convertMempoolEntryToUTXO(s);
             utxos.push(u);
         }

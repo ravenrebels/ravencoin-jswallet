@@ -500,8 +500,6 @@ export class Wallet {
     return getBalance(this, a);
   }
   async convertMempoolEntryToUTXO(mempoolEntry: IMempoolEntry): Promise<IUTXO> {
-    console.log("New convert mempool entry to UTXO");
-
     //Mempool items might not have the script attbribute, we need it
     const out = await this.rpc("gettxout", [
       mempoolEntry.txid,
@@ -519,9 +517,14 @@ export class Wallet {
   }
 
   async getUTXOsInMempool(mempool: IMempoolEntry[]) {
+    //If no mempool argument, fetch mempool
+    let _mempool = mempool;
+    if (!_mempool) {
+      _mempool = await this.getMempool();
+    }
     const mySet = new Set();
 
-    for (let item of mempool) {
+    for (let item of _mempool) {
       if (!item.prevtxid) {
         continue;
       }
@@ -540,7 +543,6 @@ export class Wallet {
     const utxos: IUTXO[] = [];
 
     for (let s of spendable) {
-      console.log("Calling convert mempool entry to UTXO for", s);
       const u = await this.convertMempoolEntryToUTXO(s);
       utxos.push(u);
     }
