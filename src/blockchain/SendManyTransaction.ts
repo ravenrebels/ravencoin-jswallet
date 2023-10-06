@@ -53,13 +53,17 @@ export class SendManyTransaction {
       .concat(baseCurrencyUTXOs)
       .concat(mempoolUTXOs);
 
-    //Remove UTXOs that are mined less than 100 blocks ago
-    const blockCount = await this.wallet.rpc("getblockcount", []);
-
     //Filter out UTXOs that are NOT in mempool
     const allUTXOs = _allUTXOsTemp.filter((utxo) => {
       const objInMempool = this.walletMempool.find((mempoolEntry) => {
-        return mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.txid;
+        if (mempoolEntry.prevtxid) {
+          const result =
+            mempoolEntry.prevtxid === utxo.txid &&
+            mempoolEntry.prevout === utxo.outputIndex;
+
+          return result;
+        }
+        return false;
       });
 
       return !objInMempool;
@@ -67,6 +71,7 @@ export class SendManyTransaction {
 
     //Sort utxos lowest first
     allUTXOs.sort(sortBySatoshis);
+
     this._allUTXOs = allUTXOs;
   }
   getAmount() {

@@ -74,17 +74,25 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         this.feerate = await feeRatePromise;
         const mempoolUTXOs = await this.wallet.getUTXOsInMempool(this.walletMempool);
         const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
-        //Remove UTXOs that are mined less than 100 blocks ago
-        const blockCount = await this.wallet.rpc("getblockcount", []);
         //Filter out UTXOs that are NOT in mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
             const objInMempool = this.walletMempool.find((mempoolEntry)=>{
-                return mempoolEntry.prevtxid && mempoolEntry.prevtxid === utxo.txid;
+                if (mempoolEntry.prevtxid) {
+                    const result = mempoolEntry.prevtxid === utxo.txid && mempoolEntry.prevout === utxo.outputIndex;
+                    return result;
+                }
+                return false;
             });
             return !objInMempool;
         });
         //Sort utxos lowest first
         allUTXOs.sort($95d3c5cb954e3eff$var$sortBySatoshis);
+        let sum = 0;
+        allUTXOs.map((u)=>{
+            if (u.assetName !== "RVN") return;
+            sum += u.satoshis / 1e8;
+        });
+        console.log("TRANSACTION, available RVN", sum);
         this._allUTXOs = allUTXOs;
     }
     getAmount() {
