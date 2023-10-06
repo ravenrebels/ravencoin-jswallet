@@ -87,12 +87,6 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         });
         //Sort utxos lowest first
         allUTXOs.sort($95d3c5cb954e3eff$var$sortBySatoshis);
-        let sum = 0;
-        allUTXOs.map((u)=>{
-            if (u.assetName !== "RVN") return;
-            sum += u.satoshis / 1e8;
-        });
-        console.log("TRANSACTION, available RVN", sum);
         this._allUTXOs = allUTXOs;
     }
     getAmount() {
