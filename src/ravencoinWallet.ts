@@ -552,7 +552,6 @@ export class Wallet {
       _mempool = m;
     }
     const mySet = new Set();
-
     for (let item of _mempool) {
       if (!item.prevtxid) {
         continue;
