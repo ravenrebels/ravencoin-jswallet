@@ -20,6 +20,15 @@ interface ISendManyOptions {
         [key: string]: number;
     };
 }
+interface ISendManyTransactionOptions {
+    assetName?: string;
+    outputs: {
+        [key: string]: number;
+    };
+    wallet: Wallet;
+    forcedUTXOs?: IForcedUTXO[];
+    forcedChangeAddressAssets?: string;
+}
 interface SweepResult {
     errorDescription?: string;
     fromAddress?: string;
@@ -65,6 +74,7 @@ interface IUTXO {
     satoshis: number;
     txid: string;
     value: number;
+    forced?: boolean;
 }
 interface IAddressMetaData {
     address: string;
@@ -82,6 +92,12 @@ interface IAddressMetaData {
     WIF: string;
     path: string;
     privateKey: string;
+}
+interface ITransactionOptions {
+    amount: number;
+    assetName: string;
+    toAddress: string;
+    wallet: Wallet;
 }
 interface IOptions {
     mnemonic: string;
@@ -101,6 +117,57 @@ interface IMempoolEntry {
     timestamp: number;
     prevtxid: string;
     prevout: number;
+}
+interface IForcedUTXO {
+    utxo: IUTXO;
+    privateKey: string;
+    address: string;
+}
+export class SendManyTransaction {
+    _allUTXOs: IUTXO[];
+    feerate: number;
+    constructor(options: ISendManyTransactionOptions);
+    getWalletMempool(): IMempoolEntry[];
+    getSizeInKB(): number;
+    loadData(): Promise<void>;
+    getAmount(): number;
+    getUTXOs(): IUTXO[];
+    predictUTXOs(): IUTXO[];
+    getBaseCurrencyAmount(): number;
+    getBaseCurrencyChange(): number;
+    getAssetChange(): number;
+    isAssetTransfer(): boolean;
+    getOutputs(): Promise<{}>;
+    _getChangeAddressAssets(): Promise<string>;
+    getInputs(): {
+        address: string;
+        txid: string;
+        vout: number;
+    }[];
+    getPrivateKeys(): {};
+    getFee(): number;
+    getFeeRate(): Promise<any>;
+}
+export class Transaction {
+    constructor({ wallet, toAddress, amount, assetName }: ITransactionOptions);
+    getWalletMempool(): import("Types").IMempoolEntry[];
+    getSizeInKB(): number;
+    loadData(): Promise<void>;
+    getUTXOs(): import("Types").IUTXO[];
+    predictUTXOs(): import("Types").IUTXO[];
+    getBaseCurrencyAmount(): number;
+    getBaseCurrencyChange(): number;
+    getAssetChange(): number;
+    isAssetTransfer(): boolean;
+    getOutputs(): Promise<{}>;
+    getInputs(): {
+        address: string;
+        txid: string;
+        vout: number;
+    }[];
+    getPrivateKeys(): {};
+    getFee(): number;
+    getFeeRate(): Promise<any>;
 }
 declare function getBaseCurrencyByNetwork(network: ChainType): string;
 export class Wallet {
@@ -166,9 +233,24 @@ export class Wallet {
             [key: string]: number;
         };
     }): Promise<ISendResult>;
+    /**
+     * This method checks if an UTXO is being spent in the mempool.
+     * rpc getaddressutxos will list available UTXOs on the chain.
+     * BUT an UTXO can be being spent by a transaction in mempool.
+     *
+     * @param utxo
+     * @returns boolean true if utxo is being spent in mempool, false if not
+     */
+    isSpentInMempool(utxo: IUTXO): Promise<boolean>;
     getAssets(): Promise<any>;
     getBalance(): Promise<number>;
     convertMempoolEntryToUTXO(mempoolEntry: IMempoolEntry): Promise<IUTXO>;
+    /**
+     * Get list of spendable UTXOs in mempool.
+     * Note: a UTXO in mempool can already be "being spent"
+     * @param mempool (optional)
+     * @returns list of UTXOs in mempool ready to spend
+     */
     getUTXOsInMempool(mempool: IMempoolEntry[]): Promise<IUTXO[]>;
 }
 declare const _default: {

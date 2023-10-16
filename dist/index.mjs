@@ -28,13 +28,22 @@ class $df4abebf0c223404$export$b276096bbba16879 extends Error {
 
 
 class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
-    constructor({ wallet: wallet, outputs: outputs, assetName: assetName }){
+    constructor(options){
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
         ;
         this.walletMempool = [];
+        this.forcedUTXOs = [];
+        this.forcedChangeAddressAssets = "";
+        const { wallet: wallet, outputs: outputs, assetName: assetName } = options;
         this.assetName = !assetName ? wallet.baseCurrency : assetName;
         this.wallet = wallet;
         this.outputs = outputs;
+        this.forcedChangeAddressAssets = options.forcedChangeAddressAssets;
+        //Tag forced UTXOs with the "force" flag
+        if (options.forcedUTXOs) {
+            options.forcedUTXOs.map((f)=>f.utxo.forced = true);
+            this.forcedUTXOs = options.forcedUTXOs;
+        }
     }
     getWalletMempool() {
         return this.walletMempool;
@@ -59,6 +68,8 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         this.feerate = await feeRatePromise;
         const mempoolUTXOs = await this.wallet.getUTXOsInMempool(this.walletMempool);
         const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
+        //add forced UTXO to the beginning of the array
+        if (this.forcedUTXOs) for (let f of this.forcedUTXOs)_allUTXOsTemp.unshift(f.utxo);
         //Filter out UTXOs that are NOT in mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
             const objInMempool = this.walletMempool.find((mempoolEntry)=>{
@@ -71,8 +82,7 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
             return !objInMempool;
         });
         //Sort utxos lowest first
-        allUTXOs.sort($c7db79d953d79f02$var$sortBySatoshis);
-        this._allUTXOs = allUTXOs;
+        this._allUTXOs = allUTXOs.sort($c7db79d953d79f02$var$sortBySatoshis);
     }
     getAmount() {
         let total = 0;
@@ -81,17 +91,28 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         return total;
     }
     getUTXOs() {
+        //NOTE, if we have FORCED utxos, they have to be inclued no matter what
+        let result = [];
         if (this.isAssetTransfer() === true) {
             const assetAmount = this.getAmount();
             const baseCurrencyAmount = this.getBaseCurrencyAmount();
             const baseCurrencyUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, baseCurrencyAmount);
             const assetUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, assetAmount);
-            return assetUTXOs.concat(baseCurrencyUTXOs);
-        } else return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+            result = assetUTXOs.concat(baseCurrencyUTXOs);
+        } else result = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
+        //Make sure every forced UTXO is part of the list of UTXOs
+        for (let forced of this.forcedUTXOs){
+            const isUTXOBeingUsed = result.find((utxo)=>utxo.txid === forced.utxo.txid && utxo.outputIndex === forced.utxo.outputIndex);
+            if (!isUTXOBeingUsed) result.unshift(forced.utxo);
+        }
+        return result;
     }
     predictUTXOs() {
-        if (this.isAssetTransfer()) return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
-        return $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getAmount());
+        let utxos = [];
+        if (this.isAssetTransfer()) utxos = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
+        else utxos = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getAmount());
+        for (let forced of this.forcedUTXOs)utxos.push(forced.utxo);
+        return utxos;
     }
     getBaseCurrencyAmount() {
         const fee = this.getFee();
@@ -129,8 +150,7 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
             const toAddresses = Object.keys(this.outputs);
             if (toAddresses.includes(changeAddressBaseCurrency) === true) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as to address");
             totalOutputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
-            const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
-            const changeAddressAsset = this.wallet.getAddresses()[index + 2];
+            const changeAddressAsset = await this._getChangeAddressAssets();
             //Validate change address can never be the same as toAddress
             if (toAddresses.includes(changeAddressAsset) === true) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as to address");
             if (this.getAssetChange() > 0) totalOutputs[changeAddressAsset] = {
@@ -156,6 +176,13 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         }
         return totalOutputs;
     }
+    async _getChangeAddressAssets() {
+        if (this.forcedChangeAddressAssets) return this.forcedChangeAddressAssets;
+        const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
+        const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
+        const changeAddressAsset = this.wallet.getAddresses()[index + 2];
+        return changeAddressAsset;
+    }
     getInputs() {
         return this.getUTXOs().map((obj)=>{
             return {
@@ -173,6 +200,8 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
             const addressObject = addressObjects.find((obj)=>obj.address === u.address);
             if (addressObject) privateKeys[u.address] = addressObject.WIF;
         }
+        //Add privatekeys from forcedUTXOs
+        this.forcedUTXOs.map((f)=>privateKeys[f.address] = f.privateKey);
         return privateKeys;
     }
     getFee() {
@@ -206,6 +235,17 @@ function $c7db79d953d79f02$var$sortBySatoshis(u1, u2) {
 function $c7db79d953d79f02$var$getEnoughUTXOs(utxos, asset, amount) {
     const result = [];
     let sum = 0;
+    //First off, add mandatory/forced UTXO, no matter what
+    if (!utxos) throw Error("getEnoughUTXOs cannot be called without utxos");
+    for (let u of utxos){
+        if (u.forced === true) {
+            if (u.assetName === asset) {
+                const value = u.satoshis / 1e8;
+                result.push(u);
+                sum = sum + value;
+            }
+        }
+    }
     for (let u of utxos){
         if (sum > amount) break;
         if (u.assetName !== asset) continue;
@@ -749,6 +789,22 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
             throw new Error("Error while sending, perhaps you have pending transaction? Please try again.");
         }
     }
+    /**
+   * This method checks if an UTXO is being spent in the mempool.
+   * rpc getaddressutxos will list available UTXOs on the chain.
+   * BUT an UTXO can be being spent by a transaction in mempool.
+   *
+   * @param utxo
+   * @returns boolean true if utxo is being spent in mempool, false if not
+   */ async isSpentInMempool(utxo) {
+        const mempool = await this.getMempool();
+        for (let entry of mempool){
+            const sameTxId = entry.txid === utxo.txid;
+            const sameIndex = entry.index === utxo.outputIndex;
+            if (sameTxId && sameIndex) return true;
+        }
+        return false;
+    }
     async getAssets() {
         return (0, $0b10d1d1bbb55c3e$export$ab187dba3e955af9)(this, this.getAddresses());
     }
@@ -771,17 +827,25 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         };
         return utxo;
     }
-    async getUTXOsInMempool(mempool) {
+    /**
+   * Get list of spendable UTXOs in mempool.
+   * Note: a UTXO in mempool can already be "being spent"
+   * @param mempool (optional)
+   * @returns list of UTXOs in mempool ready to spend
+   */ async getUTXOsInMempool(mempool) {
         //If no mempool argument, fetch mempool
         let _mempool = mempool;
-        if (!_mempool) _mempool = await this.getMempool();
+        if (!_mempool) {
+            const m = await this.getMempool();
+            _mempool = m;
+        }
         const mySet = new Set();
         for (let item of _mempool){
             if (!item.prevtxid) continue;
             const value = item.prevtxid + "_" + item.prevout;
             mySet.add(value);
         }
-        const spendable = mempool.filter((item)=>{
+        const spendable = _mempool.filter((item)=>{
             if (item.satoshis < 0) return false;
             const value = item.txid + "_" + item.index;
             return mySet.has(value) === false;
@@ -817,5 +881,5 @@ async function $c3676b79c37149df$export$99152e8d49ca4e7d(options) {
 }
 
 
-export {$c3676b79c37149df$export$bcca3ea514774656 as Wallet, $c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance};
+export {$c3676b79c37149df$export$bcca3ea514774656 as Wallet, $c3676b79c37149df$export$2e2bcd8739ae039 as default, $c3676b79c37149df$export$99152e8d49ca4e7d as createInstance, $c3dba3dbad356cd6$export$febc5573c75cefb0 as Transaction, $c7db79d953d79f02$export$a0aa368c31ae6e6c as SendManyTransaction};
 //# sourceMappingURL=index.mjs.map

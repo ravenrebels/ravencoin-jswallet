@@ -22,6 +22,8 @@ import { getBalance } from "./getBalance";
 import { ValidationError } from "./Errors";
 import { getAssets } from "./getAssets";
 
+export { Transaction };
+export { SendManyTransaction };
 const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
 const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
 
@@ -492,6 +494,26 @@ export class Wallet {
     }
   }
 
+  /**
+   * This method checks if an UTXO is being spent in the mempool.
+   * rpc getaddressutxos will list available UTXOs on the chain.
+   * BUT an UTXO can be being spent by a transaction in mempool.
+   *
+   * @param utxo
+   * @returns boolean true if utxo is being spent in mempool, false if not
+   */
+  async isSpentInMempool(utxo: IUTXO) {
+    const mempool = await this.getMempool();
+    for (let entry of mempool) {
+      const sameTxId = entry.txid === utxo.txid;
+      const sameIndex = entry.index === utxo.outputIndex;
+
+      if (sameTxId && sameIndex) {
+        return true;
+      }
+    }
+    return false;
+  }
   async getAssets() {
     return getAssets(this, this.getAddresses());
   }
@@ -516,11 +538,18 @@ export class Wallet {
     return utxo;
   }
 
+  /**
+   * Get list of spendable UTXOs in mempool.
+   * Note: a UTXO in mempool can already be "being spent"
+   * @param mempool (optional)
+   * @returns list of UTXOs in mempool ready to spend
+   */
   async getUTXOsInMempool(mempool: IMempoolEntry[]) {
     //If no mempool argument, fetch mempool
     let _mempool = mempool;
     if (!_mempool) {
-      _mempool = await this.getMempool();
+      const m = await this.getMempool();
+      _mempool = m;
     }
     const mySet = new Set();
 
@@ -532,7 +561,7 @@ export class Wallet {
       mySet.add(value);
     }
 
-    const spendable = mempool.filter((item) => {
+    const spendable = _mempool.filter((item) => {
       if (item.satoshis < 0) {
         return false;
       }

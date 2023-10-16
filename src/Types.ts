@@ -35,6 +35,8 @@ export interface ISendManyTransactionOptions {
   assetName?: string;
   outputs: { [key: string]: number };
   wallet: Wallet;
+  forcedUTXOs?: IForcedUTXO[];
+  forcedChangeAddressAssets?: string;
 }
 
 export interface SweepResult {
@@ -180,6 +182,8 @@ export interface IUTXO {
   satoshis: number;
   txid: string;
   value: number;
+  //custom property
+  forced?: boolean;
 }
 export interface IAssetMetaData {
   assetName: string;
@@ -246,4 +250,10 @@ export interface IMempoolEntry {
   timestamp: number;
   prevtxid: string;
   prevout: number;
+}
+
+export interface IForcedUTXO {
+  utxo: IUTXO;
+  privateKey: string;
+  address: string;
 }

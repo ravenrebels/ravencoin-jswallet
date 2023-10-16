@@ -1,6 +1,11 @@
 import { InsufficientFundsError, ValidationError } from "../Errors";
 import { Wallet } from "../ravencoinWallet";
-import { IMempoolEntry, ISendManyTransactionOptions, IUTXO } from "../Types";
+import {
+  IForcedUTXO,
+  IMempoolEntry,
+  ISendManyTransactionOptions,
+  IUTXO,
+} from "../Types";
 
 export class SendManyTransaction {
   _allUTXOs: IUTXO[]; //all UTXOs that we know of
@@ -11,17 +16,26 @@ export class SendManyTransaction {
   private wallet: Wallet;
   private outputs: any;
   private walletMempool: IMempoolEntry[] = [];
-  constructor({ wallet, outputs, assetName }: ISendManyTransactionOptions) {
+  private forcedUTXOs: IForcedUTXO[] = [];
+  private forcedChangeAddressAssets: string | undefined = "";
+  constructor(options: ISendManyTransactionOptions) {
+    const { wallet, outputs, assetName } = options;
     this.assetName = !assetName ? wallet.baseCurrency : assetName;
     this.wallet = wallet;
     this.outputs = outputs;
+    this.forcedChangeAddressAssets = options.forcedChangeAddressAssets;
+    //Tag forced UTXOs with the "force" flag
+    if (options.forcedUTXOs) {
+      options.forcedUTXOs.map((f) => (f.utxo.forced = true));
+      this.forcedUTXOs = options.forcedUTXOs;
+    }
   }
+
   getWalletMempool() {
     return this.walletMempool;
   }
   getSizeInKB() {
     const utxos = this.predictUTXOs();
-
     const assumedSizePerUTXO = 300;
     const assumedSizePerOutput = 100;
 
@@ -53,6 +67,12 @@ export class SendManyTransaction {
       .concat(baseCurrencyUTXOs)
       .concat(mempoolUTXOs);
 
+    //add forced UTXO to the beginning of the array
+    if (this.forcedUTXOs) {
+      for (let f of this.forcedUTXOs) {
+        _allUTXOsTemp.unshift(f.utxo);
+      }
+    }
     //Filter out UTXOs that are NOT in mempool
     const allUTXOs = _allUTXOsTemp.filter((utxo) => {
       const objInMempool = this.walletMempool.find((mempoolEntry) => {
@@ -70,9 +90,7 @@ export class SendManyTransaction {
     });
 
     //Sort utxos lowest first
-    allUTXOs.sort(sortBySatoshis);
-
-    this._allUTXOs = allUTXOs;
+    this._allUTXOs = allUTXOs.sort(sortBySatoshis);
   }
   getAmount() {
     let total = 0;
@@ -82,11 +100,13 @@ export class SendManyTransaction {
 
     return total;
   }
-  getUTXOs() {
+  getUTXOs(): IUTXO[] {
+    //NOTE, if we have FORCED utxos, they have to be inclued no matter what
+
+    let result: IUTXO[] = [];
     if (this.isAssetTransfer() === true) {
       const assetAmount = this.getAmount();
       const baseCurrencyAmount = this.getBaseCurrencyAmount();
-
       const baseCurrencyUTXOs = getEnoughUTXOs(
         this._allUTXOs,
         this.wallet.baseCurrency,
@@ -98,28 +118,51 @@ export class SendManyTransaction {
         assetAmount
       );
 
-      return assetUTXOs.concat(baseCurrencyUTXOs);
+      result = assetUTXOs.concat(baseCurrencyUTXOs);
     } else {
-      return getEnoughUTXOs(
+      result = getEnoughUTXOs(
         this._allUTXOs,
         this.wallet.baseCurrency,
         this.getBaseCurrencyAmount()
       );
     }
+    //Make sure every forced UTXO is part of the list of UTXOs
+
+    for (let forced of this.forcedUTXOs) {
+      const isUTXOBeingUsed = result.find(
+        (utxo) =>
+          utxo.txid === forced.utxo.txid &&
+          utxo.outputIndex === forced.utxo.outputIndex
+      );
+      if (!isUTXOBeingUsed) {
+        result.unshift(forced.utxo);
+      }
+    }
+
+    return result;
   }
 
   predictUTXOs() {
+    let utxos: IUTXO[] = [];
+
     if (this.isAssetTransfer()) {
-      return getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
+      utxos = getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
+    } else {
+      utxos = getEnoughUTXOs(
+        this._allUTXOs,
+        this.wallet.baseCurrency,
+        this.getAmount()
+      );
     }
-    return getEnoughUTXOs(
-      this._allUTXOs,
-      this.wallet.baseCurrency,
-      this.getAmount()
-    );
+
+    for (let forced of this.forcedUTXOs) {
+      utxos.push(forced.utxo);
+    }
+    return utxos;
   }
   getBaseCurrencyAmount() {
     const fee = this.getFee();
+
     if (this.isAssetTransfer() === true) {
       return fee;
     } else return this.getAmount() + fee;
@@ -175,11 +218,7 @@ export class SendManyTransaction {
         );
       }
       totalOutputs[changeAddressBaseCurrency] = this.getBaseCurrencyChange();
-
-      const index = this.wallet
-        .getAddresses()
-        .indexOf(changeAddressBaseCurrency);
-      const changeAddressAsset = this.wallet.getAddresses()[index + 2];
+      const changeAddressAsset = await this._getChangeAddressAssets();
       //Validate change address can never be the same as toAddress
       if (toAddresses.includes(changeAddressAsset) === true) {
         throw new ValidationError(
@@ -215,6 +254,15 @@ export class SendManyTransaction {
     return totalOutputs;
   }
 
+  async _getChangeAddressAssets() {
+    if (this.forcedChangeAddressAssets) {
+      return this.forcedChangeAddressAssets;
+    }
+    const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
+    const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
+    const changeAddressAsset = this.wallet.getAddresses()[index + 2];
+    return changeAddressAsset;
+  }
   getInputs() {
     return this.getUTXOs().map((obj) => {
       return { address: obj.address, txid: obj.txid, vout: obj.outputIndex };
@@ -233,6 +281,9 @@ export class SendManyTransaction {
         privateKeys[u.address] = addressObject.WIF;
       }
     }
+
+    //Add privatekeys from forcedUTXOs
+    this.forcedUTXOs.map((f) => (privateKeys[f.address] = f.privateKey));
     return privateKeys;
   }
 
@@ -284,6 +335,20 @@ function getEnoughUTXOs(
 ): IUTXO[] {
   const result: IUTXO[] = [];
   let sum = 0;
+  //First off, add mandatory/forced UTXO, no matter what
+
+  if (!utxos) {
+    throw Error("getEnoughUTXOs cannot be called without utxos");
+  }
+  for (let u of utxos) {
+    if (u.forced === true) {
+      if (u.assetName === asset) {
+        const value = u.satoshis / 1e8;
+        result.push(u);
+        sum = sum + value;
+      }
+    }
+  }
   for (let u of utxos) {
     if (sum > amount) {
       break;
