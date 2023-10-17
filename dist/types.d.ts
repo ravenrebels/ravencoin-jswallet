@@ -28,6 +28,7 @@ interface ISendManyTransactionOptions {
     wallet: Wallet;
     forcedUTXOs?: IForcedUTXO[];
     forcedChangeAddressAssets?: string;
+    forcedChangeAddressBaseCurrency?: string;
 }
 interface SweepResult {
     errorDescription?: string;

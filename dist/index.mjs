@@ -33,12 +33,14 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         ;
         this.walletMempool = [];
         this.forcedUTXOs = [];
+        this.forcedChangeAddressBaseCurrency = "";
         this.forcedChangeAddressAssets = "";
         const { wallet: wallet, outputs: outputs, assetName: assetName } = options;
         this.assetName = !assetName ? wallet.baseCurrency : assetName;
         this.wallet = wallet;
         this.outputs = outputs;
         this.forcedChangeAddressAssets = options.forcedChangeAddressAssets;
+        this.forcedChangeAddressBaseCurrency = options.forcedChangeAddressBaseCurrency;
         //Tag forced UTXOs with the "force" flag
         if (options.forcedUTXOs) {
             options.forcedUTXOs.map((f)=>f.utxo.forced = true);
@@ -144,8 +146,8 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
     async getOutputs() {
         //we take the declared outputs and add change outputs
         const totalOutputs = {};
+        const changeAddressBaseCurrency = this.forcedChangeAddressBaseCurrency || await this.wallet.getChangeAddress();
         if (this.isAssetTransfer() === true) {
-            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
             //Validate: change address cant be toAddress
             const toAddresses = Object.keys(this.outputs);
             if (toAddresses.includes(changeAddressBaseCurrency) === true) throw new (0, $df4abebf0c223404$export$2191b9da168c6cf0)("Change address cannot be the same as to address");
@@ -167,7 +169,6 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
                 };
             }
         } else {
-            const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
             for (let addy of Object.keys(this.outputs)){
                 const amount = this.outputs[addy];
                 totalOutputs[addy] = amount;
@@ -177,6 +178,7 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         return totalOutputs;
     }
     async _getChangeAddressAssets() {
+        console.log("get change address assets", this.forcedChangeAddressAssets);
         if (this.forcedChangeAddressAssets) return this.forcedChangeAddressAssets;
         const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
         const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);
