@@ -3,7 +3,7 @@ const RavencoinWallet = require("../../dist/index.cjs");
 const SendManyTransaction = RavencoinWallet.SendManyTransaction;
 const crazyCatWalletPromise = require("./getWalletPromise");
 
-jest.setTimeout(10 * 1000);
+jest.setTimeout(10 * 2000);
 
 //Should have 10 RVN on testnet
 const mnemonic =

@@ -2,12 +2,15 @@ var $4aiOY$ravenrebelsravencoinrpc = require("@ravenrebels/ravencoin-rpc");
 var $4aiOY$ravenrebelsravencoinkey = require("@ravenrebels/ravencoin-key");
 var $4aiOY$ravenrebelsravencoinsigntransaction = require("@ravenrebels/ravencoin-sign-transaction");
 
+
 function $parcel$interopDefault(a) {
   return a && a.__esModule ? a.default : a;
 }
+
 function $parcel$defineInteropFlag(a) {
   Object.defineProperty(a, '__esModule', {value: true, configurable: true});
 }
+
 function $parcel$export(e, n, v, s) {
   Object.defineProperty(e, n, {get: v, set: s, enumerable: true, configurable: true});
 }
@@ -195,7 +198,6 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         return totalOutputs;
     }
     async _getChangeAddressAssets() {
-        console.log("get change address assets", this.forcedChangeAddressAssets);
         if (this.forcedChangeAddressAssets) return this.forcedChangeAddressAssets;
         const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
         const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);

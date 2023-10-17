@@ -257,7 +257,7 @@ export class SendManyTransaction {
   }
 
   async _getChangeAddressAssets() {
-    console.log("get change address assets", this.forcedChangeAddressAssets);
+ 
     if (this.forcedChangeAddressAssets) {
       return this.forcedChangeAddressAssets;
     }

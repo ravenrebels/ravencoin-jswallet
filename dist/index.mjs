@@ -178,7 +178,6 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         return totalOutputs;
     }
     async _getChangeAddressAssets() {
-        console.log("get change address assets", this.forcedChangeAddressAssets);
         if (this.forcedChangeAddressAssets) return this.forcedChangeAddressAssets;
         const changeAddressBaseCurrency = await this.wallet.getChangeAddress();
         const index = this.wallet.getAddresses().indexOf(changeAddressBaseCurrency);

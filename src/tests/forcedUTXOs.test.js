@@ -3,7 +3,7 @@ const RavencoinWallet = require("../../dist/index.cjs");
 const SendManyTransaction = RavencoinWallet.SendManyTransaction;
 const crazyCatWalletPromise = require("./getWalletPromise");
 
-jest.setTimeout(10 * 1000);
+jest.setTimeout(10 * 2000);
 
 //Should have 10 RVN on testnet
 const mnemonic =
@@ -50,15 +50,6 @@ test("Forced UTXOs must be part of transaction", async () => {
   const fo = transactionUTXOs.find((u) => u.txid === forcedUTXO.utxo.xid);
 
   expect(!!fo).not.toEqual(true);
-
-  const amount = sendManyTransaction.getBaseCurrencyAmount();
-  const change = sendManyTransaction.getBaseCurrencyChange();
-  const fee = sendManyTransaction.getFee();
-  console.log("amount", amount);
-  console.log("change", change);
-  console.log("Fee", fee);
-  const value = forcedUTXO.utxo.satoshis / 1e8;
-  console.log("Forced utxo value", forcedUTXO.utxo.satoshis / 1e8);
 });
 
 test("Forced UTXOs must be part of transaction", async () => {
@@ -92,7 +83,7 @@ test("Forced UTXOs must be part of transaction", async () => {
   //UTXOs must include forcedUTXO
 
   const transactionUTXOs = sendManyTransaction.getUTXOs();
-  console.log("UTXOS", transactionUTXOs);
+
   const fo = transactionUTXOs.find((u) => u.txid === forcedUTXO.utxo.xid);
 
   expect(!!fo).not.toEqual(true);

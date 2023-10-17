@@ -1,5 +1,4 @@
 const RavencoinWallet = require("../../dist/index.cjs");
-console.log("RavencoinWallet", RavencoinWallet);
 
 const getBaseCurrencyByNetwork =
   RavencoinWallet.default.getBaseCurrencyByNetwork;
