@@ -1,4 +1,4 @@
-import { ISendManyTransactionOptions, ITransactionOptions } from "../Types";
+import { IMempoolEntry, ISendManyTransactionOptions, ITransactionOptions, IUTXO } from "../Types";
 import { SendManyTransaction } from "./SendManyTransaction";
 
 export class Transaction {
@@ -14,7 +14,7 @@ export class Transaction {
     };
     this.sendManyTransaction = new SendManyTransaction(options);
   }
-  getWalletMempool() {
+  getWalletMempool():IMempoolEntry[] {
     return this.sendManyTransaction.getWalletMempool();
   }
   getSizeInKB() {
@@ -23,7 +23,7 @@ export class Transaction {
   async loadData() {
     return this.sendManyTransaction.loadData();
   }
-  getUTXOs() {
+  getUTXOs():IUTXO[] {
     return this.sendManyTransaction.getUTXOs();
   }
 

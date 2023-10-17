@@ -151,11 +151,11 @@ export class SendManyTransaction {
 }
 export class Transaction {
     constructor({ wallet, toAddress, amount, assetName }: ITransactionOptions);
-    getWalletMempool(): import("Types").IMempoolEntry[];
+    getWalletMempool(): IMempoolEntry[];
     getSizeInKB(): number;
     loadData(): Promise<void>;
-    getUTXOs(): import("Types").IUTXO[];
-    predictUTXOs(): import("Types").IUTXO[];
+    getUTXOs(): IUTXO[];
+    predictUTXOs(): IUTXO[];
     getBaseCurrencyAmount(): number;
     getBaseCurrencyChange(): number;
     getAssetChange(): number;
