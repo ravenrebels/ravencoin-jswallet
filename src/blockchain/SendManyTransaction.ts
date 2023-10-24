@@ -71,11 +71,21 @@ export class SendManyTransaction {
       .concat(mempoolUTXOs);
 
     //add forced UTXO to the beginning of the array
+    //only if not already part of the list, never ever have duplicated UTXOs
     if (this.forcedUTXOs) {
       for (let f of this.forcedUTXOs) {
-        _allUTXOsTemp.unshift(f.utxo);
+        const utxo = f.utxo;
+
+        const found = _allUTXOsTemp.find((u) => {
+          return utxo.txid == u.txid && utxo.outputIndex === u.outputIndex;
+        });
+
+        if (!found) {
+          _allUTXOsTemp.unshift(f.utxo);
+        }
       }
     }
+
     //Filter out UTXOs that are NOT in mempool
     const allUTXOs = _allUTXOsTemp.filter((utxo) => {
       const objInMempool = this.walletMempool.find((mempoolEntry) => {
@@ -158,9 +168,6 @@ export class SendManyTransaction {
       );
     }
 
-    for (let forced of this.forcedUTXOs) {
-      utxos.push(forced.utxo);
-    }
     return utxos;
   }
   getBaseCurrencyAmount() {
@@ -257,7 +264,6 @@ export class SendManyTransaction {
   }
 
   async _getChangeAddressAssets() {
- 
     if (this.forcedChangeAddressAssets) {
       return this.forcedChangeAddressAssets;
     }

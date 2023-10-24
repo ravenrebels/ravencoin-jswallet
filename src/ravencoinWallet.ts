@@ -504,12 +504,13 @@ export class Wallet {
    */
   async isSpentInMempool(utxo: IUTXO) {
     const mempool = await this.getMempool();
-    for (let entry of mempool) {
-      const sameTxId = entry.txid === utxo.txid;
-      const sameIndex = entry.index === utxo.outputIndex;
+    for (let mempoolEntry of mempool) {
+      if (mempoolEntry.prevtxid) {
+        const result =
+          mempoolEntry.prevtxid === utxo.txid &&
+          mempoolEntry.prevout === utxo.outputIndex;
 
-      if (sameTxId && sameIndex) {
-        return true;
+        return result;
       }
     }
     return false;

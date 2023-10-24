@@ -71,7 +71,14 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         const mempoolUTXOs = await this.wallet.getUTXOsInMempool(this.walletMempool);
         const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
         //add forced UTXO to the beginning of the array
-        if (this.forcedUTXOs) for (let f of this.forcedUTXOs)_allUTXOsTemp.unshift(f.utxo);
+        //only if not already part of the list, never ever have duplicated UTXOs
+        if (this.forcedUTXOs) for (let f of this.forcedUTXOs){
+            const utxo = f.utxo;
+            const found = _allUTXOsTemp.find((u)=>{
+                return utxo.txid == u.txid && utxo.outputIndex === u.outputIndex;
+            });
+            if (!found) _allUTXOsTemp.unshift(f.utxo);
+        }
         //Filter out UTXOs that are NOT in mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
             const objInMempool = this.walletMempool.find((mempoolEntry)=>{
@@ -113,7 +120,6 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         let utxos = [];
         if (this.isAssetTransfer()) utxos = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
         else utxos = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getAmount());
-        for (let forced of this.forcedUTXOs)utxos.push(forced.utxo);
         return utxos;
     }
     getBaseCurrencyAmount() {
@@ -799,10 +805,9 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
    * @returns boolean true if utxo is being spent in mempool, false if not
    */ async isSpentInMempool(utxo) {
         const mempool = await this.getMempool();
-        for (let entry of mempool){
-            const sameTxId = entry.txid === utxo.txid;
-            const sameIndex = entry.index === utxo.outputIndex;
-            if (sameTxId && sameIndex) return true;
+        for (let mempoolEntry of mempool)if (mempoolEntry.prevtxid) {
+            const result = mempoolEntry.prevtxid === utxo.txid && mempoolEntry.prevout === utxo.outputIndex;
+            return result;
         }
         return false;
     }
