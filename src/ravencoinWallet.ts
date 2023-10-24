@@ -544,7 +544,7 @@ export class Wallet {
    * @param mempool (optional)
    * @returns list of UTXOs in mempool ready to spend
    */
-  async getUTXOsInMempool(mempool: IMempoolEntry[]) {
+  async getUTXOsInMempool(mempool?: IMempoolEntry[]) {
     //If no mempool argument, fetch mempool
     let _mempool = mempool;
     if (!_mempool) {

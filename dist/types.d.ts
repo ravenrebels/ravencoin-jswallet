@@ -252,7 +252,7 @@ export class Wallet {
      * @param mempool (optional)
      * @returns list of UTXOs in mempool ready to spend
      */
-    getUTXOsInMempool(mempool: IMempoolEntry[]): Promise<IUTXO[]>;
+    getUTXOsInMempool(mempool?: IMempoolEntry[]): Promise<IUTXO[]>;
 }
 declare const _default: {
     createInstance: typeof createInstance;
