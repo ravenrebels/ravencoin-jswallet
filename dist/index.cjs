@@ -67,6 +67,12 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
             this.forcedUTXOs = options.forcedUTXOs;
         }
     }
+    /**
+   * 
+   * @returns forced UTXOs for this transaction, that means "no matter want, spend this UTXO"
+   */ getForcedUTXOs() {
+        return this.forcedUTXOs;
+    }
     getWalletMempool() {
         return this.walletMempool;
     }
@@ -120,7 +126,7 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         return total;
     }
     getUTXOs() {
-        //NOTE, if we have FORCED utxos, they have to be inclued no matter what
+        //NOTE, if we have FORCED utxos, they have to be included no matter what
         let result = [];
         if (this.isAssetTransfer() === true) {
             const assetAmount = this.getAmount();

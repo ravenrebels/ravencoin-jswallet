@@ -128,6 +128,11 @@ export class SendManyTransaction {
     _allUTXOs: IUTXO[];
     feerate: number;
     constructor(options: ISendManyTransactionOptions);
+    /**
+     *
+     * @returns forced UTXOs for this transaction, that means "no matter want, spend this UTXO"
+     */
+    getForcedUTXOs(): IForcedUTXO[];
     getWalletMempool(): IMempoolEntry[];
     getSizeInKB(): number;
     loadData(): Promise<void>;
