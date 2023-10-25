@@ -504,7 +504,7 @@ export class Wallet {
    */
   async isSpentInMempool(utxo: IUTXO) {
     const details = await this.rpc("gettxout", [utxo.txid, utxo.outputIndex]);
-    return details !== null;
+    return details === null; 
   }
   async getAssets() {
     return getAssets(this, this.getAddresses());

@@ -839,7 +839,7 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
             utxo.txid,
             utxo.outputIndex
         ]);
-        return details !== null;
+        return details === null;
     }
     async getAssets() {
         return (0, $e47617f9093ded67$export$ab187dba3e955af9)(this, this.getAddresses());
