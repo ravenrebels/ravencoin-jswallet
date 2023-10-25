@@ -27,6 +27,20 @@ class $df4abebf0c223404$export$b276096bbba16879 extends Error {
 }
 
 
+function $fab42eb3dee39b5b$export$2e2262a44ac61957(originalArray) {
+    const uniqueArray = [];
+    const seen = new Set();
+    originalArray.forEach((item)=>{
+        const uniqueIdentifier = item.txid + item.outputIndex;
+        if (!seen.has(uniqueIdentifier)) {
+            seen.add(uniqueIdentifier);
+            uniqueArray.push(item);
+        }
+    });
+    return uniqueArray;
+}
+
+
 class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
     constructor(options){
         this.feerate = 1 //When loadData is called, this attribute is updated from the blockchain  wallet = null;
@@ -77,16 +91,15 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
         const mempoolUTXOs = await this.wallet.getUTXOsInMempool(this.walletMempool);
         const _allUTXOsTemp = assetUTXOs.concat(baseCurrencyUTXOs).concat(mempoolUTXOs);
         //add forced UTXO to the beginning of the array
-        //only if not already part of the list, never ever have duplicated UTXOs
+        //method getUTXOs will remove all duplicates
         if (this.forcedUTXOs) for (let f of this.forcedUTXOs){
             const utxo = f.utxo;
-            const found = _allUTXOsTemp.find((u)=>{
-                return utxo.txid == u.txid && utxo.outputIndex === u.outputIndex;
-            });
-            if (!found) _allUTXOsTemp.unshift(f.utxo);
+            _allUTXOsTemp.unshift(utxo);
         }
         //Collect UTXOs that are not currently being spent in the mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
+            //Always include forced UTXOs
+            if (utxo.forced === true) return true;
             const objInMempool = this.walletMempool.find((mempoolEntry)=>{
                 if (mempoolEntry.prevtxid) {
                     const result = mempoolEntry.prevtxid === utxo.txid && mempoolEntry.prevout === utxo.outputIndex;
@@ -97,7 +110,10 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
             return !objInMempool;
         });
         //Sort utxos lowest first
-        this._allUTXOs = allUTXOs.sort($c7db79d953d79f02$var$sortBySatoshis);
+        const sorted = allUTXOs.sort($c7db79d953d79f02$var$sortBySatoshis);
+        //Remove duplicates, like if we have added an UTXO as forced, but it is already
+        //in the wallet as a normal UTXO
+        this._allUTXOs = (0, $fab42eb3dee39b5b$export$2e2262a44ac61957)(sorted);
     }
     getAmount() {
         let total = 0;
@@ -115,12 +131,6 @@ class $c7db79d953d79f02$export$a0aa368c31ae6e6c {
             const assetUTXOs = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.assetName, assetAmount);
             result = assetUTXOs.concat(baseCurrencyUTXOs);
         } else result = $c7db79d953d79f02$var$getEnoughUTXOs(this._allUTXOs, this.wallet.baseCurrency, this.getBaseCurrencyAmount());
-        //Make sure every forced UTXO is part of the list of UTXOs
-        for (let forced of this.forcedUTXOs){
-            const isUTXOBeingUsed = result.find((utxo)=>utxo.txid === forced.utxo.txid && utxo.outputIndex === forced.utxo.outputIndex);
-            if (!isUTXOBeingUsed) //TODO what if this forced UTXO is already being spent in mempool?
-            result.unshift(forced.utxo);
-        }
         return result;
     }
     /*
@@ -253,8 +263,8 @@ function $c7db79d953d79f02$var$sortBySatoshis(u1, u2) {
 function $c7db79d953d79f02$var$getEnoughUTXOs(utxos, asset, amount) {
     const result = [];
     let sum = 0;
-    //First off, add mandatory/forced UTXO, no matter what
     if (!utxos) throw Error("getEnoughUTXOs cannot be called without utxos");
+    //First off, add mandatory/forced UTXO, no matter what
     for (let u of utxos){
         if (u.forced === true) {
             if (u.assetName === asset) {
@@ -264,7 +274,9 @@ function $c7db79d953d79f02$var$getEnoughUTXOs(utxos, asset, amount) {
             }
         }
     }
+    //Process NON FORCED utxos
     for (let u of utxos){
+        if (u.forced) continue;
         if (sum > amount) break;
         if (u.assetName !== asset) continue;
         //Ignore UTXOs with zero satoshis, seems to occure when assets are minted
