@@ -124,6 +124,28 @@ interface IForcedUTXO {
     privateKey: string;
     address: string;
 }
+/**
+ * SendManyTransaction Class
+ *
+ * This class is responsible for calculating the necessary steps to broadcast a Ravencoin transaction:
+ * 1) Identify available UTXOs that are not already spent in the mempool.
+ * 2) Determine the required number of UTXOs for creating this transaction.
+ * 3) Define the transaction's inputs and outputs.
+ * 4) Sign the transaction.
+ *
+ * Note: this class does not do the actual broadcasting; it is up to the user.
+ *
+ * How does it work?
+ * 1) Create an instance:
+ *    const transaction = new SendManyTransaction({
+ *      assetName,
+ *      outputs: options.outputs,
+ *      wallet: this,
+ *    });
+ *
+ * 2) Load data from the network:
+ *    transaction.loadData();
+ */
 export class SendManyTransaction {
     _allUTXOs: IUTXO[];
     feerate: number;
@@ -138,6 +160,7 @@ export class SendManyTransaction {
     loadData(): Promise<void>;
     getAmount(): number;
     getUTXOs(): IUTXO[];
+    validate(): void;
     predictUTXOs(): IUTXO[];
     getBaseCurrencyAmount(): number;
     getBaseCurrencyChange(): number;

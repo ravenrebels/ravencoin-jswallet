@@ -6,6 +6,28 @@ import {
   ISendManyTransactionOptions,
   IUTXO,
 } from "../Types";
+/**
+ * SendManyTransaction Class
+ *
+ * This class is responsible for calculating the necessary steps to broadcast a Ravencoin transaction:
+ * 1) Identify available UTXOs that are not already spent in the mempool.
+ * 2) Determine the required number of UTXOs for creating this transaction.
+ * 3) Define the transaction's inputs and outputs.
+ * 4) Sign the transaction.
+ *
+ * Note: this class does not do the actual broadcasting; it is up to the user.
+ *
+ * How does it work?
+ * 1) Create an instance:
+ *    const transaction = new SendManyTransaction({
+ *      assetName,
+ *      outputs: options.outputs,
+ *      wallet: this,
+ *    });
+ *
+ * 2) Load data from the network:
+ *    transaction.loadData();
+ */
 
 export class SendManyTransaction {
   _allUTXOs: IUTXO[]; //all UTXOs that we know of
@@ -34,10 +56,10 @@ export class SendManyTransaction {
     }
   }
   /**
-   * 
+   *
    * @returns forced UTXOs for this transaction, that means "no matter want, spend this UTXO"
    */
-  getForcedUTXOs(){
+  getForcedUTXOs() {
     return this.forcedUTXOs;
   }
   getWalletMempool() {
@@ -92,7 +114,7 @@ export class SendManyTransaction {
       }
     }
 
-    //Filter out UTXOs that are NOT in mempool
+    //Collect UTXOs that are not currently being spent in the mempool
     const allUTXOs = _allUTXOsTemp.filter((utxo) => {
       const objInMempool = this.walletMempool.find((mempoolEntry) => {
         if (mempoolEntry.prevtxid) {
@@ -154,13 +176,18 @@ export class SendManyTransaction {
           utxo.outputIndex === forced.utxo.outputIndex
       );
       if (!isUTXOBeingUsed) {
+        //TODO what if this forced UTXO is already being spent in mempool?
         result.unshift(forced.utxo);
       }
     }
 
     return result;
   }
-
+  /*
+  Check the blockchain, network.
+  Is this transaction still valid? Will it be accepted?
+  */
+  validate() {}
   predictUTXOs() {
     let utxos: IUTXO[] = [];
 

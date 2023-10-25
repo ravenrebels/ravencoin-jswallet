@@ -503,17 +503,8 @@ export class Wallet {
    * @returns boolean true if utxo is being spent in mempool, false if not
    */
   async isSpentInMempool(utxo: IUTXO) {
-    const mempool = await this.getMempool();
-    for (let mempoolEntry of mempool) {
-      if (mempoolEntry.prevtxid) {
-        const result =
-          mempoolEntry.prevtxid === utxo.txid &&
-          mempoolEntry.prevout === utxo.outputIndex;
-
-        return result;
-      }
-    }
-    return false;
+    const details = await this.rpc("gettxout", [utxo.txid, utxo.outputIndex]);
+    return details !== null;
   }
   async getAssets() {
     return getAssets(this, this.getAddresses());

@@ -68,7 +68,7 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         }
     }
     /**
-   * 
+   *
    * @returns forced UTXOs for this transaction, that means "no matter want, spend this UTXO"
    */ getForcedUTXOs() {
         return this.forcedUTXOs;
@@ -105,7 +105,7 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
             });
             if (!found) _allUTXOsTemp.unshift(f.utxo);
         }
-        //Filter out UTXOs that are NOT in mempool
+        //Collect UTXOs that are not currently being spent in the mempool
         const allUTXOs = _allUTXOsTemp.filter((utxo)=>{
             const objInMempool = this.walletMempool.find((mempoolEntry)=>{
                 if (mempoolEntry.prevtxid) {
@@ -138,10 +138,15 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         //Make sure every forced UTXO is part of the list of UTXOs
         for (let forced of this.forcedUTXOs){
             const isUTXOBeingUsed = result.find((utxo)=>utxo.txid === forced.utxo.txid && utxo.outputIndex === forced.utxo.outputIndex);
-            if (!isUTXOBeingUsed) result.unshift(forced.utxo);
+            if (!isUTXOBeingUsed) //TODO what if this forced UTXO is already being spent in mempool?
+            result.unshift(forced.utxo);
         }
         return result;
     }
+    /*
+  Check the blockchain, network.
+  Is this transaction still valid? Will it be accepted?
+  */ validate() {}
     predictUTXOs() {
         let utxos = [];
         if (this.isAssetTransfer()) utxos = $95d3c5cb954e3eff$var$getEnoughUTXOs(this._allUTXOs, this.assetName, this.getAmount());
@@ -830,12 +835,11 @@ class $bf36305bcbc0cb23$export$bcca3ea514774656 {
    * @param utxo
    * @returns boolean true if utxo is being spent in mempool, false if not
    */ async isSpentInMempool(utxo) {
-        const mempool = await this.getMempool();
-        for (let mempoolEntry of mempool)if (mempoolEntry.prevtxid) {
-            const result = mempoolEntry.prevtxid === utxo.txid && mempoolEntry.prevout === utxo.outputIndex;
-            return result;
-        }
-        return false;
+        const details = await this.rpc("gettxout", [
+            utxo.txid,
+            utxo.outputIndex
+        ]);
+        return details !== null;
     }
     async getAssets() {
         return (0, $e47617f9093ded67$export$ab187dba3e955af9)(this, this.getAddresses());

@@ -1,18 +1,13 @@
 {
   "name": "@ravenrebels/ravencoin-jswallet",
-  "version": "0.7.53",
+  "version": "0.7.54",
   "description": "Ravencoin JavaScript wallet library",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-
-  "files":[
+  "files": [
+    "LICENSE",
     "README.md",
-    "dist/index.cjs",
-    "dist/index.cjs.map",
-    "dist/index.mjs",
-    "dist/index.mjs.map",
-    "dist/types.d.ts",
-    "dist/types.d.ts.map"
+    "dist/*"
   ],
   "types": "dist/types.d.ts",
   "scripts": {
