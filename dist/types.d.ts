@@ -175,7 +175,7 @@ export class SendManyTransaction {
     }[];
     getPrivateKeys(): {};
     getFee(): number;
-    getFeeRate(): Promise<any>;
+    getFeeRate(): Promise<number>;
 }
 export class Transaction {
     constructor({ wallet, toAddress, amount, assetName }: ITransactionOptions);
@@ -196,7 +196,7 @@ export class Transaction {
     }[];
     getPrivateKeys(): {};
     getFee(): number;
-    getFeeRate(): Promise<any>;
+    getFeeRate(): Promise<number>;
 }
 declare function getBaseCurrencyByNetwork(network: ChainType): string;
 export class Wallet {

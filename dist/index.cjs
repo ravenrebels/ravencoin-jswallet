@@ -261,10 +261,11 @@ class $95d3c5cb954e3eff$export$a0aa368c31ae6e6c {
         const defaultFee = 0.02;
         try {
             const confirmationTarget = 20;
-            const asdf = await this.wallet.rpc("estimatesmartfee", [
+            const response = await this.wallet.rpc("estimatesmartfee", [
                 confirmationTarget
             ]);
-            if (!asdf.errors) return asdf.feerate;
+            //Errors can occur on testnet, not enough info to calculate fee
+            if (!response.errors) return $95d3c5cb954e3eff$var$normaliseFee(this.wallet.network, response.feerate);
             else return defaultFee;
         } catch (e) {
             //Might occure errors on testnet when calculating fees
@@ -310,6 +311,11 @@ function $95d3c5cb954e3eff$var$getEnoughUTXOs(utxos, asset, amount) {
         throw error;
     }
     return result;
+}
+function $95d3c5cb954e3eff$var$normaliseFee(network, fee) {
+    //Seems to be a bug with EVR fees are 1300 times too high
+    if (network === "evr" && fee > 1) return fee / 100;
+    return fee;
 }
 
 

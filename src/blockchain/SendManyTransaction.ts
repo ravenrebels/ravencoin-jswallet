@@ -321,7 +321,6 @@ export class SendManyTransaction {
 
   getFee() {
     const kb = this.getSizeInKB();
-
     const result = kb * this.feerate;
 
     return result;
@@ -330,11 +329,12 @@ export class SendManyTransaction {
     const defaultFee = 0.02;
     try {
       const confirmationTarget = 20;
-      const asdf = await this.wallet.rpc("estimatesmartfee", [
+      const response = await this.wallet.rpc("estimatesmartfee", [
         confirmationTarget,
       ]);
-      if (!asdf.errors) {
-        return asdf.feerate;
+      //Errors can occur on testnet, not enough info to calculate fee
+      if (!response.errors) {
+        return normaliseFee(this.wallet.network, response.feerate);
       } else {
         return defaultFee;
       }
@@ -409,4 +409,12 @@ function getEnoughUTXOs(
     throw error;
   }
   return result;
+}
+
+function normaliseFee(network: string, fee: number) {
+  //Seems to be a bug with EVR fees are 1300 times too high
+  if (network === "evr" && fee > 1) {
+    return fee / 100;
+  }
+  return fee;
 }
