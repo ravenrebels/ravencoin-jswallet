@@ -24,14 +24,15 @@ import { getAssets } from "./getAssets";
 
 export { Transaction };
 export { SendManyTransaction };
-const URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
-const URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
+const URL_RAVENCOIN_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
+const URL_RAVENCOIN_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
+const URL_EVRMORE_MAINNET = "https://evr-rpc-mainnet.ting.finance/rpc";
 
 //Avoid singleton (anti-pattern)
 //Meaning multiple instances of the wallet must be able to co-exist
 
 export class Wallet {
-  rpc = getRPC("anonymous", "anonymous", URL_MAINNET);
+  rpc = getRPC("anonymous", "anonymous", URL_RAVENCOIN_MAINNET);
   _mnemonic = "";
   network: ChainType = "rvn";
   addressObjects: Array<IAddressMetaData> = [];
@@ -73,7 +74,7 @@ export class Wallet {
   async init(options: IOptions) {
     let username = "anonymous";
     let password = "anonymous";
-    let url = URL_MAINNET;
+    let url = URL_RAVENCOIN_MAINNET;
 
     //VALIDATION
     if (!options) {
@@ -86,17 +87,19 @@ export class Wallet {
     if (!options.mnemonic) {
       throw Error("option.mnemonic is mandatory");
     }
-
+    if (options.network === "rvn-test") {
+      url = URL_RAVENCOIN_TESTNET;
+    }
+    if (options.network === "evr") {
+      url = URL_EVRMORE_MAINNET;
+    }
     url = options.rpc_url || url;
-    password = options.rpc_password || url;
-    username = options.rpc_username || url;
+    password = options.rpc_password || password;
+    username = options.rpc_username || username;
 
     if (options.network) {
       this.network = options.network;
       this.setBaseCurrency(getBaseCurrencyByNetwork(options.network));
-    }
-    if (options.network === "rvn-test" && !options.rpc_url) {
-      url = URL_TESTNET;
     }
 
     this.rpc = getRPC(username, password, url);
@@ -504,7 +507,7 @@ export class Wallet {
    */
   async isSpentInMempool(utxo: IUTXO) {
     const details = await this.rpc("gettxout", [utxo.txid, utxo.outputIndex]);
-    return details === null; 
+    return details === null;
   }
   async getAssets() {
     return getAssets(this, this.getAddresses());

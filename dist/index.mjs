@@ -480,8 +480,9 @@ async function $0b10d1d1bbb55c3e$export$ab187dba3e955af9(wallet, addresses) {
 }
 
 
-const $c3676b79c37149df$var$URL_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
-const $c3676b79c37149df$var$URL_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
+const $c3676b79c37149df$var$URL_RAVENCOIN_MAINNET = "https://rvn-rpc-mainnet.ting.finance/rpc";
+const $c3676b79c37149df$var$URL_RAVENCOIN_TESTNET = "https://rvn-rpc-testnet.ting.finance/rpc";
+const $c3676b79c37149df$var$URL_EVRMORE_MAINNET = "https://evr-rpc-mainnet.ting.finance/rpc";
 class $c3676b79c37149df$export$bcca3ea514774656 {
     setBaseCurrency(currency) {
         this.baseCurrency = currency;
@@ -513,19 +514,20 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
     async init(options) {
         let username = "anonymous";
         let password = "anonymous";
-        let url = $c3676b79c37149df$var$URL_MAINNET;
+        let url = $c3676b79c37149df$var$URL_RAVENCOIN_MAINNET;
         //VALIDATION
         if (!options) throw Error("option argument is mandatory");
         if (options.offlineMode === true) this.offlineMode = true;
         if (!options.mnemonic) throw Error("option.mnemonic is mandatory");
+        if (options.network === "rvn-test") url = $c3676b79c37149df$var$URL_RAVENCOIN_TESTNET;
+        if (options.network === "evr") url = $c3676b79c37149df$var$URL_EVRMORE_MAINNET;
         url = options.rpc_url || url;
-        password = options.rpc_password || url;
-        username = options.rpc_username || url;
+        password = options.rpc_password || password;
+        username = options.rpc_username || username;
         if (options.network) {
             this.network = options.network;
             this.setBaseCurrency((0, $b986b05eb12d057a$export$af0c167f1aa2328f)(options.network));
         }
-        if (options.network === "rvn-test" && !options.rpc_url) url = $c3676b79c37149df$var$URL_TESTNET;
         this.rpc = (0, $93qLg$getRPC)(username, password, url);
         this._mnemonic = options.mnemonic;
         //Generating the hd key is slow, so we re-use the object
@@ -886,7 +888,7 @@ class $c3676b79c37149df$export$bcca3ea514774656 {
         return utxos;
     }
     constructor(){
-        this.rpc = (0, $93qLg$getRPC)("anonymous", "anonymous", $c3676b79c37149df$var$URL_MAINNET);
+        this.rpc = (0, $93qLg$getRPC)("anonymous", "anonymous", $c3676b79c37149df$var$URL_RAVENCOIN_MAINNET);
         this._mnemonic = "";
         this.network = "rvn";
         this.addressObjects = [];
