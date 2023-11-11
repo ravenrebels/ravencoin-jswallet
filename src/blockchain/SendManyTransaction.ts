@@ -412,7 +412,7 @@ function getEnoughUTXOs(
 }
 
 function normaliseFee(network: string, fee: number) {
-  //Seems to be a bug with EVR fees are 1300 times too high
+  //It seems there is a bug causing the EVR fees to be 1300 times higher than they should be
   if (network === "evr" && fee > 1) {
     return fee / 100;
   }
