@@ -1,20 +1,29 @@
-import { IMempoolEntry, ISendManyTransactionOptions, ITransactionOptions, IUTXO } from "../Types";
+import {
+  IMempoolEntry,
+  ISendManyTransactionOptions,
+  ITransactionOptions,
+  IUTXO,
+} from "../Types";
 import { SendManyTransaction } from "./SendManyTransaction";
 
 export class Transaction {
   private sendManyTransaction: SendManyTransaction;
 
-  constructor({ wallet, toAddress, amount, assetName }: ITransactionOptions) {
-    const options: ISendManyTransactionOptions = {
-      assetName,
-      wallet,
+  constructor(options: ITransactionOptions) {
+
+    //The diff between ITransactionOptions and ISendManyTransactionOptions 
+    //is that SendMany has a multi value outputs attribute instead of toAddress
+    
+    const _options: ISendManyTransactionOptions = {
+      ...options,
       outputs: {
-        [toAddress]: amount,
+        [options.toAddress]: options.amount,
       },
     };
-    this.sendManyTransaction = new SendManyTransaction(options);
+
+    this.sendManyTransaction = new SendManyTransaction(_options);
   }
-  getWalletMempool():IMempoolEntry[] {
+  getWalletMempool(): IMempoolEntry[] {
     return this.sendManyTransaction.getWalletMempool();
   }
   getSizeInKB() {
@@ -23,7 +32,7 @@ export class Transaction {
   async loadData() {
     return this.sendManyTransaction.loadData();
   }
-  getUTXOs():IUTXO[] {
+  getUTXOs(): IUTXO[] {
     return this.sendManyTransaction.getUTXOs();
   }
 

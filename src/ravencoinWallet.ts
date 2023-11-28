@@ -302,18 +302,12 @@ export class Wallet {
     //Important, do not swallow the exceptions/errors of createTransaction, let them fly
     const sendResult: ISendResult = await this.createTransaction(options);
 
-    try {
-      const id = await this.rpc("sendrawtransaction", [
-        sendResult.debug.signedTransaction,
-      ]);
-      sendResult.transactionId = id;
+    const id = await this.rpc("sendrawtransaction", [
+      sendResult.debug.signedTransaction,
+    ]);
+    sendResult.transactionId = id;
 
-      return sendResult;
-    } catch (e) {
-      throw new Error(
-        "Error while sending, perhaps you have pending transaction? Please try again."
-      );
-    }
+    return sendResult;
   }
 
   async sendMany({ outputs, assetName }: ISendManyOptions) {
@@ -374,6 +368,10 @@ export class Wallet {
       amount,
       toAddress,
       wallet: this,
+      /* optional */
+      forcedChangeAddressAssets: options.forcedChangeAddressAssets,
+      forcedUTXOs: options.forcedUTXOs,
+      forcedChangeAddressBaseCurrency: options.forcedChangeAddressBaseCurrency,
     });
 
     await transaction.loadData();
@@ -391,7 +389,6 @@ export class Wallet {
       privateKeys
     );
 
-    //ACTUAL SENDING TRANSACTION
     try {
       //   const id = await this.rpc("sendrawtransaction", [signed]);
       const sendResult: ISendResult = {

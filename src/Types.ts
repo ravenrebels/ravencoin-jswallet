@@ -10,9 +10,13 @@ export interface ISettings {
   headline: string;
 }
 export interface ISend {
+  amount: number;
   assetName?: string;
   toAddress: string;
-  amount: number;
+
+  forcedUTXOs?: IForcedUTXO[];
+  forcedChangeAddressAssets?: string;
+  forcedChangeAddressBaseCurrency?: string;
 }
 export type ChainType = "rvn" | "rvn-test" | "evr" | "evr-test";
 export interface IAddressDelta {
@@ -35,6 +39,16 @@ export interface ISendManyTransactionOptions {
   assetName?: string;
   outputs: { [key: string]: number };
   wallet: Wallet;
+  forcedUTXOs?: IForcedUTXO[];
+  forcedChangeAddressAssets?: string;
+  forcedChangeAddressBaseCurrency?: string;
+}
+export interface ITransactionOptions {
+  amount: number;
+  assetName: string;
+  toAddress: string;
+  wallet: Wallet;
+
   forcedUTXOs?: IForcedUTXO[];
   forcedChangeAddressAssets?: string;
   forcedChangeAddressBaseCurrency?: string;
