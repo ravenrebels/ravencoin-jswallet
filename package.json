@@ -13,7 +13,8 @@
   "scripts": {
     "build": "parcel build ./src/ravencoinWallet.ts --no-cache",
     "test": "jest",
-    "test:sweep": "jest ./src/sweep.test.js"
+    "test:sweep": "jest ./src/sweep.test.js",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
