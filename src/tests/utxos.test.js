@@ -1,6 +1,6 @@
 const RavencoinWallet = require("../../dist/index.cjs");
-jest.setTimeout(40 * 1000);
-test("Test UTXOs for assets and base currency", async () => {
+const expect = require("chai").expect;
+it("Test UTXOs for assets and base currency", async () => {
   const mnemonic =
     "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
 
@@ -11,11 +11,11 @@ test("Test UTXOs for assets and base currency", async () => {
   });
 
   const UTXOs = await wallet.getUTXOs();
-  expect(UTXOs.length).toBeGreaterThanOrEqual(1);
+  expect(UTXOs.length).to.be.at.least(1);
 
   const assetUTXOs = await wallet.getAssetUTXOs();
-  expect(assetUTXOs.length).toBeGreaterThanOrEqual(1);
+  expect(assetUTXOs.length).to.be.at.least(1);
 
   const assetDoesNotExistUTXOs = await wallet.getAssetUTXOs("AIXNEHXO");
-  expect(assetDoesNotExistUTXOs.length).toBe(0);
+  expect(assetDoesNotExistUTXOs.length).to.equal(0);
 });

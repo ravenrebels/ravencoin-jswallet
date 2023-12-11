@@ -1,8 +1,6 @@
 const RavencoinWallet = require("../../dist/index.cjs");
-
-jest.setTimeout(20 * 1000);
-
-test("Test sweep", async () => {
+const expect = require("chai").expect;
+it("Test sweep", async () => {
   /* 
     The wallet that will be drained, that has the funds from start.
 
@@ -24,7 +22,7 @@ test("Test sweep", async () => {
     const onlineMode = false;
     const result = await wallet.sweep(WIF, onlineMode);
     const something = !!result;
-    expect(true).toBe(something);
+    expect(true).to.equal(something);
   } catch (e) {
     console.log("EXCEPTION", e);
   }

@@ -1,7 +1,5 @@
 const RavencoinWallet = require("../../dist/index.cjs");
-
-jest.setTimeout(20 * 1000);
-
+const expect = require("chai").expect;
 //Account "Crazy Cat" on https://testnet.ting.finance/
 const mnemonic =
   "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
@@ -12,7 +10,7 @@ const walletPromise = RavencoinWallet.createInstance({
   offlineMode: true,
 });
 
-test("Send asset we do not have", async () => {
+it("Send asset we do not have", async () => {
   const options = {
     assetName: "FREN#RED", //Asset we do not have;
     toAddress: "mmmjadMR4LkmHjg7VHQSj3hyp9NjWidzT9",
@@ -29,5 +27,5 @@ test("Send asset we do not have", async () => {
     error = e;
   }
 
-  expect(error.name).toBe("InsufficientFundsError");
+  expect(error.name).to.equal("InsufficientFundsError");
 });

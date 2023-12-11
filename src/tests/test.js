@@ -1,15 +1,11 @@
 const RavencoinWallet = require("../../dist/index.cjs");
 const walletPromise = require("./getWalletPromise");
-jest.setTimeout(20 * 1000);
-
+const expect = require("chai").expect;
 //This mnemonic should be empty and super fast
 const mnemonic =
-"caught actress master salt kingdom february spot brief barrel apart rely common";
+  "caught actress master salt kingdom february spot brief barrel apart rely common";
 
-
-test("Network rvn should give base currency RVN", async () => {
-
-
+it("Network rvn should give base currency RVN", async () => {
   const network = "rvn";
   const wallet = await RavencoinWallet.createInstance({
     mnemonic,
@@ -17,10 +13,10 @@ test("Network rvn should give base currency RVN", async () => {
     offlineMode: true,
   });
   const baseCurrency = wallet.baseCurrency;
-  expect(baseCurrency).toBe("RVN");
+  expect(baseCurrency).to.equal("RVN");
 });
 
-test("Network evr should give base currency EVR", async () => {
+it("Network evr should give base currency EVR", async () => {
   const mnemonic =
     "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
 
@@ -34,13 +30,13 @@ test("Network evr should give base currency EVR", async () => {
 
     const baseCurrency = wallet.baseCurrency;
 
-    expect(baseCurrency).toBe("EVR");
+    expect(baseCurrency).to.equal("EVR");
   } catch (e) {
     console.log("SUPER ERROR", e);
   }
 });
 
-test("Network rvn-test should give base currency RVN", async () => {
+it("Network rvn-test should give base currency RVN", async () => {
   const network = "rvn-test";
   const wallet = await RavencoinWallet.createInstance({
     mnemonic,
@@ -49,10 +45,10 @@ test("Network rvn-test should give base currency RVN", async () => {
   });
 
   const baseCurrency = wallet.baseCurrency;
-  expect(baseCurrency).toBe("RVN");
+  expect(baseCurrency).to.equal("RVN");
 });
 
-test("Network evr-test should give base currency EVR", async () => {
+it("Network evr-test should give base currency EVR", async () => {
   const mnemonic =
     "mesh beef tuition ensure apart picture rabbit tomato ancient someone alter embrace";
 
@@ -64,27 +60,28 @@ test("Network evr-test should give base currency EVR", async () => {
   });
 
   const baseCurrency = wallet.baseCurrency;
-  expect(baseCurrency).toBe("EVR");
+  expect(baseCurrency).to.equal("EVR");
 });
 
-test("get balance", async () => {
+it("get balance", async () => {
   const wallet = await walletPromise;
 
   const balance = await wallet.getBalance();
 
-  expect(isNaN(balance)).toBe(false);
+  expect(isNaN(balance)).to.equal(false);
 });
 
-test("Test getHistory", async () => {
+it("Test getHistory", async () => {
   let error = null;
   const wallet = await walletPromise;
 
   const result = await wallet.getHistory();
 
-  expect(result.length > 0).toBe(true);
+  expect(result.length > 0).to.equal(true);
 });
 
-test("Min amount of addresses", async () => {
+it("Min amount of addresses", async function () {
+  this.timeout(30 * 1000); //30 seconds, generating tons of addresses
   const mnemonic = "bla bla bla";
   const minAmountOfAddresses = 1000;
   wallet = await RavencoinWallet.createInstance({
@@ -94,7 +91,5 @@ test("Min amount of addresses", async () => {
     offlineMode: true,
   });
 
-  expect(wallet.getAddresses().length).toBeGreaterThanOrEqual(
-    minAmountOfAddresses
-  );
+  expect(wallet.getAddresses().length).to.be.at.least(minAmountOfAddresses);
 });

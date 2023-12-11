@@ -1,6 +1,6 @@
 const RavencoinWallet = require("../../dist/index.cjs");
-
-test("Change and to address cant be the same", async () => {
+const expect = require("chai").expect;
+it("Change and to address cant be the same", async () => {
   const mnemonic = "bla bla bla";
 
   const wallet = await RavencoinWallet.createInstance({
@@ -22,5 +22,7 @@ test("Change and to address cant be the same", async () => {
   const changeAddressAndToAddressTheSame =
     (error + "").indexOf("Change address cannot be the same as toAddress") > -1;
 
-  expect(changeAddressAndToAddressTheSame).toBe(true);
+  expect(changeAddressAndToAddressTheSame).to.be.true;
+
+  return true;
 });

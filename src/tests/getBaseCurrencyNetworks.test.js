@@ -1,11 +1,11 @@
 const RavencoinWallet = require("../../dist/index.cjs");
-
+const expect = require("chai").expect;
 const getBaseCurrencyByNetwork =
   RavencoinWallet.default.getBaseCurrencyByNetwork;
-test("getBaseCurrencyByNetwork", async () => {
-  expect(getBaseCurrencyByNetwork("evr")).toBe("EVR");
-  expect(getBaseCurrencyByNetwork("evr-test")).toBe("EVR");
+it("getBaseCurrencyByNetwork", async () => {
+  expect(getBaseCurrencyByNetwork("evr")).to.equal("EVR");
+  expect(getBaseCurrencyByNetwork("evr-test")).to.equal("EVR");
 
-  expect(getBaseCurrencyByNetwork("rvn")).toBe("RVN");
-  expect(getBaseCurrencyByNetwork("rvn-test")).toBe("RVN");
+  expect(getBaseCurrencyByNetwork("rvn")).to.equal("RVN");
+  expect(getBaseCurrencyByNetwork("rvn-test")).to.equal("RVN");
 });

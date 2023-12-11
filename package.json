@@ -12,8 +12,7 @@
   "types": "dist/types.d.ts",
   "scripts": {
     "build": "parcel build ./src/ravencoinWallet.ts --no-cache",
-    "test": "jest",
-    "test:sweep": "jest ./src/sweep.test.js",
+    "test": "mocha ./src/tests",
     "prepublishOnly": "npm run build",
     "prepublish": "npm run build"
   },
@@ -39,7 +38,8 @@
     "@parcel/packager-ts": "^2.10.3",
     "@parcel/transformer-typescript-types": "^2.10.3",
     "@types/node": "^20.8.0",
-    "jest": "^29.7.0",
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
     "parcel": "^2.10.3",
     "typescript": "^5.2.2"
   }
