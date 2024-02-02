@@ -262,7 +262,7 @@ export class SendManyTransaction {
       if (this.getAssetChange() > 0) {
         totalOutputs[changeAddressAsset] = {
           transfer: {
-            [this.assetName]: this.getAssetChange(),
+            [this.assetName]: Number(this.getAssetChange().toFixed(8)),
           },
         };
       }
