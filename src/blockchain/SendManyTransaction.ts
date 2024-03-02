@@ -128,11 +128,11 @@ export class SendManyTransaction {
       return !objInMempool;
     });
     //Sort utxos lowest first
-    const sorted = allUTXOs.sort(sortBySatoshis);
+    //const sorted = allUTXOs.sort(sortBySatoshis);
 
     //Remove duplicates, like if we have added an UTXO as forced, but it is already
     //in the wallet as a normal UTXO
-    this._allUTXOs = removeDuplicates(sorted);
+    this._allUTXOs = removeDuplicates(allUTXOs);
   }
   getAmount() {
     let total = 0;
