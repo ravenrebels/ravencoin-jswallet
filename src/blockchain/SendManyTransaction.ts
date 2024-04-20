@@ -68,7 +68,7 @@ export class SendManyTransaction {
   }
   getSizeInKB() {
     const utxos = this.predictUTXOs();
-    const assumedSizePerUTXO = 300;
+    const assumedSizePerUTXO = 160;
     const assumedSizePerOutput = 100;
 
     const bytes =
