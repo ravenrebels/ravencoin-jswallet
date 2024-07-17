@@ -67,15 +67,21 @@ export class SendManyTransaction {
     return this.walletMempool;
   }
   getSizeInKB() {
+    // We need to estimate the size of the transaction to calculate the fee,
+    // which in turn affects the transaction size itself.
+    // This is a chicken-and-egg situation, requiring an initial size estimate.
+
     const utxos = this.predictUTXOs();
-    const assumedSizePerUTXO = 160;
+
+    const baseSize = 400;
+    const assumedSizePerUTXO = 320; //Add 320 bytes to the size per UTXO we use
     const assumedSizePerOutput = 160;
 
     const bytes =
       (utxos.length + 1) * assumedSizePerUTXO +
       Object.keys(this.outputs).length * assumedSizePerOutput;
 
-    const kb = bytes / 1024;
+    const kb = (baseSize + bytes) / 1024;
 
     return kb;
   }
