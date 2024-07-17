@@ -29,8 +29,8 @@
     "url": "https://github.com/ravenrebels/ravencoin-jswallet/issues"
   },
   "dependencies": {
-    "@ravenrebels/ravencoin-key": "^2.7.0",
-    "@ravenrebels/ravencoin-rpc": "^0.3.3",
+    "@ravenrebels/ravencoin-key": "^2.8.0",
+    "@ravenrebels/ravencoin-rpc": "^0.4.1",
     "@ravenrebels/ravencoin-sign-transaction": "^0.2.12"
   },
   "homepage": "https://github.com/ravenrebels/ravencoin-jswallet#readme",
