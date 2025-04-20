@@ -31,7 +31,7 @@
   "dependencies": {
     "@ravenrebels/ravencoin-key": "2.8.0",
     "@ravenrebels/ravencoin-rpc": "0.4.1",
-    "@ravenrebels/ravencoin-sign-transaction": "1.0.0",
+    "@ravenrebels/ravencoin-sign-transaction": "1.1.0",
     "parcel": "2.14.4"
   },
   "homepage": "https://github.com/ravenrebels/ravencoin-jswallet#readme",
