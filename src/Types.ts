@@ -1,4 +1,5 @@
 import { Wallet } from "./ravencoinWallet";
+import RavencoinKey, { Network } from "@ravenrebels/ravencoin-key";
 
 export interface ISettings {
   assets?: Array<string>;
@@ -18,7 +19,7 @@ export interface ISend {
   forcedChangeAddressAssets?: string;
   forcedChangeAddressBaseCurrency?: string;
 }
-export type ChainType = "rvn" | "rvn-test" | "evr" | "evr-test";
+export type ChainType = Network | (string & {});
 export interface IAddressDelta {
   address: string;
   assetName: string;
@@ -134,7 +135,7 @@ export interface ISendInternalProps {
   toAddress: string;
 }
 
-interface Vin {
+export interface Vin {
   c_index?: number;
   address?: string;
 
@@ -146,7 +147,7 @@ interface Vin {
   vout: number;
 }
 
-interface ScriptSig {
+export interface ScriptSig {
   asm: string;
   hex: string;
 }
@@ -163,7 +164,7 @@ export interface IVout {
   valueSat: number;
 }
 
-interface ScriptPubKey {
+export interface ScriptPubKey {
   asm: string;
   hex: string;
   reqSigs: number;
@@ -203,12 +204,7 @@ export interface IUTXO {
 export interface IAssetMetaData {
   assetName: string;
 }
-export interface IAddressMetaData {
-  address: string;
-  WIF: string;
-  path: string;
-  privateKey: string;
-}
+export type IAddressMetaData = ReturnType<typeof RavencoinKey.getAddressByPath>;
 export interface IUser {
   lastKnownUsedPosition?: number;
   id: string;
@@ -231,12 +227,7 @@ export interface IInput {
 
 export type RPCType = (arg1: string, arg2: any[]) => any;
 
-export interface IAddressMetaData {
-  address: string;
-  WIF: string;
-  path: string;
-  privateKey: string;
-}
+
 
 export interface ITransactionOptions {
   amount: number;

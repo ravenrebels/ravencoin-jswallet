@@ -13,6 +13,7 @@ import {
   IUTXO,
   SweepResult,
 } from "./Types";
+export * from "./Types";
 
 import { sweep } from "./blockchain/sweep";
 import { Transaction } from "./blockchain/Transaction";
@@ -61,7 +62,7 @@ export class Wallet {
 
     return sweep(WIF, wallet, onlineMode);
   }
-  getAddressObjects() {
+  getAddressObjects(): IAddressMetaData[] {
     return this.addressObjects;
   }
   getAddresses(): Array<string> {
@@ -106,8 +107,8 @@ export class Wallet {
     this._mnemonic = options.mnemonic;
 
     //Generating the hd key is slow, so we re-use the object
-    const hdKey = RavencoinKey.getHDKey(this.network, this._mnemonic);
-    const coinType = RavencoinKey.getCoinType(this.network);
+    const hdKey = RavencoinKey.getHDKey(this.network as any, this._mnemonic);
+    const coinType = RavencoinKey.getCoinType(this.network as any);
     const ACCOUNT = 0;
 
     const minAmountOfAddresses = Number.isFinite(options.minAmountOfAddresses)
@@ -121,13 +122,13 @@ export class Wallet {
 
       for (let i = 0; i < 20; i++) {
         const external = RavencoinKey.getAddressByPath(
-          this.network,
+          this.network as any,
           hdKey,
           `m/44'/${coinType}'/${ACCOUNT}'/0/${this.addressPosition}`
         );
 
         const internal = RavencoinKey.getAddressByPath(
-          this.network,
+          this.network as any,
           hdKey,
           `m/44'/${coinType}'/${ACCOUNT}'/1/${this.addressPosition}`
         );
@@ -383,7 +384,7 @@ export class Wallet {
 
     const raw = await this.rpc("createrawtransaction", [inputs, outputs]);
     const signed = Signer.sign(
-      this.network,
+      this.network as any,
       raw,
       transaction.getUTXOs(),
       privateKeys
@@ -462,7 +463,7 @@ export class Wallet {
 
     const raw = await this.rpc("createrawtransaction", [inputs, outputs]);
     const signed = Signer.sign(
-      this.network,
+      this.network as any,
       raw,
       transaction.getUTXOs(),
       privateKeys

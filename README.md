@@ -1,27 +1,39 @@
-# ravencoin-jswallet
+# Ravencoin & Evrmore JS Wallet
 
-Ravencoin wallet library for JavaScript.
-Non-custodial.
-By default it interacts with the Ravencoin blockchain using public RPC services from
-https://rpc.ting.finance/ for both testnet and mainnet.
-You are free to use any RPC-service you like, including your own.
-See section [Run your own blockchain node](#run-your-own-blockchain-node) for more info
+[![npm version](https://img.shields.io/npm/v/@ravenrebels/ravencoin-jswallet.svg?style=flat-square)](https://www.npmjs.com/package/@ravenrebels/ravencoin-jswallet)
+[![license](https://img.shields.io/npm/l/@ravenrebels/ravencoin-jswallet.svg?style=flat-square)](https://github.com/ravenrebels/ravencoin-jswallet/blob/master/LICENSE)
+[![npm downloads](https://img.shields.io/npm/dm/@ravenrebels/ravencoin-jswallet.svg?style=flat-square)](https://www.npmjs.com/package/@ravenrebels/ravencoin-jswallet)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square)](https://www.typescriptlang.org/)
 
-##
+A light-weight, non-custodial JavaScript and TypeScript wallet library with full support for both Ravencoin (RVN) and Evrmore (EVR).
 
-EXPERIMENTAL.
+## Features
 
-This lib needs a lot of testing before being used in production.
-Only use on mainnet if you "play around".
-This lib supports EVR as well (see section at the end)
-### 
-## Example code
+- **Non-custodial**: You own your keys (BIP39 mnemonics).
+- **Dual Support**: Built-in support for both Ravencoin and Evrmore blockchains.
+- **Asset Support**: Handle user-defined assets on both networks.
+- **Flexible RPC**: Connect to public RPC nodes or your own local node.
+- **TypeScript Ready**: Full type definitions for a better developer experience.
 
-To run these code examples
+---
 
-1. Create an empty npm project
-2. Install `@ravenrebels/ravencoin-jswallet`
-3. Create a .mjs file called `index.mjs`
+> [!CAUTION]
+> **EXPERIMENTAL**: This library is undergoing active development. Please test thoroughly before using it for significant amounts. Use on mainnet at your own risk.
+
+---
+## Installation
+
+```bash
+npm install @ravenrebels/ravencoin-jswallet
+```
+
+## Quick Start
+
+To run these code examples:
+
+1. Create an empty npm project: `npm init -y`
+2. Install the library: `npm install @ravenrebels/ravencoin-jswallet`
+3. Create a file called `index.mjs`
 
 ### Minimalistic example
 
@@ -35,7 +47,7 @@ RavencoinWallet.createInstance({
    .then(wallet => wallet.getBalance())
    .then(console.log);
 ```
-### Some stuff you can do
+### Usage Examples
 ```
 import RavencoinWallet from "@ravenrebels/ravencoin-jswallet";
 const wallet = await RavencoinWallet.createInstance({
@@ -160,13 +172,12 @@ Create an instance of wallet and set baseCurrency
 wallet.setBaseCurrency("EVR");
 ```
 
-## API
+## API Reference
 
-When you create your instance of a wallet you can specify some stuff.
+When creating a wallet instance, you can provide several configuration options. 
 
-You can set network to be something else than RVN, for example EVR.
-
-You can specify your own RPC node URL and username/password.
+### RPC Configuration
+By default, the library uses public RPC services from **ting.finance**, allowing you to kickstart your development immediately without setting up your own infrastructure. As your application grows or if you prefer full control, you can easily switch to your own Ravencoin or Evrmore node by providing custom credentials. See the section [Run your own blockchain node](#run-your-own-blockchain-node) for more information.
 
 ```
 export interface IOptions {
@@ -178,7 +189,7 @@ export interface IOptions {
 }
 ```
 
-[Check the TypeScript definitions ](./dist/types.d.ts) for all the details
+Refer to the [TypeScript definitions](./dist/types.d.ts) for exhaustive technical details.
 
 ### Run your own blockchain node
 

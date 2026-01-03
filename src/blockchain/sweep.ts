@@ -4,7 +4,7 @@ import Signer from "@ravenrebels/ravencoin-sign-transaction";
 !!Signer.sign; //"Idiocracy" but prevents bundle tools such as PARCEL to strip this dependency out on build.
 
 import { Wallet } from "../ravencoinWallet";
-import { IInput, SweepResult } from "../Types";
+import { IInput, IUTXO, SweepResult } from "../Types";
 import { shortenNumber } from "./SendManyTransaction";
 
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
@@ -22,7 +22,7 @@ export async function sweep(
   wallet: Wallet,
   onlineMode: boolean
 ): Promise<SweepResult> {
-  const privateKey = RavencoinKey.getAddressByWIF(wallet.network, WIF);
+  const privateKey = RavencoinKey.getAddressByWIF(wallet.network as any, WIF);
 
   const result: SweepResult = {};
   const rpc = wallet.rpc;
@@ -44,9 +44,9 @@ export async function sweep(
     result.errorDescription = "Address " + privateKey.address + " has no funds";
     return result;
   }
-  const balanceObject = {};
+  const balanceObject: Record<string, number> = {};
 
-  UTXOs.map((utxo) => {
+  UTXOs.map((utxo: IUTXO) => {
     if (!balanceObject[utxo.assetName]) {
       balanceObject[utxo.assetName] = 0;
     }
@@ -57,7 +57,7 @@ export async function sweep(
 
   //Start simple, get the first addresses from the wallet
 
-  const outputs = {};
+  const outputs: Record<string, any> = {};
 
   const fixedFee = 0.02; // should do for now
   keys.map((assetName, index) => {
@@ -77,7 +77,7 @@ export async function sweep(
   result.outputs = outputs;
 
   //Convert from UTXO format to INPUT fomat
-  const inputs: Array<IInput> = UTXOs.map((utxo, index) => {
+  const inputs: Array<IInput> = UTXOs.map((utxo: IUTXO, index: number) => {
     /*   {
          "txid":"id",                      (string, required) The transaction id
          "vout":n,                         (number, required) The output number
@@ -97,7 +97,7 @@ export async function sweep(
   const privateKeys = {
     [privateKey.address]: WIF,
   };
-  const signedHex = Signer.sign(wallet.network, rawHex, UTXOs, privateKeys);
+  const signedHex = Signer.sign(wallet.network as any, rawHex, UTXOs, privateKeys);
   result.rawTransaction = signedHex;
   if (onlineMode === true) {
     result.transactionId = await rpc("sendrawtransaction", [signedHex]);
