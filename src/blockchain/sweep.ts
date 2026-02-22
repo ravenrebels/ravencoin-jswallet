@@ -9,7 +9,6 @@ import { shortenNumber } from "./SendManyTransaction";
 
 //sight rate burger maid melody slogan attitude gas account sick awful hammer
 //OH easter egg ;)
-const WIF = "Kz5U4Bmhrng4o2ZgwBi5PjtorCeq2dyM7axGQfdxsBSwCKi5ZfTw";
 
 /**
  *

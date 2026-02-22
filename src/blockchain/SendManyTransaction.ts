@@ -31,7 +31,7 @@ import { removeDuplicates } from "../utils";
  */
 
 export class SendManyTransaction {
-  _allUTXOs: IUTXO[]; //all UTXOs that we know of
+  _allUTXOs: IUTXO[] = []; //all UTXOs that we know of
 
   private assetName: string;
   feerate = 1; //When loadData is called, this attribute is updated from the blockchain  wallet = null;
@@ -181,7 +181,7 @@ export class SendManyTransaction {
   Check the blockchain, network.
   Is this transaction still valid? Will it be accepted?
   */
-  validate() {}
+  validate() { }
   predictUTXOs() {
     let utxos: IUTXO[] = [];
 
@@ -244,7 +244,7 @@ export class SendManyTransaction {
 
   async getOutputs() {
     //we take the declared outputs and add change outputs
-    const totalOutputs = {};
+    const totalOutputs: Record<string, any> = {};
     const changeAddressBaseCurrency =
       this.forcedChangeAddressBaseCurrency ||
       (await this.wallet.getChangeAddress());
@@ -309,7 +309,7 @@ export class SendManyTransaction {
 
   getPrivateKeys() {
     const addressObjects = this.wallet.getAddressObjects();
-    const privateKeys = {};
+    const privateKeys: Record<string, string> = {};
     for (let u of this.getUTXOs()) {
       //Find the address object (we want the WIF) for the address related to the UTXO
       const addressObject = addressObjects.find(
@@ -352,7 +352,7 @@ export class SendManyTransaction {
 }
 
 //Return the number with max 2 decimals
-export function shortenNumber(number) {
+export function shortenNumber(number: number) {
   return parseFloat(number.toFixed(2));
 }
 
