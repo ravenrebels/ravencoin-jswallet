@@ -33,7 +33,7 @@ const URL_EVRMORE_MAINNET = "https://evr-rpc-mainnet.ting.finance/rpc";
 //Meaning multiple instances of the wallet must be able to co-exist
 
 export class Wallet {
-  rpc = getRPC("anonymous", "anonymous", URL_RAVENCOIN_MAINNET);
+  rpc: <T = any>(method: string, params: any[]) => Promise<T> = getRPC("anonymous", "anonymous", URL_RAVENCOIN_MAINNET) as any;
   _mnemonic = "";
   network: ChainType = "rvn";
   addressObjects: Array<IAddressMetaData> = [];
@@ -103,7 +103,7 @@ export class Wallet {
       this.setBaseCurrency(getBaseCurrencyByNetwork(options.network));
     }
 
-    this.rpc = getRPC(username, password, url);
+    this.rpc = getRPC(username, password, url) as any;
     this._mnemonic = options.mnemonic;
 
     //Generating the hd key is slow, so we re-use the object

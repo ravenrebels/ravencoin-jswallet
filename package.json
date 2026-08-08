@@ -29,15 +29,15 @@
     "url": "https://github.com/ravenrebels/ravencoin-jswallet/issues"
   },
   "dependencies": {
-    "@ravenrebels/ravencoin-key": "^3.0.3",
-    "@ravenrebels/ravencoin-rpc": "0.4.2",
-    "@ravenrebels/ravencoin-sign-transaction": "^1.1.4"
+    "@ravenrebels/ravencoin-key": "^3.0.4",
+    "@ravenrebels/ravencoin-rpc": "^0.4.4",
+    "@ravenrebels/ravencoin-sign-transaction": "^1.1.5"
   },
   "homepage": "https://github.com/ravenrebels/ravencoin-jswallet#readme",
   "devDependencies": {
     "@parcel/packager-ts": "^2.16.4",
     "@parcel/transformer-typescript-types": "^2.16.4",
-    "@types/node": "^25.3.0",
+    "@types/node": "^26.2.0",
     "chai": "^6.2.2",
     "mocha": "^11.7.5",
     "parcel": "^2.16.4",
